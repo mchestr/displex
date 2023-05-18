@@ -17,24 +17,24 @@ pub struct Config {
 impl Config {
     pub fn init() -> Config {
         Config {
-            hostname: env::var("TAUTBOT_HOSTNAME").expect("TAUTBOT_HOSTNAME not set"),
-            host: env::var("TAUTBOT_HOST").unwrap_or("0.0.0.0".into()),
-            port: env::var("TAUTBOT_PORT")
+            hostname: env::var("DISPLEX_HOSTNAME").expect("DISPLEX_HOSTNAME not set"),
+            host: env::var("DISPLEX_HOST").unwrap_or("0.0.0.0".into()),
+            port: env::var("DISPLEX_PORT")
                 .unwrap_or("8080".into())
                 .parse::<u16>()
-                .expect("TAUTBOT_PORT not set"),
-            session_secret_key: env::var("TAUTBOT_SESSION_SECRET_KEY")
-                .expect("TAUTBOT_SESSION_SECRET_KEY not set."),
+                .expect("DISPLEX_PORT not set"),
+            session_secret_key: env::var("DISPLEX_SESSION_SECRET_KEY")
+                .expect("DISPLEX_SESSION_SECRET_KEY not set."),
 
-            plex_client_id: env::var("TAUTBOT_PLEX_CLIENT_ID")
-                .expect("TAUTBOT_PLEX_CLIENT_ID not set"),
-            plex_server_id: env::var("TAUTBOT_PLEX_SERVER_ID")
-                .expect("TAUTBOT_PLEX_SERVER_ID not set"),
+            plex_client_id: env::var("DISPLEX_PLEX_CLIENT_ID")
+                .expect("DISPLEX_PLEX_CLIENT_ID not set"),
+            plex_server_id: env::var("DISPLEX_PLEX_SERVER_ID")
+                .expect("DISPLEX_PLEX_SERVER_ID not set"),
 
-            discord_client_id: env::var("TAUTBOT_DISCORD_CLIENT_ID")
-                .expect("TAUTBOT_DISCORD_CLIENT_ID not set"),
-            discord_client_secret: env::var("TAUTBOT_DISCORD_CLIENT_SECRET")
-                .expect("TAUTBOT_DISCORD_CLIENT_SECRET not set"),
+            discord_client_id: env::var("DISPLEX_DISCORD_CLIENT_ID")
+                .expect("DISPLEX_DISCORD_CLIENT_ID not set"),
+            discord_client_secret: env::var("DISPLEX_DISCORD_CLIENT_SECRET")
+                .expect("DISPLEX_DISCORD_CLIENT_SECRET not set"),
         }
     }
 }
