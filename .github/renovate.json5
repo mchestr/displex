@@ -50,14 +50,6 @@
       "semanticCommitType": "chore"
     },
     {
-      "description": "Auto merge container images",
-      "matchDatasources": ["docker"],
-      "automerge": true,
-      "automergeType": "branch",
-      "ignoreTests": true,
-      "matchUpdateTypes": ["major", "minor", "patch", "digest"]
-    },
-    {
       "description": "Auto merge GitHub Actions",
       "matchManagers": ["github-actions"],
       "matchDatasources": ["github-tags"],
