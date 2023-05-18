@@ -14,14 +14,14 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
       - name: "Refresh tags"
         id: tag
         run: git fetch --tags --force # Is currently required for v3 due to https://github.com/actions/checkout/issues/290
       - uses: ericcornelissen/git-tag-annotation-action@v2
         id: tag-data
       - name: Create GitHub release
-        uses: Roang-zero1/github-create-release-action@v3
+        uses: Roang-zero1/github-create-release-action@57eb9bdce7a964e48788b9e78b5ac766cb684803 # v3
         with:
           release_text: ${{ steps.tag-data.outputs.git-tag-annotation }}
         env:
