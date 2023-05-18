@@ -15,7 +15,7 @@ jobs:
       - name: "Refresh tags"
         id: tag
         run: git fetch --tags --force # Is currently required for v3 due to https://github.com/actions/checkout/issues/290
-      - uses: ericcornelissen/git-tag-annotation-action@v3
+      - uses: ericcornelissen/git-tag-annotation-action@v2
         id: tag-data
       - name: Create GitHub release
         uses: Roang-zero1/github-create-release-action@v3
