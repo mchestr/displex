@@ -541,6 +541,7 @@ version = "0.1.0"
 dependencies = [
  "actix-session",
  "actix-web",
+ "anyhow",
  "dotenv",
  "env_logger",
  "log",

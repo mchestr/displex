@@ -1,3 +1,4 @@
+use anyhow::Result;
 use oauth2::{
     basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl,
     Scope, TokenResponse, TokenUrl,
@@ -58,17 +59,16 @@ impl DiscordClient {
             .url()
     }
 
-    pub async fn token(&self, code: &str) -> String {
+    pub async fn token(&self, code: &str) -> Result<String> {
         let resp = self
             .oauth_client
             .exchange_code(AuthorizationCode::new(String::from(code)))
             .request_async(oauth2::reqwest::async_http_client)
-            .await
-            .unwrap();
-        String::from(resp.access_token().secret())
+            .await?;
+        Ok(String::from(resp.access_token().secret()))
     }
 
-    pub async fn link_application(&self, token: &str) {
+    pub async fn link_application(&self, token: &str) -> Result<()> {
         self.client
             .put(format!(
                 "https://discord.com/api/v10/users/@me/applications/{}/role-connection",
@@ -79,7 +79,7 @@ impl DiscordClient {
                 platform_name: String::from("mikeflix"),
             })
             .send()
-            .await
-            .unwrap();
+            .await?;
+        Ok(())
     }
 }

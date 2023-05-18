@@ -1,9 +1,9 @@
-use std::{time::Duration, env};
+use std::{env, time::Duration};
 
 use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
 use actix_web::{
     cookie::Key,
-    error::{ErrorBadRequest, ErrorUnauthorized},
+    error::{ErrorBadRequest, ErrorInternalServerError, ErrorUnauthorized},
     get,
     middleware::Logger,
     web::{self, Redirect},
@@ -47,15 +47,26 @@ async fn discord_callback(
     qs: web::Query<DiscordRedirectQueryParams>,
     session: Session,
 ) -> Result<impl Responder> {
-    let session_token = session.get::<String>(session::DISCORD_STATE)?.expect("invalid state");
+    let session_token = session
+        .get::<String>(session::DISCORD_STATE)?
+        .expect("invalid state");
     if session_token != qs.state {
         log::info!("session state does not match query parameters");
         Err(ErrorBadRequest("invalid state"))
     } else {
         session.insert(session::DISCORD_CODE, &qs.code)?;
 
-        let pin = plex_client.get_pin().await;
-        let url = plex_client.generate_auth_url(pin.id, &pin.code).await;
+        let pin = plex_client.get_pin().await.map_err(|err| {
+            log::error!("{}", err);
+            ErrorInternalServerError("something bad happened")
+        })?;
+        let url = plex_client
+            .generate_auth_url(pin.id, &pin.code)
+            .await
+            .map_err(|err| {
+                log::error!("{}", err);
+                ErrorInternalServerError("something bad happened")
+            })?;
 
         Ok(Redirect::to(String::from(url)))
     }
@@ -76,7 +87,13 @@ async fn plex_callback(
     qs: web::Query<PlexRedirectQueryParams>,
     session: Session,
 ) -> Result<impl Responder> {
-    let resp = plex_client.pin_claim(qs.id, &qs.code).await;
+    let resp = plex_client
+        .pin_claim(qs.id, &qs.code)
+        .await
+        .map_err(|err| {
+            log::error!("{}", err);
+            ErrorInternalServerError("something bad happened")
+        })?;
 
     let discord_token = session
         .get::<String>(session::DISCORD_CODE)?
@@ -85,12 +102,25 @@ async fn plex_callback(
     match plex_client
         .get_devices(&resp.auth_token)
         .await
+        .map_err(|err| {
+            log::error!("{}", err);
+            ErrorInternalServerError("something bad happened")
+        })?
         .iter()
         .find(|&d| d.client_identifier == config.plex_server_id)
     {
         Some(_) => {
-            let token = discord_client.token(&discord_token).await;
-            discord_client.link_application(&token).await;
+            let token = discord_client.token(&discord_token).await.map_err(|err| {
+                log::error!("{}", err);
+                ErrorInternalServerError("something bad happened")
+            })?;
+            discord_client
+                .link_application(&token)
+                .await
+                .map_err(|err| {
+                    log::error!("{}", err);
+                    ErrorInternalServerError("something bad happened")
+                })?;
             Ok(HttpResponse::Ok()
                 .body("Successfully linked! You can go back to Discord now and close this tab."))
         }

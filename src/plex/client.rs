@@ -1,3 +1,4 @@
+use anyhow::Result;
 use reqwest::Url;
 
 use super::{
@@ -30,25 +31,24 @@ impl PlexClient {
         }
     }
 
-    pub async fn get_pin(&self) -> CreatePinResponse {
+    pub async fn get_pin(&self) -> Result<CreatePinResponse> {
         let form_params = [
             ("strong", "true"),
             ("X-Plex-Product", &self.client_id),
             ("X-Plex-Client-Identifier", &self.client_id),
         ];
 
-        self.client
+        Ok(self
+            .client
             .post(format!("{}{}", PLEX_TV_URL, PLEX_TV_PIN_PATH))
             .form(&form_params)
             .send()
-            .await
-            .unwrap()
+            .await?
             .json()
-            .await
-            .unwrap()
+            .await?)
     }
 
-    pub async fn generate_auth_url(&self, pin_id: u64, pin_code: &str) -> String {
+    pub async fn generate_auth_url(&self, pin_id: u64, pin_code: &str) -> Result<String> {
         let qs = AuthQueryParams {
             client_id: String::from(&self.client_id),
             code: String::from(pin_code),
@@ -59,16 +59,16 @@ impl PlexClient {
             },
             forward_url: format!("{}?id={}&code={}", &self.redirect_url, pin_id, pin_code),
         };
-        let params = serde_qs::to_string(&qs).unwrap();
+        let params = serde_qs::to_string(&qs)?;
 
-        let mut url = Url::parse(&format!("{}{}", PLEX_TV_APP_URL, PLEX_TV_AUTH_PATH)).unwrap();
+        let mut url = Url::parse(&format!("{}{}", PLEX_TV_APP_URL, PLEX_TV_AUTH_PATH))?;
         url.set_fragment(Some(&format!("?{}", &params)));
 
         log::debug!("generate_auth_url: {}", url);
-        url.to_string()
+        Ok(url.to_string())
     }
 
-    pub async fn pin_claim(&self, pin_id: u64, pin_code: &str) -> PinClaimResponse {
+    pub async fn pin_claim(&self, pin_id: u64, pin_code: &str) -> Result<PinClaimResponse> {
         let params: [(&str, &str); 3] = [
             ("X-Plex-Product", &self.client_id),
             ("X-Plex-Client-Identifier", &self.client_id),
@@ -77,52 +77,42 @@ impl PlexClient {
         let url = Url::parse_with_params(
             &format!("{}{}/{}", PLEX_TV_URL, PLEX_TV_PIN_PATH, pin_id),
             &params,
-        )
-        .unwrap();
+        )?;
 
         log::debug!("pin_claim: {}", url);
-        self.client
-            .get(url)
-            .send()
-            .await
-            .unwrap()
-            .json()
-            .await
-            .unwrap()
+        Ok(self.client.get(url).send().await?.json().await?)
     }
 
     #[allow(dead_code)]
-    pub async fn get_user(&self, auth_token: &str) -> User {
+    pub async fn get_user(&self, auth_token: &str) -> Result<User> {
         let user_params: [(&str, &str); 3] = [
             ("X-Plex-Token", auth_token),
             ("X-Plex-Product", &self.client_id),
             ("X-Plex-Client-Identifier", &self.client_id),
         ];
-        self.client
+        Ok(self
+            .client
             .get(&format!("{}{}", PLEX_TV_URL, PLEX_TV_USER_PATH))
             .query(&user_params)
             .send()
-            .await
-            .unwrap()
+            .await?
             .json()
-            .await
-            .unwrap()
+            .await?)
     }
 
-    pub async fn get_devices(&self, auth_token: &str) -> Vec<Device> {
+    pub async fn get_devices(&self, auth_token: &str) -> Result<Vec<Device>> {
         let user_params: [(&str, &str); 3] = [
             ("X-Plex-Token", auth_token),
             ("X-Plex-Product", &self.client_id),
             ("X-Plex-Client-Identifier", &self.client_id),
         ];
-        self.client
+        Ok(self
+            .client
             .get(&format!("{}{}", PLEX_TV_URL, PLEX_TV_RESOURCES_PATH))
             .query(&user_params)
             .send()
-            .await
-            .unwrap()
+            .await?
             .json()
-            .await
-            .unwrap()
+            .await?)
     }
 }
