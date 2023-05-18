@@ -19,10 +19,11 @@ impl Config {
         Config {
             hostname: env::var("DISPLEX_HOSTNAME").expect("DISPLEX_HOSTNAME not set"),
             host: env::var("DISPLEX_HOST").unwrap_or("0.0.0.0".into()),
-            port: env::var("DISPLEX_PORT")
-                .unwrap_or("8080".into())
-                .parse::<u16>()
-                .expect("DISPLEX_PORT not set"),
+            port: env::var("DISPLEX_PORT").map_or(8080, |v| {
+                v.parse::<u16>()
+                    .map_err(|e| format!("DISPLEX_PORT '{}' is invalid", e))
+                    .unwrap()
+            }),
             session_secret_key: env::var("DISPLEX_SESSION_SECRET_KEY")
                 .expect("DISPLEX_SESSION_SECRET_KEY not set."),
 

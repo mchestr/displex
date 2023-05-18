@@ -84,7 +84,7 @@ impl PlexClient {
     }
 
     #[allow(dead_code)]
-    pub async fn get_user(&self, auth_token: &str) -> Result<User> {
+    pub async fn user(&self, auth_token: &str) -> Result<User> {
         let user_params: [(&str, &str); 3] = [
             ("X-Plex-Token", auth_token),
             ("X-Plex-Product", &self.client_id),

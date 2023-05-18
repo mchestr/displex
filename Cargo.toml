@@ -8,6 +8,7 @@ actix-web = "4"
 actix-session = { version = "0.7.2", features = ["cookie-session"] }
 anyhow = "1.0.71"
 dotenv = "0.15.0"
+diesel = { version = "2", features = ["postgres", "r2d2"], default-features = false }
 env_logger = "0.10.0"
 log = "0.4.17"
 oauth2 = "4"

@@ -1,11 +1,12 @@
 use anyhow::Result;
 use oauth2::{
-    basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl,
-    Scope, TokenResponse, TokenUrl,
+    basic::{BasicClient, BasicTokenType},
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
+    RedirectUrl, Scope, TokenUrl,
 };
 use reqwest::Url;
 
-use super::models::DiscordMetaDataPush;
+use super::models::{DiscordMetaDataPush, User};
 
 type OAuth2DiscordClient = oauth2::Client<
     oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
@@ -18,6 +19,8 @@ type OAuth2DiscordClient = oauth2::Client<
     oauth2::StandardRevocableToken,
     oauth2::StandardErrorResponse<oauth2::RevocationErrorResponseType>,
 >;
+
+pub type DiscordOAuth2Token = oauth2::StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
 
 pub struct DiscordClient {
     oauth_client: OAuth2DiscordClient,
@@ -59,13 +62,13 @@ impl DiscordClient {
             .url()
     }
 
-    pub async fn token(&self, code: &str) -> Result<String> {
+    pub async fn token(&self, code: &str) -> Result<DiscordOAuth2Token> {
         let resp = self
             .oauth_client
             .exchange_code(AuthorizationCode::new(String::from(code)))
             .request_async(oauth2::reqwest::async_http_client)
             .await?;
-        Ok(String::from(resp.access_token().secret()))
+        Ok(resp)
     }
 
     pub async fn link_application(&self, token: &str) -> Result<()> {
@@ -81,5 +84,26 @@ impl DiscordClient {
             .send()
             .await?;
         Ok(())
+    }
+
+    pub async fn user(&self, token: &str) -> Result<User> {
+        log::info!(
+            "{}",
+            self.client
+                .get("https://discord.com/api/v10/users/@me")
+                .bearer_auth(&token)
+                .send()
+                .await?
+                .text()
+                .await?
+        );
+        Ok(self
+            .client
+            .get("https://discord.com/api/v10/users/@me")
+            .bearer_auth(&token)
+            .send()
+            .await?
+            .json()
+            .await?)
     }
 }

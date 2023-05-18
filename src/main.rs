@@ -11,15 +11,23 @@ use actix_web::{
 };
 
 use config::Config;
+use db::initialize_db_pool;
 use dotenv::dotenv;
+use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
 use serde::Deserialize;
 
-use crate::{discord::client::DiscordClient, plex::client::PlexClient};
+use crate::{
+    db::{discord_tokens::DiscordToken, plex_tokens::PlexToken, DbPool},
+    discord::client::DiscordClient,
+    plex::client::PlexClient,
+};
 
 mod config;
+mod db;
 mod discord;
 mod plex;
+mod schema;
 mod session;
 
 // 1. Initial route that will ask user to authorize bot for their discord account
@@ -52,24 +60,23 @@ async fn discord_callback(
         .expect("invalid state");
     if session_token != qs.state {
         log::info!("session state does not match query parameters");
-        Err(ErrorBadRequest("invalid state"))
-    } else {
-        session.insert(session::DISCORD_CODE, &qs.code)?;
+        return Err(ErrorBadRequest("invalid state"));
+    }
+    session.insert(session::DISCORD_CODE, &qs.code)?;
 
-        let pin = plex_client.get_pin().await.map_err(|err| {
+    let pin = plex_client.get_pin().await.map_err(|err| {
+        log::error!("{}", err);
+        ErrorInternalServerError("something bad happened")
+    })?;
+    let url = plex_client
+        .generate_auth_url(pin.id, &pin.code)
+        .await
+        .map_err(|err| {
             log::error!("{}", err);
             ErrorInternalServerError("something bad happened")
         })?;
-        let url = plex_client
-            .generate_auth_url(pin.id, &pin.code)
-            .await
-            .map_err(|err| {
-                log::error!("{}", err);
-                ErrorInternalServerError("something bad happened")
-            })?;
 
-        Ok(Redirect::to(String::from(url)))
-    }
+    Ok(Redirect::to(String::from(url)))
 }
 
 #[derive(Debug, Deserialize)]
@@ -84,6 +91,7 @@ async fn plex_callback(
     config: web::Data<Config>,
     discord_client: web::Data<DiscordClient>,
     plex_client: web::Data<PlexClient>,
+    pool: web::Data<DbPool>,
     qs: web::Query<PlexRedirectQueryParams>,
     session: Session,
 ) -> Result<impl Responder> {
@@ -111,14 +119,69 @@ async fn plex_callback(
     {
         Some(_) => {
             let token = discord_client.token(&discord_token).await.map_err(|err| {
-                log::error!("{}", err);
+                log::error!("discord_client.token: {}", err);
                 ErrorInternalServerError("something bad happened")
             })?;
+
+            let d_access_token = token.access_token().secret();
+            let d_access_token_clone = d_access_token.clone();
+            let t = token.clone();
+
+            let discord_user = discord_client.user(&d_access_token).await.map_err(|err| {
+                log::error!("discord_client.user: {}", err);
+                ErrorInternalServerError("something bad happened")
+            })?;
+
+            let plex_user = plex_client.user(&resp.auth_token).await.map_err(|err| {
+                log::error!("plex_client.user {}", err);
+                ErrorInternalServerError("something bad happened")
+            })?;
+
+            let _ = web::block(move || {
+                // note that obtaining a connection from the pool is also potentially blocking
+                let mut conn = pool.get()?;
+
+                conn.build_transaction().run(|conn| {
+                    db::plex_tokens::insert_new_token(
+                        conn,
+                        PlexToken {
+                            id: plex_user.id.to_string(),
+                            username: plex_user.username,
+                            access_token: resp.auth_token,
+                        },
+                    )?;
+
+                    db::discord_tokens::insert_new_token(
+                        conn,
+                        DiscordToken {
+                            id: discord_user.id,
+                            username: discord_user.username,
+                            access_token: d_access_token_clone.into(),
+                            token_type: "bearer".into(),
+                            refresh_token: t
+                                .refresh_token()
+                                .expect("expecting refresh token")
+                                .secret()
+                                .into(),
+                            scopes: t.scopes().map_or("".into(), |d| {
+                                d.iter().map(|i| i.to_string() + ",").collect()
+                            }),
+                        },
+                    )
+                })
+            })
+            .await?
+            // map diesel query errors to a 500 error response
+            .map_err(|err| {
+                log::error!("db save: {}", err);
+                ErrorInternalServerError("something bad happened")
+            })?;
+
             discord_client
-                .link_application(&token)
+                .link_application(&d_access_token)
                 .await
                 .map_err(|err| {
-                    log::error!("{}", err);
+                    log::error!("discord_client.link_application: {}", err);
                     ErrorInternalServerError("something bad happened")
                 })?;
             Ok(HttpResponse::Ok()
@@ -147,8 +210,10 @@ async fn main() -> std::io::Result<()> {
         .build()
         .unwrap();
 
-    env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    let pool = initialize_db_pool();
+
+    env::set_var("RUST_LOG", "info,actix_web=debug,actix_server=info");
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     HttpServer::new(move || {
         App::new()
             .service(discord_callback)
@@ -166,6 +231,7 @@ async fn main() -> std::io::Result<()> {
                 &format!("https://{}/discord/callback", &config.hostname),
             )))
             .app_data(web::Data::new(config.clone()))
+            .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::default())
             .wrap(
                 // create cookie based session middleware
