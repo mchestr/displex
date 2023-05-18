@@ -16,7 +16,7 @@ RUN cargo build --release
 RUN strip target/release/displex
 
 # use a plain alpine image, the alpine version needs to match the builder
-FROM alpine:3.17
+FROM alpine:3.18
 
 RUN apk add --no-cache libgcc libressl-dev
 # copy the binary into the final image
