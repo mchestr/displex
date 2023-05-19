@@ -47,3 +47,4 @@ services:
       - .env
     environment:
       DISPLEX_DATABASE_URL: postgres://displex:password@postgres/displex
+      DISPLEX_HOST: "0.0.0.0"
