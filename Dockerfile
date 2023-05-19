@@ -13,6 +13,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 # Build application
 COPY . .
 RUN cargo build --release --bin displex
+RUN cargo build --release --bin stat-refresh
 
 # We do not need the Rust toolchain to run the binary!
 FROM debian:buster-slim AS runtime
