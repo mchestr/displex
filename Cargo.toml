@@ -8,6 +8,7 @@ actix-web = "4"
 actix-session = { version = "0.7.2", features = ["cookie-session"] }
 anyhow = "1.0.71"
 chrono = { version = "0.4.24", features = ["serde"] }
+derive_more = "0.99.17"
 dotenv = "0.15.0"
 diesel = { version = "2", features = ["postgres", "r2d2", "chrono"], default-features = false }
 diesel_migrations = { version = "2.0.0", features = ["postgres"] }

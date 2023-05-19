@@ -1,10 +1,38 @@
 use std::env;
 
-#[derive(Clone)]
+use derive_more::Display;
+
+#[derive(Clone, Display)]
+#[display(
+    fmt = "Config(
+        host: {}, 
+        port: {}, 
+        hostname: {}, 
+        session_secret_key: *****,
+        database_url: *****,
+        application_name: {}, 
+        accept_invalid_certs: {}, 
+        plex_server_id: {}, 
+        discord_client_id: {}, 
+        discord_client_secret: *****,
+        discord_bot_token: *****,
+        tautulli_url: {},
+        tautulli_api_key: *****,
+    )",
+    host,
+    hostname,
+    port,
+    application_name,
+    accept_invalid_certs,
+    plex_server_id,
+    discord_client_id,
+    tautulli_url
+)]
 pub struct Config {
     pub host: String,
-    pub hostname: String,
     pub port: u16,
+    pub hostname: String,
+
     pub session_secret_key: String,
     pub database_url: String,
     pub application_name: String,
@@ -38,9 +66,9 @@ impl Config {
             accept_invalid_certs: match env::var("DISPLEX_ACCEPT_INVALID_CERTS") {
                 Ok(value) => match value.to_lowercase().as_str() {
                     "true" | "t" | "yes" | "y" => true,
-                    _ => false
+                    _ => false,
                 },
-                Err(_) => false
+                Err(_) => false,
             },
 
             plex_server_id: env::var("DISPLEX_PLEX_SERVER_ID")

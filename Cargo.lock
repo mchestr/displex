@@ -590,6 +590,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "chrono",
+ "derive_more",
  "diesel",
  "diesel_migrations",
  "dotenv",

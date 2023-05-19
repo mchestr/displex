@@ -253,6 +253,7 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     let config = config::Config::init();
+    log::info!("Loaded config: {}", config.session_secret_key);
     let host = String::from(&config.host);
     let port = config.port;
 
