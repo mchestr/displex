@@ -6,13 +6,13 @@ pub struct ApplicationMetadataUpdate {
     pub metadata: ApplicationMetadata,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ApplicationMetadata {
-    pub join_date: String,
-    pub hours_watched: i64,
+    pub total_watches: i32,
+    pub hours_watched: i32,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct User {
     pub id: String,
     pub username: String,

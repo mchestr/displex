@@ -61,7 +61,7 @@ pub struct AuthDevice {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
-    pub id: u32,
+    pub id: i64,
     pub uuid: String,
     pub username: String,
     pub title: String,

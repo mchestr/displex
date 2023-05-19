@@ -17,6 +17,7 @@ use dotenv::dotenv;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
 use serde::Deserialize;
+use tautulli::client::TautulliClient;
 
 use crate::{
     db::{
@@ -34,6 +35,7 @@ mod discord;
 mod plex;
 mod schema;
 mod session;
+mod tautulli;
 
 // 1. Initial route that will ask user to authorize bot for their discord account
 #[get("/discord/linked-role")]
@@ -99,6 +101,7 @@ async fn plex_callback(
     pool: web::Data<DbPool>,
     qs: web::Query<PlexRedirectQueryParams>,
     session: Session,
+    tautulli_client: web::Data<TautulliClient>,
 ) -> Result<impl Responder> {
     let resp = plex_client
         .pin_claim(qs.id, &qs.code)
@@ -182,7 +185,7 @@ async fn plex_callback(
                     let plex_user = db::plex::insert_user(
                         conn,
                         NewPlexUser {
-                            id: plex_user.uuid,
+                            id: plex_user.id,
                             username: plex_user.username,
                             discord_user_id: String::from(&discord_user.id),
                         },
@@ -208,15 +211,28 @@ async fn plex_callback(
                 ErrorInternalServerError("something bad happened")
             })?;
 
+            let watch_stats = tautulli_client
+                .get_user_watch_time_stats(plex_user.id, Some(false), Some("0"))
+                .await
+                .map_err(|err| {
+                    log::error!("tautulli_client.get_user_watch_time_stats: {}", err);
+                    ErrorInternalServerError("something bad happened")
+                })?;
+
+            let mut data = ApplicationMetadata {
+                ..Default::default()
+            };
+            if let Some(latest) = watch_stats.get(0) {
+                data.total_watches = latest.total_plays;
+                data.hours_watched = latest.total_time / 3600;
+            }
+
             discord_client
                 .link_application(
                     &d_access_token,
                     ApplicationMetadataUpdate {
                         platform_name: String::from(&config.application_name),
-                        metadata: ApplicationMetadata {
-                            join_date: "2022-01-01".into(),
-                            hours_watched: 100,
-                        },
+                        metadata: data,
                     },
                 )
                 .await
@@ -248,7 +264,7 @@ async fn main() -> std::io::Result<()> {
         .timeout(Duration::from_secs(30))
         .pool_idle_timeout(Duration::from_secs(90))
         .default_headers(default_headers)
-        .danger_accept_invalid_certs(true)
+        .danger_accept_invalid_certs(config.accept_invalid_certs)
         .build()
         .unwrap();
 
@@ -260,10 +276,16 @@ async fn main() -> std::io::Result<()> {
         &config.discord_bot_token,
     );
 
-    let plex_client = plex::client::PlexClient::new_with_client(
+    let plex_client = plex::client::PlexClient::new(
         &reqwest_client,
         &config.application_name,
         &format!("https://{}/plex/callback", &config.hostname),
+    );
+
+    let tautlli_client = tautulli::client::TautulliClient::new(
+        &reqwest_client.clone(),
+        &config.tautulli_url,
+        &config.tautulli_api_key,
     );
 
     let pool = initialize_db_pool(&config.database_url);
@@ -281,6 +303,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(discord_client.clone()))
             .app_data(web::Data::new(config.clone()))
             .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(tautlli_client.clone()))
             .wrap(Logger::default())
             .wrap(
                 // create cookie based session middleware

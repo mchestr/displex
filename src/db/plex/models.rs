@@ -9,20 +9,20 @@ pub struct PlexToken {
     pub access_token: String,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
-    pub plex_user_id: String,
+    pub plex_user_id: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
 #[diesel(table_name = plex_tokens)]
 pub struct NewPlexToken {
     pub access_token: String,
-    pub plex_user_id: String,
+    pub plex_user_id: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
 #[diesel(table_name = plex_users)]
 pub struct PlexUser {
-    pub id: String,
+    pub id: i64,
     pub username: String,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
@@ -32,7 +32,7 @@ pub struct PlexUser {
 #[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
 #[diesel(table_name = plex_users)]
 pub struct NewPlexUser {
-    pub id: String,
+    pub id: i64,
     pub username: String,
     pub discord_user_id: String,
 }

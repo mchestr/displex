@@ -19,11 +19,7 @@ pub struct PlexClient {
 }
 
 impl PlexClient {
-    pub fn new_with_client(
-        client: &reqwest::Client,
-        client_id: &str,
-        redirect_url: &str,
-    ) -> PlexClient {
+    pub fn new(client: &reqwest::Client, client_id: &str, redirect_url: &str) -> PlexClient {
         PlexClient {
             client: client.clone(),
             redirect_url: String::from(redirect_url),

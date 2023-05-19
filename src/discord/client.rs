@@ -6,9 +6,7 @@ use oauth2::{
 };
 use reqwest::Url;
 
-use super::models::{
-    ApplicationMetadataDefinition, ApplicationMetadataUpdate, User,
-};
+use super::models::{ApplicationMetadataDefinition, ApplicationMetadataUpdate, User};
 
 type OAuth2DiscordClient = oauth2::Client<
     oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,

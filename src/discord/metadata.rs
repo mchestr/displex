@@ -5,15 +5,15 @@ use super::{client::DiscordClient, models::ApplicationMetadataDefinition};
 pub async fn register_metadata(client: &DiscordClient) -> Result<()> {
     let metadata_spec = vec![
         ApplicationMetadataDefinition {
-            key: "join_date".into(),
-            name: "Joined".into(),
-            description: "Date user joined".into(),
-            type_: 6,
+            key: "total_watches".into(),
+            name: "Watch Count".into(),
+            description: "Total watch count".into(),
+            type_: 2,
         },
         ApplicationMetadataDefinition {
             key: "hours_watched".into(),
             name: "Hours Watched".into(),
-            description: "Hours watching".into(),
+            description: "Total hours spent watching".into(),
             type_: 2,
         },
     ];

@@ -26,13 +26,13 @@ diesel::table! {
         access_token -> Varchar,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
-        plex_user_id -> Varchar,
+        plex_user_id -> Int8,
     }
 }
 
 diesel::table! {
     plex_users (id) {
-        id -> Varchar,
+        id -> Int8,
         username -> Varchar,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,

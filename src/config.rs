@@ -8,12 +8,16 @@ pub struct Config {
     pub session_secret_key: String,
     pub database_url: String,
     pub application_name: String,
+    pub accept_invalid_certs: bool,
 
     pub plex_server_id: String,
 
     pub discord_client_id: String,
     pub discord_client_secret: String,
     pub discord_bot_token: String,
+
+    pub tautulli_url: String,
+    pub tautulli_api_key: String,
 }
 
 impl Config {
@@ -31,6 +35,13 @@ impl Config {
             session_secret_key: env::var("DISPLEX_SESSION_SECRET_KEY")
                 .expect("DISPLEX_SESSION_SECRET_KEY not set."),
             database_url: env::var("DISPLEX_DATABASE_URL").expect("DISPLEX_DATABASE_URL not set."),
+            accept_invalid_certs: match env::var("DISPLEX_ACCEPT_INVALID_CERTS") {
+                Ok(value) => match value.to_lowercase().as_str() {
+                    "true" | "t" | "yes" | "y" => true,
+                    _ => false
+                },
+                Err(_) => false
+            },
 
             plex_server_id: env::var("DISPLEX_PLEX_SERVER_ID")
                 .expect("DISPLEX_PLEX_SERVER_ID not set"),
@@ -41,6 +52,10 @@ impl Config {
                 .expect("DISPLEX_DISCORD_CLIENT_SECRET not set"),
             discord_bot_token: env::var("DISPLEX_DISCORD_BOT_TOKEN")
                 .expect("DISPLEX_DISCORD_BOT_TOKEN not set"),
+
+            tautulli_api_key: env::var("DISPLEX_TAUTULLI_API_KEY")
+                .expect("DISPLEX_TAUTULLI_API_KEY not set"),
+            tautulli_url: env::var("DISPLEX_TAUTULLI_URL").expect("DISPLEX_TAUTULLI_URL not set"),
         }
     }
 }
