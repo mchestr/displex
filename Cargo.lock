@@ -584,7 +584,7 @@ dependencies = [
 
 [[package]]
 name = "displex"
-version = "0.5.0"
+version = "0.5.2"
 dependencies = [
  "actix-session",
  "actix-web",
