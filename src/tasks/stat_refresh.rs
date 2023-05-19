@@ -44,7 +44,7 @@ async fn main(config: RefreshArgs) {
         &config.tautulli.tautulli_api_key.sensitive_string(),
     );
 
-    let pool = initialize_db_pool(&config.database.database_url);
+    let pool = initialize_db_pool(&config.database.database_url.sensitive_string());
     let mut conn = pool.get().unwrap();
 
     let users = list_users(&mut conn).unwrap();

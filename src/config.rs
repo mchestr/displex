@@ -132,7 +132,7 @@ pub struct DatabaseArgs {
         required = true,
         hide_env_values = true
     )]
-    pub database_url: String,
+    pub database_url: Secret,
 }
 
 #[derive(Args, Clone, Display)]

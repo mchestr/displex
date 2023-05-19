@@ -70,7 +70,7 @@ pub fn new(
         &config.tautulli.tautulli_api_key.sensitive_string(),
     );
 
-    let pool = initialize_db_pool(&config.database.database_url);
+    let pool = initialize_db_pool(&config.database.database_url.sensitive_string());
     let mut conn = pool.get().unwrap();
     run_migrations(&mut conn).unwrap();
     // register_metadata(&discord_client).await.unwrap();
