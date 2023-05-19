@@ -20,7 +20,10 @@ enum Commands {
 }
 
 fn main() -> std::io::Result<()> {
-    dotenvy::dotenv().unwrap();
+    match dotenvy::dotenv() {
+        Ok(_) => log::info!("loaded .env file."),
+        Err(_) => log::info!("no .env file found.")
+    };
     let args = Cli::parse();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     log::info!("{}", args);
