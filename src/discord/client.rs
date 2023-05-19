@@ -55,7 +55,7 @@ impl DiscordClient {
             .set_redirect_uri(RedirectUrl::new(redirect_url).expect("Invalid redirect URL"));
         DiscordClient {
             client: client.clone(),
-            oauth_client: oauth_client,
+            oauth_client,
             client_id: String::from(client_id),
             bot_token: String::from(bot_token),
             server_id: String::from(server_id),
@@ -98,7 +98,7 @@ impl DiscordClient {
                 "https://discord.com/api/v10/users/@me/applications/{}/role-connection",
                 self.client_id
             ))
-            .bearer_auth(&token)
+            .bearer_auth(token)
             .json(&metadata)
             .send()
             .await?;
@@ -110,7 +110,7 @@ impl DiscordClient {
             "{}",
             self.client
                 .get("https://discord.com/api/v10/users/@me")
-                .bearer_auth(&token)
+                .bearer_auth(token)
                 .send()
                 .await?
                 .text()
@@ -119,7 +119,7 @@ impl DiscordClient {
         Ok(self
             .client
             .get("https://discord.com/api/v10/users/@me")
-            .bearer_auth(&token)
+            .bearer_auth(token)
             .send()
             .await?
             .json()

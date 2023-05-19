@@ -1,7 +1,7 @@
 use anyhow::Result;
 use reqwest::Url;
 
-use super::models::{ApiResponse, UserWatchStat, QueryDays};
+use super::models::{ApiResponse, QueryDays, UserWatchStat};
 
 #[derive(Clone, Debug)]
 pub struct TautulliClient {

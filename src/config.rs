@@ -1,36 +1,29 @@
 use std::env;
 
+use actix_web::web;
 use derive_more::Display;
+
+use crate::handlers;
 
 #[derive(Clone, Display)]
 #[display(
     fmt = "Config(
-        host: {}, 
-        hostname: {}, 
-        port: {}, 
+        host: {host}, 
+        hostname: {hostname}, 
+        port: {port}, 
         session_secret_key: *****,
         database_url: *****,
-        application_name: {}, 
-        accept_invalid_certs: {}, 
-        plex_server_id: {}, 
-        discord_client_id: {}, 
+        application_name: {application_name}, 
+        accept_invalid_certs: {accept_invalid_certs}, 
+        plex_server_id: {plex_server_id}, 
+        discord_client_id: {discord_client_id}, 
         discord_client_secret: *****,
-        discord_server_id: {},
-        discord_channel_id: {},
+        discord_server_id: {discord_server_id},
+        discord_channel_id: {discord_channel_id},
         discord_bot_token: *****,
-        tautulli_url: {},
+        tautulli_url: {tautulli_url},
         tautulli_api_key: *****,
-    )",
-    host,
-    hostname,
-    port,
-    application_name,
-    accept_invalid_certs,
-    plex_server_id,
-    discord_client_id,
-    discord_server_id,
-    discord_channel_id,
-    tautulli_url
+    )"
 )]
 pub struct Config {
     pub host: String,
@@ -63,17 +56,14 @@ impl Config {
             host: env::var("DISPLEX_HOST").unwrap_or("127.0.0.1".into()),
             port: env::var("DISPLEX_PORT").map_or(8080, |v| {
                 v.parse::<u16>()
-                    .map_err(|e| format!("DISPLEX_PORT '{}' is invalid", e))
+                    .map_err(|e| format!("DISPLEX_PORT '{e}' is invalid"))
                     .unwrap()
             }),
             session_secret_key: env::var("DISPLEX_SESSION_SECRET_KEY")
                 .expect("DISPLEX_SESSION_SECRET_KEY not set."),
             database_url: env::var("DISPLEX_DATABASE_URL").expect("DISPLEX_DATABASE_URL not set."),
             accept_invalid_certs: match env::var("DISPLEX_ACCEPT_INVALID_CERTS") {
-                Ok(value) => match value.to_lowercase().as_str() {
-                    "true" | "t" | "yes" | "y" => true,
-                    _ => false,
-                },
+                Ok(value) => matches!(value.to_lowercase().as_str(), "true" | "t" | "yes" | "y"),
                 Err(_) => false,
             },
 
@@ -96,4 +86,18 @@ impl Config {
             tautulli_url: env::var("DISPLEX_TAUTULLI_URL").expect("DISPLEX_TAUTULLI_URL not set"),
         }
     }
+}
+
+pub fn config_app(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        web::scope("/discord")
+            .service(
+                web::resource("/linked-role").route(web::get().to(handlers::discord::linked_role)),
+            )
+            .service(web::resource("/callback").route(web::get().to(handlers::discord::callback))),
+    )
+    .service(
+        web::scope("/plex")
+            .service(web::resource("/callback").route(web::get().to(handlers::plex::callback))),
+    );
 }

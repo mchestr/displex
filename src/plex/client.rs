@@ -36,7 +36,7 @@ impl PlexClient {
 
         Ok(self
             .client
-            .post(format!("{}{}", PLEX_TV_URL, PLEX_TV_PIN_PATH))
+            .post(format!("{PLEX_TV_URL}{PLEX_TV_PIN_PATH}"))
             .form(&form_params)
             .send()
             .await?
@@ -57,7 +57,7 @@ impl PlexClient {
         };
         let params = serde_qs::to_string(&qs)?;
 
-        let mut url = Url::parse(&format!("{}{}", PLEX_TV_APP_URL, PLEX_TV_AUTH_PATH))?;
+        let mut url = Url::parse(&format!("{PLEX_TV_APP_URL}{PLEX_TV_AUTH_PATH}"))?;
         url.set_fragment(Some(&format!("?{}", &params)));
 
         log::debug!("generate_auth_url: {}", url);
@@ -71,7 +71,7 @@ impl PlexClient {
             ("code", pin_code),
         ];
         let url = Url::parse_with_params(
-            &format!("{}{}/{}", PLEX_TV_URL, PLEX_TV_PIN_PATH, pin_id),
+            &format!("{PLEX_TV_URL}{PLEX_TV_PIN_PATH}/{pin_id}"),
             &params,
         )?;
 
@@ -88,7 +88,7 @@ impl PlexClient {
         ];
         Ok(self
             .client
-            .get(&format!("{}{}", PLEX_TV_URL, PLEX_TV_USER_PATH))
+            .get(&format!("{PLEX_TV_URL}{PLEX_TV_USER_PATH}"))
             .query(&user_params)
             .send()
             .await?
@@ -104,7 +104,7 @@ impl PlexClient {
         ];
         Ok(self
             .client
-            .get(&format!("{}{}", PLEX_TV_URL, PLEX_TV_RESOURCES_PATH))
+            .get(&format!("{PLEX_TV_URL}{PLEX_TV_RESOURCES_PATH}"))
             .query(&user_params)
             .send()
             .await?
