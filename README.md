@@ -39,6 +39,24 @@ DISPLEX_TAUTULLI_URL="https://tautulli.example.com"
 
 4. Associate the App to a Roles Links in the Discord server.
 
+### Environment Variables
+
+| Name                          | Description                                                                                             | Required | Default   |
+|-------------------------------|---------------------------------------------------------------------------------------------------------|----------|-----------|
+| DISPLEX_HOSTNAME              | Hostname of application. Used to generate the redirect URLs for OAuth2.                                 | yes      |           |
+| DISPLEX_APPLICATION_NAME      | Name of application. Will be displayed on Plex Sign-in mostly.                                          | yes      |           |
+| DISPLEX_HOST                  | Host to bind HTTP server.                                                                               | no       | 127.0.0.1 |
+| DISPLEX_PORT                  | Port to bind HTTP server                                                                                | no       | 8080      |
+| DISPLEX_SESSION_SECRET_KEY    | Session secret value for encryption. Mostly used in OAuth2 flow to store state between requests         | yes      |           |
+| DISPLEX_DATABASE_URL          | PostgresQL database url. For example postgres://displex:password@localhost/displex                      | yes      |           |
+| DISPLEX_ACCEPT_INVALID_CERTS  | Control whether reqwest will validate SSL certs. Useful for MITM proxy development.                     | no       | false     |
+| DISPLEX_PLEX_SERVER_ID        | Plex Server ID. When a user attempts to link the role, it will check if they have access to the server. | yes      |           |
+| DISPLEX_DISCORD_CLIENT_ID     | Discord Application Client ID.                                                                          | yes      |           |
+| DISPLEX_DISCORD_CLIENT_SECRET | Discord Application Client Secret.                                                                      | yes      |           |
+| DISPLEX_DISCORD_BOT_TOKEN     | Discord Application Bot Token. Only used at the moment to register the application metadata.            | yes      |           |
+| DISPLEX_TAUTULLI_API_KEY      | Tautulli API key.                                                                                       | yes      |           |
+| DISPLEX_TAUTULLI_URL          | URL to Tautulli server. For example https://localhost:8181                                              | yes      |           |
+
 ## Development
 
 Checkout [docker-compose.yaml](./docker-compose.yaml) for a sample of how you can easily setup a dev environment. [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/) (or similiar) can be used to easily put your development instance behind HTTPS with valid certificates which are needed for the OAuth2 flow with Discord.
