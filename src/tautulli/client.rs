@@ -1,7 +1,7 @@
 use anyhow::Result;
 use reqwest::Url;
 
-use super::models::{ApiResponse, UserWatchStat};
+use super::models::{ApiResponse, UserWatchStat, QueryDays};
 
 #[derive(Clone, Debug)]
 pub struct TautulliClient {
@@ -23,25 +23,25 @@ impl TautulliClient {
         &self,
         user_id: i64,
         grouping: Option<bool>,
-        query_days: Option<&str>,
+        query_days: Option<QueryDays>,
     ) -> Result<Vec<UserWatchStat>> {
         let user_id = user_id.to_string();
         let mut params = vec![
-            ("apikey", self.api_key.as_str()),
-            ("cmd", "get_user_watch_time_stats"),
-            ("user_id", &user_id),
+            ("apikey", self.api_key.clone()),
+            ("cmd", "get_user_watch_time_stats".into()),
+            ("user_id", user_id),
         ];
         if let Some(grouping) = grouping {
             params.push((
                 "grouping",
                 match grouping {
-                    true => "1",
-                    false => "0",
+                    true => "1".into(),
+                    false => "0".into(),
                 },
             ));
         }
         if let Some(query_days) = query_days {
-            params.push(("query_days", query_days));
+            params.push(("query_days", query_days.to_string()));
         }
 
         let url = Url::parse_with_params(&format!("{}/api/v2", self.url), &params)?;

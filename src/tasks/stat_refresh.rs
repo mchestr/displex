@@ -10,7 +10,7 @@ use displex::{
         client::DiscordClient,
         models::{ApplicationMetadata, ApplicationMetadataUpdate},
     },
-    tautulli::client::TautulliClient,
+    tautulli::{client::TautulliClient, models::QueryDays},
 };
 use dotenv::dotenv;
 use oauth2::TokenResponse;
@@ -93,7 +93,7 @@ async fn main() {
             discord_token = new_token;
         }
         let watch_stats = tautlli_client
-            .get_user_watch_time_stats(plex_user.id, Some(false), Some("0"))
+            .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
             .await
             .unwrap();
 

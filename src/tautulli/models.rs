@@ -1,4 +1,17 @@
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
+
+#[derive(Display)]
+pub enum QueryDays {
+    #[display(fmt = "1")]
+    Day,
+    #[display(fmt = "7")]
+    Week,
+    #[display(fmt = "30")]
+    Month,
+    #[display(fmt = "0")]
+    Total,
+}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct ApiResponse<T> {
