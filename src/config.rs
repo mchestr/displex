@@ -18,8 +18,7 @@ impl From<String> for Secret {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(
-    fmt = "ServerArgs(
+#[display(fmt = "ServerArgs(
     application_name: {application_name},
     hostname: {hostname},
     host: {host},
@@ -30,8 +29,7 @@ impl From<String> for Secret {
     plex: {plex},
     database: {database},
     tautulli: {tautulli},
-)"
-)]
+)")]
 pub struct ServerArgs {
     #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
     pub application_name: String,
@@ -65,21 +63,34 @@ pub struct ServerArgs {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(
-    fmt = "DiscordArgs(
+#[display(fmt = "DiscordArgs(
         discord_client_id: {discord_client_id},
         discord_client_secret: {discord_client_secret},
         discord_bot_token: {discord_bot_token},
         discord_server_id: {discord_server_id},
         discord_channel_id: {discord_channel_id},
-    )"
-)]
+    )")]
 pub struct DiscordArgs {
-    #[arg(long, env = "DISPLEX_DISCORD_CLIENT_ID", required = true)]
+    #[arg(
+        long,
+        env = "DISPLEX_DISCORD_CLIENT_ID",
+        required = true,
+        hide_env_values = true
+    )]
     pub discord_client_id: Secret,
-    #[arg(long, env = "DISPLEX_DISCORD_CLIENT_SECRET", required = true)]
+    #[arg(
+        long,
+        env = "DISPLEX_DISCORD_CLIENT_SECRET",
+        required = true,
+        hide_env_values = true
+    )]
     pub discord_client_secret: Secret,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_TOKEN", required = true)]
+    #[arg(
+        long,
+        env = "DISPLEX_DISCORD_BOT_TOKEN",
+        required = true,
+        hide_env_values = true
+    )]
     pub discord_bot_token: Secret,
     #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
     pub discord_server_id: String,
@@ -88,63 +99,68 @@ pub struct DiscordArgs {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(
-    fmt = "PlexArgs(
+#[display(fmt = "PlexArgs(
         plex_server_id: {plex_server_id},
-    )"
-)]
+    )")]
 pub struct PlexArgs {
     #[arg(long, env = "DISPLEX_PLEX_SERVER_ID", required = true)]
     pub plex_server_id: String,
 }
 
 #[derive(Args, Clone, Display)]
-#[display(
-    fmt = "DatabaseArgs(
+#[display(fmt = "DatabaseArgs(
         session_secret_key: {session_secret_key},
-    )"
-)]
+    )")]
 pub struct SessionArgs {
-    #[arg(long, env = "DISPLEX_SESSION_SECRET_KEY", required = true)]
+    #[arg(
+        long,
+        env = "DISPLEX_SESSION_SECRET_KEY",
+        required = true,
+        hide_env_values = true
+    )]
     pub session_secret_key: Secret,
 }
 
 #[derive(Args, Clone, Display)]
-#[display(
-    fmt = "DatabaseArgs(
+#[display(fmt = "DatabaseArgs(
         database_url: {database_url},
-    )"
-)]
+    )")]
 pub struct DatabaseArgs {
-    #[arg(long, env = "DISPLEX_DATABASE_URL", required = true)]
+    #[arg(
+        long,
+        env = "DISPLEX_DATABASE_URL",
+        required = true,
+        hide_env_values = true
+    )]
     pub database_url: String,
 }
 
 #[derive(Args, Clone, Display)]
-#[display(
-    fmt = "TautulliArgs(
+#[display(fmt = "TautulliArgs(
         tautulli_url: {tautulli_url},
         tautulli_api_key: {tautulli_api_key},
-    )"
-)]
+    )")]
 pub struct TautulliArgs {
     #[arg(long, env = "DISPLEX_TAUTULLI_URL", required = true)]
     pub tautulli_url: String,
-    #[arg(long, env = "DISPLEX_TAUTULLI_API_KEY", required = true)]
+    #[arg(
+        long,
+        env = "DISPLEX_TAUTULLI_API_KEY",
+        required = true,
+        hide_env_values = true
+    )]
     pub tautulli_api_key: Secret,
 }
 
 #[derive(Args, Clone, Display)]
-#[display(
-    fmt = "RefreshArgs(
+#[display(fmt = "RefreshArgs(
     application_name: {application_name},
     hostname: {hostname},
     accept_invalid_certs: {accept_invalid_certs},
     discord: {discord},
     tautulli: {tautulli},
     database: {database},
-)"
-)]
+)")]
 pub struct RefreshArgs {
     #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
     pub application_name: String,
