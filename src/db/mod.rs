@@ -1,17 +1,30 @@
-use diesel::{r2d2, PgConnection};
+use std::error::Error;
 
-pub mod discord_tokens;
-pub mod plex_tokens;
+use diesel::{pg::Pg, r2d2, PgConnection};
+
+pub mod discord;
+pub mod plex;
 
 pub type DbPool = r2d2::Pool<r2d2::ConnectionManager<PgConnection>>;
 
-/// Initialize database connection pool based on `DATABASE_URL` environment variable.
-///
-/// See more: <https://docs.rs/diesel/latest/diesel/r2d2/index.html>.
-pub fn initialize_db_pool() -> DbPool {
-    let conn_spec = std::env::var("DISPLEX_DATABASE_URL").expect("DATABASE_URL should be set");
-    let manager = r2d2::ConnectionManager::<PgConnection>::new(conn_spec);
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+pub fn initialize_db_pool(database_url: &str) -> DbPool {
+    let manager = r2d2::ConnectionManager::<PgConnection>::new(database_url);
     r2d2::Pool::builder()
         .build(manager)
         .expect("unable to connect to postgres")
+}
+
+pub fn run_migrations(
+    connection: &mut impl MigrationHarness<Pg>,
+) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    // This will run the necessary migrations.
+    //
+    // See the documentation for `MigrationHarness` for
+    // all available methods.
+    connection.run_pending_migrations(MIGRATIONS)?;
+
+    Ok(())
 }

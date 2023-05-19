@@ -2,11 +2,13 @@ use anyhow::Result;
 use oauth2::{
     basic::{BasicClient, BasicTokenType},
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
-    RedirectUrl, Scope, TokenUrl,
+    HttpRequest, HttpResponse, RedirectUrl, Scope, TokenUrl,
 };
 use reqwest::Url;
 
-use super::models::{DiscordMetaDataPush, User};
+use super::models::{
+    ApplicationMetadataDefinition, ApplicationMetadataUpdate, User,
+};
 
 type OAuth2DiscordClient = oauth2::Client<
     oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
@@ -22,19 +24,21 @@ type OAuth2DiscordClient = oauth2::Client<
 
 pub type DiscordOAuth2Token = oauth2::StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
 
+#[derive(Clone, Debug)]
 pub struct DiscordClient {
     oauth_client: OAuth2DiscordClient,
     client: reqwest::Client,
-
     client_id: String,
+    bot_token: String,
 }
 
 impl DiscordClient {
     pub fn new(
-        client: reqwest::Client,
+        client: &reqwest::Client,
         client_id: &str,
         client_secret: &str,
         redirect_url: &str,
+        bot_token: &str,
     ) -> DiscordClient {
         let cid = ClientId::new(String::from(client_id));
         let client_secret = ClientSecret::new(String::from(client_secret));
@@ -48,9 +52,10 @@ impl DiscordClient {
         let oauth_client = BasicClient::new(cid, Some(client_secret), auth_url, Some(token_url))
             .set_redirect_uri(RedirectUrl::new(redirect_url).expect("Invalid redirect URL"));
         DiscordClient {
-            client: client,
+            client: client.clone(),
             oauth_client: oauth_client,
             client_id: String::from(client_id),
+            bot_token: String::from(bot_token),
         }
     }
 
@@ -66,21 +71,23 @@ impl DiscordClient {
         let resp = self
             .oauth_client
             .exchange_code(AuthorizationCode::new(String::from(code)))
-            .request_async(oauth2::reqwest::async_http_client)
+            .request_async(|request| self.send(request))
             .await?;
         Ok(resp)
     }
 
-    pub async fn link_application(&self, token: &str) -> Result<()> {
+    pub async fn link_application(
+        &self,
+        token: &str,
+        metadata: ApplicationMetadataUpdate,
+    ) -> Result<()> {
         self.client
             .put(format!(
                 "https://discord.com/api/v10/users/@me/applications/{}/role-connection",
                 self.client_id
             ))
             .bearer_auth(&token)
-            .json(&DiscordMetaDataPush {
-                platform_name: String::from("mikeflix"),
-            })
+            .json(&metadata)
             .send()
             .await?;
         Ok(())
@@ -105,5 +112,62 @@ impl DiscordClient {
             .await?
             .json()
             .await?)
+    }
+
+    pub async fn application_metadata(&self) -> Result<Vec<ApplicationMetadataDefinition>> {
+        Ok(self
+            .client
+            .get(format!(
+                "https://discord.com/api/v10/applications/{}/role-connections/metadata",
+                self.client_id
+            ))
+            .header("Authorization", format!("Bot {}", self.bot_token))
+            .send()
+            .await?
+            .json()
+            .await?)
+    }
+
+    pub async fn register_application_metadata(
+        &self,
+        metadata: Vec<ApplicationMetadataDefinition>,
+    ) -> Result<Vec<ApplicationMetadataDefinition>> {
+        Ok(self
+            .client
+            .put(format!(
+                "https://discord.com/api/v10/applications/{}/role-connections/metadata",
+                self.client_id
+            ))
+            .header("Authorization", format!("Bot {}", self.bot_token))
+            .json(&metadata)
+            .send()
+            .await?
+            .json()
+            .await?)
+    }
+
+    async fn send(
+        &self,
+        request: HttpRequest,
+    ) -> std::result::Result<HttpResponse, reqwest::Error> {
+        let mut request_builder = self
+            .client
+            .request(request.method, request.url.as_str())
+            .body(request.body);
+        for (name, value) in &request.headers {
+            request_builder = request_builder.header(name.as_str(), value.as_bytes());
+        }
+        let request = request_builder.build()?;
+
+        let response = self.client.execute(request).await?;
+
+        let status_code = response.status();
+        let headers = response.headers().to_owned();
+        let chunks = response.bytes().await?;
+        Ok(HttpResponse {
+            status_code,
+            headers,
+            body: chunks.to_vec(),
+        })
     }
 }

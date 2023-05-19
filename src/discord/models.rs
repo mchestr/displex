@@ -1,8 +1,15 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct DiscordMetaDataPush {
+pub struct ApplicationMetadataUpdate {
     pub platform_name: String,
+    pub metadata: ApplicationMetadata,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ApplicationMetadata {
+    pub join_date: String,
+    pub hours_watched: i64,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -21,4 +28,13 @@ pub struct User {
     pub mfa_enabled: bool,
     pub verified: Option<bool>,
     pub premium_type: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ApplicationMetadataDefinition {
+    pub key: String,
+    pub name: String,
+    pub description: String,
+    #[serde(rename = "type")]
+    pub type_: u8,
 }

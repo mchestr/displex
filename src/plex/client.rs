@@ -11,7 +11,7 @@ use super::{
     },
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PlexClient {
     client: reqwest::Client,
     redirect_url: String,
@@ -20,12 +20,12 @@ pub struct PlexClient {
 
 impl PlexClient {
     pub fn new_with_client(
-        client: reqwest::Client,
+        client: &reqwest::Client,
         client_id: &str,
         redirect_url: &str,
     ) -> PlexClient {
         PlexClient {
-            client: client,
+            client: client.clone(),
             redirect_url: String::from(redirect_url),
             client_id: String::from(client_id),
         }

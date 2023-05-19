@@ -59,14 +59,14 @@
       "matchUpdateTypes": ["minor", "patch"]
     },
     {
-      "description": "Alpine Group",
-      "groupName": "Alpine",
-      "matchPackagePatterns": ["alpine", "rust"],
+      "description": "Dockerfile Group",
+      "groupName": "Dockerfile",
+      "matchPackagePatterns": ["alpine", "rust", "lukemathwalker/cargo-chef"],
       "matchDatasources": ["dockerfile"],
       "group": {
         "commitMessageTopic": "{{{groupName}}} group"
       },
-      "separateMinorPatch": true
+      "separateMinorPatch": false
     },
   ]
 }

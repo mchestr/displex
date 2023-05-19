@@ -1,25 +1,22 @@
-# Start with a rust alpine image
-FROM rust:1-alpine3.17
-
-# This is important, see https://github.com/rust-lang/docker-rust/issues/85
-ENV RUSTFLAGS="-C target-feature=-crt-static"
-# if needed, add additional dependencies here
-RUN apk add --no-cache musl-dev pkgconfig openssl libressl-dev
-
-# set the workdir and copy the source into it
+FROM lukemathwalker/cargo-chef:0.1.59-rust-1.69.0 AS chef
 WORKDIR /app
-COPY Cargo.toml /app/Cargo.toml
-COPY src /app/src
 
-# do a release build
-RUN cargo build --release
-RUN strip target/release/displex
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-# use a plain alpine image, the alpine version needs to match the builder
-FROM alpine:3.17
+FROM chef AS builder 
+COPY --from=planner /app/recipe.json recipe.json
+RUN apt-get update && apt-get install -y libpq-dev
+# Build dependencies - this is the caching Docker layer!
+RUN cargo chef cook --release --recipe-path recipe.json
+# Build application
+COPY . .
+RUN cargo build --release --bin displex
 
-RUN apk add --no-cache libgcc libressl-dev
-# copy the binary into the final image
-COPY --from=0 /app/target/release/displex .
-# set the binary as entrypoint
-ENTRYPOINT ["/displex"]
+# We do not need the Rust toolchain to run the binary!
+FROM debian:buster-slim AS runtime
+RUN apt-get update && apt-get install -y libpq-dev
+WORKDIR /app
+COPY --from=builder /app/target/release/displex /usr/local/bin
+ENTRYPOINT ["/usr/local/bin/displex"]
