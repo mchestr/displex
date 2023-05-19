@@ -6,8 +6,8 @@ use derive_more::Display;
 #[display(
     fmt = "Config(
         host: {}, 
-        port: {}, 
         hostname: {}, 
+        port: {}, 
         session_secret_key: *****,
         database_url: *****,
         application_name: {}, 
