@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreatePinResponse {
@@ -62,43 +61,9 @@ pub struct AuthDevice {
 #[serde(rename_all = "camelCase")]
 pub struct User {
     pub id: i64,
-    pub uuid: String,
     pub username: String,
-    pub title: String,
     pub email: String,
-    pub friendly_name: String,
-    pub locale: String,
-    pub confirmed: bool,
-    pub joined_at: u32,
-    pub email_only_auth: bool,
-    pub has_password: bool,
-    pub protected: bool,
-    pub thumb: String,
     pub auth_token: String,
-    pub mailing_list_status: String,
-    pub mailing_list_active: bool,
-    pub scrobble_types: String,
-    pub country: String,
-    pub subscription: Subscription,
-    pub subscription_description: String,
-    pub restricted: bool,
-    pub anonymous: Option<Value>,
-    pub home: bool,
-    pub guest: bool,
-    pub home_size: u32,
-    pub home_admin: bool,
-    pub max_home_size: u32,
-    pub remember_expires_at: u32,
-    pub profile: Profile,
-    pub entitlements: Vec<String>,
-    pub roles: Vec<String>,
-    pub services: Vec<Service>,
-    pub ads_consent: Option<Value>,
-    pub ads_consent_set_at: Option<Value>,
-    pub ads_consent_reminder_at: Option<Value>,
-    pub experimental_features: bool,
-    pub two_factor_enabled: bool,
-    pub backup_codes_created: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
