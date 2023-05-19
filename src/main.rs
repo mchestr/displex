@@ -23,12 +23,11 @@ use displex::{
     plex::client::PlexClient,
     tautulli::{client::TautulliClient},
 };
-use dotenv::dotenv;
 use reqwest::header::HeaderValue;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    dotenv().ok();
+    dotenvy::dotenv().unwrap();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     let config = config::Config::init();
