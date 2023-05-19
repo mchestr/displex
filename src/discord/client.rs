@@ -2,7 +2,7 @@ use anyhow::Result;
 use oauth2::{
     basic::{BasicClient, BasicTokenType},
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
-    HttpRequest, HttpResponse, RedirectUrl, Scope, TokenUrl,
+    HttpRequest, HttpResponse, RedirectUrl, RefreshToken, Scope, TokenUrl,
 };
 use reqwest::Url;
 
@@ -78,6 +78,14 @@ impl DiscordClient {
             .request_async(|request| self.send(request))
             .await?;
         Ok(resp)
+    }
+
+    pub async fn refresh_token(&self, refresh_token: &str) -> Result<DiscordOAuth2Token> {
+        Ok(self
+            .oauth_client
+            .exchange_refresh_token(&RefreshToken::new(String::from(refresh_token)))
+            .request_async(|request| self.send(request))
+            .await?)
     }
 
     pub async fn link_application(

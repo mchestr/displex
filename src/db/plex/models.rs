@@ -1,9 +1,12 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::db::discord::DiscordUser;
+
 use crate::schema::{plex_tokens, plex_users};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
+#[derive(Associations, Debug, Clone, Serialize, Deserialize, Queryable, Selectable)]
+#[diesel(belongs_to(PlexUser))]
 #[diesel(table_name = plex_tokens)]
 pub struct PlexToken {
     pub access_token: String,
@@ -19,7 +22,10 @@ pub struct NewPlexToken {
     pub plex_user_id: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
+#[derive(
+    Associations, Debug, Clone, Serialize, Deserialize, Identifiable, Queryable, Selectable,
+)]
+#[diesel(belongs_to(DiscordUser))]
 #[diesel(table_name = plex_users)]
 pub struct PlexUser {
     pub id: i64,

@@ -12,30 +12,27 @@ use actix_web::{
 
 use config::Config;
 use db::{initialize_db_pool, plex::NewPlexUser};
-use discord::models::{ApplicationMetadata, ApplicationMetadataUpdate};
-use dotenv::dotenv;
-use oauth2::TokenResponse;
-use reqwest::header::HeaderValue;
-use serde::Deserialize;
-use tautulli::client::TautulliClient;
-
-use crate::{
+use displex::{
+    config,
     db::{
+        self,
         discord::{NewDiscordToken, NewDiscordUser},
         plex::NewPlexToken,
         run_migrations, DbPool,
     },
-    discord::{client::DiscordClient, metadata::register_metadata},
+    discord::{
+        client::DiscordClient,
+        metadata::register_metadata,
+        models::{ApplicationMetadata, ApplicationMetadataUpdate},
+    },
     plex::client::PlexClient,
+    session,
+    tautulli::client::TautulliClient,
 };
-
-mod config;
-mod db;
-mod discord;
-mod plex;
-mod schema;
-mod session;
-mod tautulli;
+use dotenv::dotenv;
+use oauth2::TokenResponse;
+use reqwest::header::HeaderValue;
+use serde::Deserialize;
 
 // 1. Initial route that will ask user to authorize bot for their discord account
 #[get("/discord/linked-role")]
@@ -278,13 +275,13 @@ async fn main() -> std::io::Result<()> {
         &config.discord_channel_id,
     );
 
-    let plex_client = plex::client::PlexClient::new(
+    let plex_client = PlexClient::new(
         &reqwest_client,
         &config.application_name,
         &format!("https://{}/plex/callback", &config.hostname),
     );
 
-    let tautlli_client = tautulli::client::TautulliClient::new(
+    let tautlli_client = TautulliClient::new(
         &reqwest_client.clone(),
         &config.tautulli_url,
         &config.tautulli_api_key,

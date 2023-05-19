@@ -41,6 +41,8 @@ diesel::table! {
 }
 
 diesel::joinable!(plex_tokens -> plex_users (plex_user_id));
+diesel::joinable!(plex_users -> discord_users (discord_user_id));
+diesel::joinable!(discord_tokens -> discord_users (discord_user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     discord_tokens,

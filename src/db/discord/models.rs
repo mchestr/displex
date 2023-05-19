@@ -14,7 +14,8 @@ pub struct NewDiscordToken {
     pub discord_user_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
+#[derive(Associations, Debug, Clone, Serialize, Deserialize, Queryable, Selectable)]
+#[diesel(belongs_to(DiscordUser))]
 #[diesel(table_name = discord_tokens)]
 pub struct DiscordToken {
     pub access_token: String,
@@ -26,7 +27,7 @@ pub struct DiscordToken {
     pub discord_user_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Clone, Serialize, Deserialize, Identifiable, Queryable, Selectable)]
 #[diesel(table_name = discord_users)]
 pub struct DiscordUser {
     pub id: String,

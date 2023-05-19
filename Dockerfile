@@ -19,4 +19,5 @@ FROM debian:buster-slim AS runtime
 RUN apt-get update && apt-get install -y libpq-dev ca-certificates
 WORKDIR /app
 COPY --from=builder /app/target/release/displex /usr/local/bin
+COPY --from=builder /app/target/release/stat-refresh /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/displex"]

@@ -32,3 +32,13 @@ pub fn insert_user(conn: &mut PgConnection, new: NewDiscordUser) -> Result<Disco
 
     Ok(token)
 }
+
+pub fn get_latest_token(conn: &mut PgConnection, user_id: &str) -> Result<DiscordToken> {
+    use crate::schema::discord_tokens::dsl::*;
+
+    Ok(discord_tokens
+        .filter(discord_user_id.eq(user_id))
+        .order(expires_at.desc())
+        .limit(1)
+        .first::<DiscordToken>(conn)?)
+}
