@@ -13,12 +13,10 @@ RUN cargo chef cook --release --recipe-path recipe.json
 # Build application
 COPY . .
 RUN cargo build --release --bin displex
-RUN cargo build --release --bin stat-refresh
 
 # We do not need the Rust toolchain to run the binary!
 FROM debian:buster-slim AS runtime
 RUN apt-get update && apt-get install -y libpq-dev ca-certificates
 WORKDIR /app
 COPY --from=builder /app/target/release/displex /usr/local/bin
-COPY --from=builder /app/target/release/stat-refresh /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/displex"]
+ENTRYPOINT ["/usr/local/bin/displex", "server"]

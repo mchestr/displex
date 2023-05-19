@@ -12,9 +12,9 @@ use actix_web::{
 };
 
 use crate::{
-    config::{ServerArgs},
+    config::ServerArgs,
     db::{self, run_migrations},
-    discord::{client::DiscordClient},
+    discord::client::DiscordClient,
     handlers,
     plex::client::PlexClient,
     tautulli::client::TautulliClient,
@@ -50,10 +50,10 @@ pub fn new(
 
     let discord_client = DiscordClient::new(
         &reqwest_client,
-        &config.discord.discord_client_id,
-        &config.discord.discord_client_secret,
+        &config.discord.discord_client_id.sensitive_string(),
+        &config.discord.discord_client_secret.sensitive_string(),
         &format!("https://{}/discord/callback", &config.hostname),
-        &config.discord.discord_bot_token,
+        &config.discord.discord_bot_token.sensitive_string(),
         &config.discord.discord_server_id,
         &config.discord.discord_channel_id,
     );
@@ -65,9 +65,9 @@ pub fn new(
     );
 
     let tautlli_client = TautulliClient::new(
-        &reqwest_client.clone(),
+        &reqwest_client,
         &config.tautulli.tautulli_url,
-        &config.tautulli.tautulli_api_key,
+        &config.tautulli.tautulli_api_key.sensitive_string(),
     );
 
     let pool = initialize_db_pool(&config.database.database_url);
@@ -79,17 +79,23 @@ pub fn new(
 
     App::new()
         .configure(handlers::configure)
-        .app_data(web::Data::new(plex_client.clone()))
-        .app_data(web::Data::new(discord_client.clone()))
+        .app_data(web::Data::new(plex_client))
+        .app_data(web::Data::new(discord_client))
         .app_data(web::Data::new(config.clone()))
-        .app_data(web::Data::new(pool.clone()))
-        .app_data(web::Data::new(tautlli_client.clone()))
+        .app_data(web::Data::new(pool))
+        .app_data(web::Data::new(tautlli_client))
         .wrap(Logger::default())
         .wrap(
             // create cookie based session middleware
             SessionMiddleware::builder(
                 CookieSessionStore::default(),
-                Key::from(config.session.session_secret_key.as_bytes()),
+                Key::from(
+                    config
+                        .session
+                        .session_secret_key
+                        .sensitive_string()
+                        .as_bytes(),
+                ),
             )
             .cookie_secure(true)
             .build(),

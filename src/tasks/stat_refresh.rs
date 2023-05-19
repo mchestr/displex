@@ -30,10 +30,10 @@ async fn main(config: RefreshArgs) {
 
     let discord_client = DiscordClient::new(
         &reqwest_client,
-        &config.discord.discord_client_id,
-        &config.discord.discord_client_secret,
+        &config.discord.discord_client_id.sensitive_string(),
+        &config.discord.discord_client_secret.sensitive_string(),
         &format!("https://{}/discord/callback", &config.hostname),
-        &config.discord.discord_bot_token,
+        &config.discord.discord_bot_token.sensitive_string(),
         &config.discord.discord_server_id,
         &config.discord.discord_channel_id,
     );
@@ -41,7 +41,7 @@ async fn main(config: RefreshArgs) {
     let tautlli_client = TautulliClient::new(
         &reqwest_client.clone(),
         &config.tautulli.tautulli_url,
-        &config.tautulli.tautulli_api_key,
+        &config.tautulli.tautulli_api_key.sensitive_string(),
     );
 
     let pool = initialize_db_pool(&config.database.database_url);
@@ -112,7 +112,5 @@ pub fn run(config: RefreshArgs) {
         .enable_all()
         .build()
         .unwrap()
-        .block_on(async {
-            main(config.clone()).await
-        });
+        .block_on(async { main(config.clone()).await });
 }
