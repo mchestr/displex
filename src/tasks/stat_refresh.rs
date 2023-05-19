@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use displex::{
-    config::Config,
+use crate::{
+    config::RefreshArgs,
     db::{
         discord::{get_latest_token, insert_token, NewDiscordToken},
         initialize_db_pool, list_users,
@@ -12,18 +12,10 @@ use displex::{
     },
     tautulli::{client::TautulliClient, models::QueryDays},
 };
-use dotenv::dotenv;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
 
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
-    let config = Config::init();
-    log::info!("Loaded config: {}", config);
-
+async fn main(config: RefreshArgs) {
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.append("Accept", HeaderValue::from_static("application/json"));
 
@@ -38,21 +30,21 @@ async fn main() {
 
     let discord_client = DiscordClient::new(
         &reqwest_client,
-        &config.discord_client_id,
-        &config.discord_client_secret,
+        &config.discord.discord_client_id,
+        &config.discord.discord_client_secret,
         &format!("https://{}/discord/callback", &config.hostname),
-        &config.discord_bot_token,
-        &config.discord_server_id,
-        &config.discord_channel_id,
+        &config.discord.discord_bot_token,
+        &config.discord.discord_server_id,
+        &config.discord.discord_channel_id,
     );
 
     let tautlli_client = TautulliClient::new(
         &reqwest_client.clone(),
-        &config.tautulli_url,
-        &config.tautulli_api_key,
+        &config.tautulli.tautulli_url,
+        &config.tautulli.tautulli_api_key,
     );
 
-    let pool = initialize_db_pool(&config.database_url);
+    let pool = initialize_db_pool(&config.database.database_url);
     let mut conn = pool.get().unwrap();
 
     let users = list_users(&mut conn).unwrap();
@@ -113,4 +105,14 @@ async fn main() {
             .await
             .unwrap();
     }
+}
+
+pub fn run(config: RefreshArgs) {
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            main(config.clone()).await
+        });
 }

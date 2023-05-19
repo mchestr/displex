@@ -9,6 +9,7 @@ actix-web = "4"
 actix-session = { version = "0.7.2", features = ["cookie-session"] }
 anyhow = "1.0.71"
 chrono = { version = "0.4.24", features = ["serde"] }
+clap = { version = "4.3.0", features = ["derive", "env"] }
 derive_more = "0.99.17"
 dotenvy = "0.15.7"
 diesel = { version = "2", features = ["postgres", "r2d2", "chrono"], default-features = false }
@@ -25,7 +26,3 @@ tokio = { version = "1", features = ["full"] }
 [[bin]]
 name = "displex"
 path = "src/main.rs"
-
-[[bin]]
-name = "stat-refresh"
-path = "src/tasks/stat_refresh.rs"

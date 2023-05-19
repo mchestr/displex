@@ -10,7 +10,7 @@ use oauth2::TokenResponse;
 use serde::Deserialize;
 
 use crate::{
-    config::Config,
+    config::ServerArgs,
     db::{
         self,
         discord::{NewDiscordToken, NewDiscordUser},
@@ -33,7 +33,7 @@ pub struct PlexRedirectQueryParams {
 }
 
 pub async fn callback(
-    config: web::Data<Config>,
+    config: web::Data<ServerArgs>,
     discord_client: web::Data<DiscordClient>,
     plex_client: web::Data<PlexClient>,
     pool: web::Data<DbPool>,
@@ -61,7 +61,7 @@ pub async fn callback(
             ErrorInternalServerError("something bad happened")
         })?
         .iter()
-        .find(|&d| d.client_identifier == config.plex_server_id)
+        .find(|&d| d.client_identifier == config.plex.plex_server_id)
     {
         Some(_) => {
             let token = discord_client.token(&discord_token).await.map_err(|err| {

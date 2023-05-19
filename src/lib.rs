@@ -4,5 +4,7 @@ pub mod discord;
 pub mod handlers;
 pub mod plex;
 pub mod schema;
+pub mod server;
 pub mod session;
+pub mod tasks;
 pub mod tautulli;

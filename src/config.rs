@@ -1,103 +1,95 @@
-use std::env;
+use clap::Args;
 
-use actix_web::web;
-use derive_more::Display;
+#[derive(Debug, Args, Clone)]
+pub struct ServerArgs {
+    #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
+    pub application_name: String,
 
-use crate::handlers;
-
-#[derive(Clone, Display)]
-#[display(
-    fmt = "Config(
-        host: {host}, 
-        hostname: {hostname}, 
-        port: {port}, 
-        session_secret_key: *****,
-        database_url: *****,
-        application_name: {application_name}, 
-        accept_invalid_certs: {accept_invalid_certs}, 
-        plex_server_id: {plex_server_id}, 
-        discord_client_id: {discord_client_id}, 
-        discord_client_secret: *****,
-        discord_server_id: {discord_server_id},
-        discord_channel_id: {discord_channel_id},
-        discord_bot_token: *****,
-        tautulli_url: {tautulli_url},
-        tautulli_api_key: *****,
-    )"
-)]
-pub struct Config {
-    pub host: String,
-    pub port: u16,
+    #[arg(long, env = "DISPLEX_HOSTNAME", required = true)]
     pub hostname: String,
 
-    pub session_secret_key: String,
-    pub database_url: String,
-    pub application_name: String,
+    #[arg(long, env = "DISPLEX_HOST", default_value = "127.0.0.1")]
+    pub host: String,
+
+    #[arg(long, env = "DISPLEX_PORT", default_value = "8080")]
+    pub port: u16,
+
+    #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
     pub accept_invalid_certs: bool,
 
-    pub plex_server_id: String,
+    #[command(flatten)]
+    pub session: SessionArgs,
 
+    #[command(flatten)]
+    pub discord: DiscordArgs,
+
+    #[clap(flatten)]
+    pub plex: PlexArgs,
+
+    #[clap(flatten)]
+    pub database: DatabaseArgs,
+
+    #[clap(flatten)]
+    pub tautulli: TautulliArgs,
+}
+
+#[derive(Debug, Args, Clone)]
+pub struct DiscordArgs {
+    #[arg(long, env = "DISPLEX_DISCORD_CLIENT_ID", required = true)]
     pub discord_client_id: String,
+    #[arg(long, env = "DISPLEX_DISCORD_CLIENT_SECRET", required = true)]
     pub discord_client_secret: String,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_TOKEN", required = true)]
     pub discord_bot_token: String,
+    #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
     pub discord_server_id: String,
+    #[arg(long, env = "DISPLEX_DISCORD_CHANNEL_ID", required = true)]
     pub discord_channel_id: String,
+}
 
+#[derive(Debug, Args, Clone)]
+pub struct PlexArgs {
+    #[arg(long, env = "DISPLEX_PLEX_SERVER_ID", required = true)]
+    pub plex_server_id: String,
+}
+
+#[derive(Debug, Args, Clone)]
+pub struct SessionArgs {
+    #[arg(long, env = "DISPLEX_SESSION_SECRET_KEY", required = true)]
+    pub session_secret_key: String,
+}
+
+#[derive(Debug, Args, Clone)]
+pub struct DatabaseArgs {
+    #[arg(long, env = "DISPLEX_DATABASE_URL", required = true)]
+    pub database_url: String,
+}
+
+#[derive(Debug, Args, Clone)]
+pub struct TautulliArgs {
+    #[arg(long, env = "DISPLEX_TAUTULLI_URL", required = true)]
     pub tautulli_url: String,
+    #[arg(long, env = "DISPLEX_TAUTULLI_API_KEY", required = true)]
     pub tautulli_api_key: String,
 }
 
-impl Config {
-    pub fn init() -> Config {
-        Config {
-            hostname: env::var("DISPLEX_HOSTNAME").expect("DISPLEX_HOSTNAME not set"),
-            application_name: env::var("DISPLEX_APPLICATION_NAME")
-                .expect("DISPLEX_APPLICATION_NAME not set"),
-            host: env::var("DISPLEX_HOST").unwrap_or("127.0.0.1".into()),
-            port: env::var("DISPLEX_PORT").map_or(8080, |v| {
-                v.parse::<u16>()
-                    .map_err(|e| format!("DISPLEX_PORT '{e}' is invalid"))
-                    .unwrap()
-            }),
-            session_secret_key: env::var("DISPLEX_SESSION_SECRET_KEY")
-                .expect("DISPLEX_SESSION_SECRET_KEY not set."),
-            database_url: env::var("DISPLEX_DATABASE_URL").expect("DISPLEX_DATABASE_URL not set."),
-            accept_invalid_certs: match env::var("DISPLEX_ACCEPT_INVALID_CERTS") {
-                Ok(value) => matches!(value.to_lowercase().as_str(), "true" | "t" | "yes" | "y"),
-                Err(_) => false,
-            },
+#[derive(Debug, Args, Clone)]
+pub struct RefreshArgs {
+    #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
+    pub application_name: String,
 
-            plex_server_id: env::var("DISPLEX_PLEX_SERVER_ID")
-                .expect("DISPLEX_PLEX_SERVER_ID not set"),
+    #[arg(long, env = "DISPLEX_HOSTNAME", required = true)]
+    pub hostname: String,
 
-            discord_client_id: env::var("DISPLEX_DISCORD_CLIENT_ID")
-                .expect("DISPLEX_DISCORD_CLIENT_ID not set"),
-            discord_client_secret: env::var("DISPLEX_DISCORD_CLIENT_SECRET")
-                .expect("DISPLEX_DISCORD_CLIENT_SECRET not set"),
-            discord_bot_token: env::var("DISPLEX_DISCORD_BOT_TOKEN")
-                .expect("DISPLEX_DISCORD_BOT_TOKEN not set"),
-            discord_server_id: env::var("DISPLEX_DISCORD_SERVER_ID")
-                .expect("DISPLEX_DISCORD_SERVER_ID not set"),
-            discord_channel_id: env::var("DISPLEX_DISCORD_CHANNEL_ID")
-                .expect("DISPLEX_DISCORD_CHANNEL_ID not set"),
+    #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
+    pub accept_invalid_certs: bool,
 
-            tautulli_api_key: env::var("DISPLEX_TAUTULLI_API_KEY")
-                .expect("DISPLEX_TAUTULLI_API_KEY not set"),
-            tautulli_url: env::var("DISPLEX_TAUTULLI_URL").expect("DISPLEX_TAUTULLI_URL not set"),
-        }
-    }
-}
+    #[command(flatten)]
+    pub discord: DiscordArgs,
 
-pub fn config_app(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("/discord")
-            .service(
-                web::resource("/linked-role").route(web::get().to(handlers::discord::linked_role)),
-            )
-            .service(web::resource("/callback").route(web::get().to(handlers::discord::callback))),
-    )
-    .service(
-        web::scope("/plex")
-            .service(web::resource("/callback").route(web::get().to(handlers::plex::callback))),
-    );
+    #[clap(flatten)]
+    pub tautulli: TautulliArgs,
+
+    #[clap(flatten)]
+    pub database: DatabaseArgs,
 }
