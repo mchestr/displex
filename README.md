@@ -45,10 +45,13 @@ Checkout [docker-compose.yaml](./docker-compose.yaml) for a sample of how you ca
 
 # For Development if on MacOS you have to run cloudflared via CLI since docker host networking doesn't work.
 1. Setup Cloudflare tunnel
-2. Setup diesel cli
+1. Setup Discord Application
+1. Setup Tautulli
+1. Setup diesel_cli
 # Can just launch mitm/postgres as its easier to `cargo run`
-3. `docker-compose up mitm postgres -d`
-4. `diesel migrations run`
-5. `cargo run`
+1. `docker-compose up mitm postgres -d`
+1. `mv .example.env .env` and fix values.
+1. `diesel migrations run`
+1. `cargo run`
 
 By default `HTTPS_PROXY` will make `reqwest` route all traffic through the MITM proxy running at `http://localhost:8081`, which is useful for development.
