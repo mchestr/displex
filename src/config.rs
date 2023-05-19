@@ -15,6 +15,8 @@ use derive_more::Display;
         plex_server_id: {}, 
         discord_client_id: {}, 
         discord_client_secret: *****,
+        discord_server_id: {},
+        discord_channel_id: {},
         discord_bot_token: *****,
         tautulli_url: {},
         tautulli_api_key: *****,
@@ -26,6 +28,8 @@ use derive_more::Display;
     accept_invalid_certs,
     plex_server_id,
     discord_client_id,
+    discord_server_id,
+    discord_channel_id,
     tautulli_url
 )]
 pub struct Config {
@@ -43,6 +47,8 @@ pub struct Config {
     pub discord_client_id: String,
     pub discord_client_secret: String,
     pub discord_bot_token: String,
+    pub discord_server_id: String,
+    pub discord_channel_id: String,
 
     pub tautulli_url: String,
     pub tautulli_api_key: String,
@@ -80,6 +86,10 @@ impl Config {
                 .expect("DISPLEX_DISCORD_CLIENT_SECRET not set"),
             discord_bot_token: env::var("DISPLEX_DISCORD_BOT_TOKEN")
                 .expect("DISPLEX_DISCORD_BOT_TOKEN not set"),
+            discord_server_id: env::var("DISPLEX_DISCORD_SERVER_ID")
+                .expect("DISPLEX_DISCORD_SERVER_ID not set"),
+            discord_channel_id: env::var("DISPLEX_DISCORD_CHANNEL_ID")
+                .expect("DISPLEX_DISCORD_CHANNEL_ID not set"),
 
             tautulli_api_key: env::var("DISPLEX_TAUTULLI_API_KEY")
                 .expect("DISPLEX_TAUTULLI_API_KEY not set"),

@@ -7,7 +7,7 @@ use actix_web::{
     get,
     middleware::Logger,
     web::{self, Redirect},
-    App, HttpResponse, HttpServer, Responder, Result,
+    App, HttpServer, Responder, Result,
 };
 
 use config::Config;
@@ -240,8 +240,7 @@ async fn plex_callback(
                     log::error!("discord_client.link_application: {}", err);
                     ErrorInternalServerError("something bad happened")
                 })?;
-            Ok(HttpResponse::Ok()
-                .body("Successfully linked! You can go back to Discord now and close this tab."))
+            Ok(Redirect::to(discord_client.generate_auth_success_url()))
         }
         None => Err(ErrorUnauthorized("unauthorized user")),
     }
@@ -275,6 +274,8 @@ async fn main() -> std::io::Result<()> {
         &config.discord_client_secret,
         &format!("https://{}/discord/callback", &config.hostname),
         &config.discord_bot_token,
+        &config.discord_server_id,
+        &config.discord_channel_id,
     );
 
     let plex_client = plex::client::PlexClient::new(

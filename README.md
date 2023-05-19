@@ -29,6 +29,8 @@ DISPLEX_PLEX_SERVER_ID="plex-server-id"
 DISPLEX_DISCORD_CLIENT_ID="clientid"
 DISPLEX_DISCORD_CLIENT_SECRET="clientsecret"
 DISPLEX_DISCORD_BOT_TOKEN="bottoken"
+DISPLEX_DISCORD_SERVER_ID="serverid"
+DISPLEX_DISCORD_CHANNEL_ID="channelid"
 
 DISPLEX_TAUTULLI_API_KEY="apikey"
 DISPLEX_TAUTULLI_URL="https://tautulli.example.com"
@@ -54,6 +56,8 @@ DISPLEX_TAUTULLI_URL="https://tautulli.example.com"
 | DISPLEX_DISCORD_CLIENT_ID     | Discord Application Client ID.                                                                          | yes      |           |
 | DISPLEX_DISCORD_CLIENT_SECRET | Discord Application Client Secret.                                                                      | yes      |           |
 | DISPLEX_DISCORD_BOT_TOKEN     | Discord Application Bot Token. Only used at the moment to register the application metadata.            | yes      |           |
+| DISPLEX_DISCORD_SERVER_ID     | Discord Server ID, used for the redirect back to Discord after authorization flow.                      | yes      |           |
+| DISPLEX_DISCORD_CHANNEL_ID    | Discord Channel ID, used for the redirect back to Discord after authorization flow.                     | yes      |           |
 | DISPLEX_TAUTULLI_API_KEY      | Tautulli API key.                                                                                       | yes      |           |
 | DISPLEX_TAUTULLI_URL          | URL to Tautulli server. For example https://localhost:8181                                              | yes      |           |
 
