@@ -21,7 +21,7 @@ pub async fn register_metadata(client: &DiscordClient) -> Result<()> {
         },
         ApplicationMetadataDefinition {
             key: "is_subscriber".into(),
-            name: "Is Subscribed?".into(),
+            name: "Sub".into(),
             description: "Subscribed".into(),
             type_: 7,
         },
