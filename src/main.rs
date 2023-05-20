@@ -26,7 +26,7 @@ fn main() -> std::io::Result<()> {
     };
     let args = Cli::parse();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    log::info!("{}", args);
+    log::info!("DisplexConfig({})", args);
 
     match args.command {
         Commands::Server(args) => server::run(args),

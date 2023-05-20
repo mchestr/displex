@@ -18,7 +18,7 @@ impl From<String> for Secret {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(fmt = "ServerArgs(
+#[display(fmt = "{{
     application_name: {application_name},
     hostname: {hostname},
     host: {host},
@@ -29,7 +29,7 @@ impl From<String> for Secret {
     plex: {plex},
     database: {database},
     tautulli: {tautulli},
-)")]
+}}")]
 pub struct ServerArgs {
     #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
     pub application_name: String,
@@ -63,13 +63,13 @@ pub struct ServerArgs {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(fmt = "DiscordArgs(
+#[display(fmt = "{{
         discord_client_id: {discord_client_id},
         discord_client_secret: {discord_client_secret},
         discord_bot_token: {discord_bot_token},
         discord_server_id: {discord_server_id},
         discord_channel_id: {discord_channel_id},
-    )")]
+    }}")]
 pub struct DiscordArgs {
     #[arg(
         long,
@@ -99,18 +99,18 @@ pub struct DiscordArgs {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(fmt = "PlexArgs(
+#[display(fmt = "{{
         plex_server_id: {plex_server_id},
-    )")]
+    }}")]
 pub struct PlexArgs {
     #[arg(long, env = "DISPLEX_PLEX_SERVER_ID", required = true)]
     pub plex_server_id: String,
 }
 
 #[derive(Args, Clone, Display)]
-#[display(fmt = "DatabaseArgs(
+#[display(fmt = "{{
         session_secret_key: {session_secret_key},
-    )")]
+    }}")]
 pub struct SessionArgs {
     #[arg(
         long,
@@ -122,9 +122,9 @@ pub struct SessionArgs {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(fmt = "DatabaseArgs(
+#[display(fmt = "{{
         database_url: {database_url},
-    )")]
+    }}")]
 pub struct DatabaseArgs {
     #[arg(
         long,
@@ -136,10 +136,10 @@ pub struct DatabaseArgs {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(fmt = "TautulliArgs(
+#[display(fmt = "{{
         tautulli_url: {tautulli_url},
         tautulli_api_key: {tautulli_api_key},
-    )")]
+    }}")]
 pub struct TautulliArgs {
     #[arg(long, env = "DISPLEX_TAUTULLI_URL", required = true)]
     pub tautulli_url: String,
@@ -153,14 +153,14 @@ pub struct TautulliArgs {
 }
 
 #[derive(Args, Clone, Display)]
-#[display(fmt = "RefreshArgs(
-    application_name: {application_name},
-    hostname: {hostname},
-    accept_invalid_certs: {accept_invalid_certs},
-    discord: {discord},
-    tautulli: {tautulli},
-    database: {database},
-)")]
+#[display(fmt = "{{
+        application_name: {application_name},
+        hostname: {hostname},
+        accept_invalid_certs: {accept_invalid_certs},
+        discord: {discord},
+        tautulli: {tautulli},
+        database: {database},
+    }}")]
 pub struct RefreshArgs {
     #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
     pub application_name: String,

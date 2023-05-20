@@ -22,11 +22,6 @@ use crate::{
 use db::initialize_db_pool;
 use reqwest::header::HeaderValue;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    Ok(())
-}
-
 pub async fn new(
     config: ServerArgs,
 ) -> App<
