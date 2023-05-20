@@ -98,6 +98,7 @@ pub async fn callback(
         ErrorInternalServerError("something bad happened")
     })?;
 
+    log::info!("{} is a subscriber: {}", discord_user.username, is_subscriber);
     web::block(move || {
         // note that obtaining a connection from the pool is also potentially blocking
         let mut conn = pool.get()?;
