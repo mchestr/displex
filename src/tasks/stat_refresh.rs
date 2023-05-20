@@ -56,8 +56,6 @@ async fn main(config: RefreshArgs) {
         &config.discord.discord_client_secret.sensitive_string(),
         &format!("https://{}/discord/callback", &config.hostname),
         &config.discord.discord_bot_token.sensitive_string(),
-        &config.discord.discord_server_id,
-        &config.discord.discord_channel_id,
     );
 
     let tautlli_client = TautulliClient::new(
@@ -118,6 +116,7 @@ async fn refresh_user_stats(
                     hours_watched: latest_stat.total_time / 3600,
                     is_subscriber: true,
                 },
+                ..Default::default()
             },
         )
         .await?;

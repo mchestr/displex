@@ -68,7 +68,6 @@ pub struct ServerArgs {
         discord_client_secret: {discord_client_secret},
         discord_bot_token: {discord_bot_token},
         discord_server_id: {discord_server_id},
-        discord_channel_id: {discord_channel_id},
     }}")]
 pub struct DiscordArgs {
     #[arg(
@@ -85,8 +84,6 @@ pub struct DiscordArgs {
         hide_env_values = true
     )]
     pub discord_client_secret: Secret,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_NAME", default_value = "DisPlexBot")]
-    pub discord_bot_name: String,
     #[arg(
         long,
         env = "DISPLEX_DISCORD_BOT_TOKEN",
@@ -96,8 +93,6 @@ pub struct DiscordArgs {
     pub discord_bot_token: Secret,
     #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
     pub discord_server_id: String,
-    #[arg(long, env = "DISPLEX_DISCORD_CHANNEL_ID", required = true)]
-    pub discord_channel_id: String,
 }
 
 #[derive(Args, Clone, Display)]

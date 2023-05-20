@@ -57,7 +57,6 @@ DISPLEX_TAUTULLI_URL="https://tautulli.example.com"
 | DISPLEX_DISCORD_CLIENT_SECRET | Discord Application Client Secret.                                                                      | yes      |           |
 | DISPLEX_DISCORD_BOT_TOKEN     | Discord Application Bot Token. Only used at the moment to register the application metadata.            | yes      |           |
 | DISPLEX_DISCORD_SERVER_ID     | Discord Server ID, used for the redirect back to Discord after authorization flow.                      | yes      |           |
-| DISPLEX_DISCORD_CHANNEL_ID    | Discord Channel ID, used for the redirect back to Discord after authorization flow.                     | yes      |           |
 | DISPLEX_TAUTULLI_API_KEY      | Tautulli API key.                                                                                       | yes      |           |
 | DISPLEX_TAUTULLI_URL          | URL to Tautulli server. For example https://localhost:8181                                              | yes      |           |
 

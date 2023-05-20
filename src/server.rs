@@ -49,8 +49,6 @@ async fn run_app(config: ServerArgs) -> std::io::Result<()> {
         &config.discord.discord_client_secret.sensitive_string(),
         &format!("https://{}/discord/callback", &config.hostname),
         &config.discord.discord_bot_token.sensitive_string(),
-        &config.discord.discord_server_id,
-        &config.discord.discord_channel_id,
     );
 
     let plex_client = PlexClient::new(

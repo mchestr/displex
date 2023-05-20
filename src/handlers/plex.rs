@@ -3,19 +3,15 @@ use std::time::Duration;
 use actix_session::Session;
 use actix_web::{
     error::{
-        self,
         ErrorInternalServerError,
     },
-    http::header::ContentType,
     web::{
-        self,
+        self, Redirect,
     },
-    HttpResponse,
     Responder,
     Result,
 };
 use oauth2::TokenResponse;
-use sailfish::TemplateOnce;
 use serde::Deserialize;
 
 use crate::{
@@ -44,10 +40,6 @@ use crate::{
     tautulli::{
         client::TautulliClient,
         models::QueryDays,
-    },
-    templates::{
-        ErrorPage,
-        SuccessPage,
     },
 };
 
@@ -185,6 +177,7 @@ pub async fn callback(
             is_subscriber: is_subscriber,
             ..Default::default()
         },
+        ..Default::default()
     };
     if is_subscriber {
         let watch_stats = tautulli_client
@@ -208,16 +201,5 @@ pub async fn callback(
             log::error!("discord_client.link_application: {}", err);
             ErrorInternalServerError("something bad happened")
         })?;
-
-    let page = match is_subscriber {
-        true => SuccessPage::new()
-            .render_once()
-            .map_err(error::ErrorInternalServerError)?,
-        false => ErrorPage::new(&config.application_name)
-            .render_once()
-            .map_err(error::ErrorInternalServerError)?,
-    };
-    Ok(HttpResponse::Ok()
-        .content_type(ContentType::html())
-        .body(page))
+    Ok(Redirect::to(format!("discord://-/channels/{}/@home", config.discord.discord_server_id)))
 }

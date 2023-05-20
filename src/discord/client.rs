@@ -45,8 +45,6 @@ pub struct DiscordClient {
     client: reqwest::Client,
     client_id: String,
     bot_token: String,
-    server_id: String,
-    channel_id: String,
 }
 
 impl DiscordClient {
@@ -56,8 +54,6 @@ impl DiscordClient {
         client_secret: &str,
         redirect_url: &str,
         bot_token: &str,
-        server_id: &str,
-        channel_id: &str,
     ) -> DiscordClient {
         let cid = ClientId::new(String::from(client_id));
         let client_secret = ClientSecret::new(String::from(client_secret));
@@ -75,8 +71,6 @@ impl DiscordClient {
             oauth_client,
             client_id: String::from(client_id),
             bot_token: String::from(bot_token),
-            server_id: String::from(server_id),
-            channel_id: String::from(channel_id),
         }
     }
 
@@ -173,16 +167,6 @@ impl DiscordClient {
             .await?
             .json()
             .await?)
-    }
-
-    pub fn generate_auth_success_url(&self, is_subscriber: bool) -> String {
-        match is_subscriber {
-            true => format!(
-                "discord://discordapp.com/channels/{}/{}",
-                self.server_id, self.channel_id
-            ),
-            false => "discord://-/".into(),
-        }
     }
 
     async fn send(

@@ -3,9 +3,10 @@ use serde::{
     Serialize,
 };
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ApplicationMetadataUpdate {
     pub platform_name: String,
+    pub platform_username: Option<String>,
     pub metadata: ApplicationMetadata,
 }
 
