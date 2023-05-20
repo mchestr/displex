@@ -179,6 +179,7 @@ pub async fn callback(
                 })?;
 
             let mut data = ApplicationMetadata {
+                is_subscriber: true,
                 ..Default::default()
             };
             if let Some(latest) = watch_stats.get(0) {
