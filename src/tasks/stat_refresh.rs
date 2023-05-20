@@ -1,4 +1,10 @@
-use std::time::Duration;
+use std::{
+    io::{
+        Error,
+        ErrorKind,
+    },
+    time::Duration,
+};
 
 use crate::{
     config::RefreshArgs,
@@ -6,10 +12,13 @@ use crate::{
         discord::{
             get_latest_token,
             insert_token,
+            DiscordToken,
+            DiscordUser,
             NewDiscordToken,
         },
         initialize_db_pool,
         list_users,
+        plex::PlexUser,
     },
     discord::{
         client::DiscordClient,
@@ -23,6 +32,8 @@ use crate::{
         models::QueryDays,
     },
 };
+use anyhow::Result;
+use diesel::PgConnection;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
 
@@ -59,63 +70,97 @@ async fn main(config: RefreshArgs) {
     let mut conn = pool.get().unwrap();
 
     let users = list_users(&mut conn).unwrap();
-    let expire_window = chrono::Utc::now() + chrono::Duration::days(-1);
-
     log::info!("Refreshing {} users", users.len());
     for (discord_user, plex_user) in users {
-        log::info!("refreshing stats for user {}", &discord_user.username);
-        let mut discord_token = get_latest_token(&mut conn, &discord_user.id).unwrap();
-
-        if discord_token.expires_at < expire_window {
-            log::info!("refreshing token for user {}", &discord_user.username);
-            let new_token = discord_client
-                .refresh_token(&discord_token.refresh_token)
-                .await
-                .unwrap();
-            let new_token = insert_token(
-                &mut conn,
-                NewDiscordToken {
-                    access_token: new_token.access_token().secret().into(),
-                    refresh_token: new_token
-                        .refresh_token()
-                        .expect("expecting refresh token")
-                        .secret()
-                        .into(),
-                    scopes: discord_token.scopes,
-                    expires_at: chrono::Utc::now()
-                        + chrono::Duration::seconds(
-                            new_token
-                                .expires_in()
-                                .unwrap_or(Duration::from_secs(1800))
-                                .as_secs() as i64,
-                        ),
-                    discord_user_id: discord_user.id,
-                },
-            )
-            .unwrap();
-            discord_token = new_token;
+        match refresh_user_stats(
+            &config,
+            &mut conn,
+            &discord_client,
+            &tautlli_client,
+            &discord_user,
+            &plex_user,
+        )
+        .await
+        {
+            Ok(_) => log::info!("Successfully refreshed {}", &discord_user.username),
+            Err(err) => log::error!("Failed to refresh user {}: {}", &discord_user.username, err),
         }
-        let watch_stats = tautlli_client
-            .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
-            .await
-            .unwrap();
+    }
+}
 
-        let latest_stat = watch_stats.get(0).unwrap();
+async fn refresh_user_stats(
+    config: &RefreshArgs,
+    conn: &mut PgConnection,
+    discord_client: &DiscordClient,
+    tautulli_client: &TautulliClient,
+    discord_user: &DiscordUser,
+    plex_user: &PlexUser,
+) -> Result<()> {
+    log::info!("refreshing stats for user {}", &discord_user.username);
+    let discord_token = get_latest_token(conn, &discord_user.id)?;
+    let discord_token =
+        maybe_refresh_token(conn, discord_client, &discord_user, discord_token).await?;
 
-        discord_client
-            .link_application(
-                &discord_token.access_token,
-                ApplicationMetadataUpdate {
-                    platform_name: String::from(&config.application_name),
-                    metadata: ApplicationMetadata {
-                        total_watches: latest_stat.total_plays,
-                        hours_watched: latest_stat.total_time / 3600,
-                        is_subscriber: true,
-                    },
+    let watch_stats = tautulli_client
+        .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
+        .await?;
+
+    let latest_stat = watch_stats
+        .get(0)
+        .ok_or_else(|| Error::new(ErrorKind::Other, "Failed to get latest stats"))?;
+    discord_client
+        .link_application(
+            &discord_token.access_token,
+            ApplicationMetadataUpdate {
+                platform_name: String::from(&config.application_name),
+                metadata: ApplicationMetadata {
+                    total_watches: latest_stat.total_plays,
+                    hours_watched: latest_stat.total_time / 3600,
+                    is_subscriber: true,
                 },
-            )
-            .await
-            .unwrap();
+            },
+        )
+        .await?;
+    Ok(())
+}
+
+async fn maybe_refresh_token(
+    conn: &mut PgConnection,
+    discord_client: &DiscordClient,
+    discord_user: &DiscordUser,
+    discord_token: DiscordToken,
+) -> Result<DiscordToken> {
+    if discord_token.expires_at < chrono::Utc::now() + chrono::Duration::days(-1) {
+        log::info!("refreshing token for user {}", &discord_user.username);
+        let new_token = discord_client
+            .refresh_token(&discord_token.refresh_token)
+            .await?;
+        let new_token = insert_token(
+            conn,
+            NewDiscordToken {
+                access_token: new_token.access_token().secret().into(),
+                refresh_token: new_token
+                    .refresh_token()
+                    .ok_or_else(|| Error::new(ErrorKind::Other, "No refresh token returned!"))?
+                    .secret()
+                    .into(),
+                scopes: discord_token.scopes,
+                expires_at: chrono::Utc::now()
+                    + chrono::Duration::seconds(
+                        new_token
+                            .expires_in()
+                            .unwrap_or_else(|| {
+                                log::error!("failed to figure out when token will expire, defaulting to 3 days for {}",  discord_user.username);
+                                Duration::from_secs(3600 * 24 * 3)
+                            })
+                            .as_secs() as i64,
+                    ),
+                discord_user_id: discord_user.id.clone(),
+            },
+        )?;
+        Ok(new_token)
+    } else {
+        Ok(discord_token)
     }
 }
 
