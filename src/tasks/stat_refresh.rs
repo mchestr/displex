@@ -58,7 +58,7 @@ async fn main(config: RefreshArgs) {
         if discord_token.expires_at < expire_window {
             log::info!("refreshing token for user {:?}", &discord_user.id);
             let new_token = discord_client
-                .refresh_token(&discord_token.access_token)
+                .refresh_token(&discord_token.refresh_token)
                 .await
                 .unwrap();
             let new_token = insert_token(
