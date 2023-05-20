@@ -8,3 +8,4 @@ pub mod server;
 pub mod session;
 pub mod tasks;
 pub mod tautulli;
+pub mod templates;

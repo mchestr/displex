@@ -25,13 +25,13 @@ impl From<String> for Secret {
     port: {port},
     accept_valid_certs: {accept_invalid_certs},
     session: {session},
+    database: {database},
     discord: {discord},
     plex: {plex},
-    database: {database},
     tautulli: {tautulli},
 }}")]
 pub struct ServerArgs {
-    #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
+    #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "DisPlex")]
     pub application_name: String,
 
     #[arg(long, env = "DISPLEX_HOSTNAME", required = true)]
@@ -49,14 +49,14 @@ pub struct ServerArgs {
     #[command(flatten)]
     pub session: SessionArgs,
 
+    #[clap(flatten)]
+    pub database: DatabaseArgs,
+
     #[command(flatten)]
     pub discord: DiscordArgs,
 
     #[clap(flatten)]
     pub plex: PlexArgs,
-
-    #[clap(flatten)]
-    pub database: DatabaseArgs,
 
     #[clap(flatten)]
     pub tautulli: TautulliArgs,
@@ -85,6 +85,8 @@ pub struct DiscordArgs {
         hide_env_values = true
     )]
     pub discord_client_secret: Secret,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_NAME", default_value = "DisPlexBot")]
+    pub discord_bot_name: String,
     #[arg(
         long,
         env = "DISPLEX_DISCORD_BOT_TOKEN",

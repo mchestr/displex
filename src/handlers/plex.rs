@@ -2,15 +2,20 @@ use std::time::Duration;
 
 use actix_session::Session;
 use actix_web::{
-    error::ErrorInternalServerError,
+    error::{
+        self,
+        ErrorInternalServerError,
+    },
+    http::header::ContentType,
     web::{
         self,
-        Redirect,
     },
+    HttpResponse,
     Responder,
     Result,
 };
 use oauth2::TokenResponse;
+use sailfish::TemplateOnce;
 use serde::Deserialize;
 
 use crate::{
@@ -39,6 +44,10 @@ use crate::{
     tautulli::{
         client::TautulliClient,
         models::QueryDays,
+    },
+    templates::{
+        ErrorPage,
+        SuccessPage,
     },
 };
 
@@ -199,7 +208,16 @@ pub async fn callback(
             log::error!("discord_client.link_application: {}", err);
             ErrorInternalServerError("something bad happened")
         })?;
-    Ok(Redirect::to(
-        discord_client.generate_auth_success_url(is_subscriber),
-    ))
+
+    let page = match is_subscriber {
+        true => SuccessPage::new()
+            .render_once()
+            .map_err(error::ErrorInternalServerError)?,
+        false => ErrorPage::new(&config.application_name)
+            .render_once()
+            .map_err(error::ErrorInternalServerError)?,
+    };
+    Ok(HttpResponse::Ok()
+        .content_type(ContentType::html())
+        .body(page))
 }
