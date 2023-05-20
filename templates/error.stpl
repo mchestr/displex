@@ -53,7 +53,7 @@
       >
         <i class="checkmark">✗</i>
       </div>
-      <h1>Success</h1>
+      <h1>Failure</h1>
       <p>
         Link unsuccessful! You do not have access to <%= server_name %>.<br />
         redirecting in <span id="seconds">3</span> seconds...or go
