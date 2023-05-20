@@ -39,6 +39,7 @@ pub struct PlexUser {
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
     pub discord_user_id: String,
+    pub is_subscriber: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
@@ -47,4 +48,5 @@ pub struct NewPlexUser {
     pub id: i64,
     pub username: String,
     pub discord_user_id: String,
+    pub is_subscriber: bool,
 }

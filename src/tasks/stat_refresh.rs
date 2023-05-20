@@ -110,6 +110,7 @@ async fn main(config: RefreshArgs) {
                     metadata: ApplicationMetadata {
                         total_watches: latest_stat.total_plays,
                         hours_watched: latest_stat.total_time / 3600,
+                        is_subscriber: true,
                     },
                 },
             )

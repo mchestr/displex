@@ -22,7 +22,10 @@ use diesel_migrations::{
 
 use crate::schema::{
     discord_users,
-    plex_users,
+    plex_users::{
+        self,
+        is_subscriber,
+    },
 };
 
 use self::{
@@ -54,6 +57,7 @@ pub fn list_users(conn: &mut PgConnection) -> Result<Vec<(DiscordUser, PlexUser)
     let users = discord_users::table
         .inner_join(plex_users::table)
         .select((DiscordUser::as_select(), PlexUser::as_select()))
+        .filter(is_subscriber)
         .load::<(DiscordUser, PlexUser)>(conn)?;
 
     Ok(users)

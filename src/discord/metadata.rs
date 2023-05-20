@@ -19,6 +19,12 @@ pub async fn register_metadata(client: &DiscordClient) -> Result<()> {
             description: "Total hours spent watching".into(),
             type_: 2,
         },
+        ApplicationMetadataDefinition {
+            key: "is_subscriber".into(),
+            name: "Is Subscribed?".into(),
+            description: "Subscribed".into(),
+            type_: 7,
+        },
     ];
 
     let current_metadata: Vec<ApplicationMetadataDefinition> =

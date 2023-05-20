@@ -13,6 +13,7 @@ pub struct ApplicationMetadataUpdate {
 pub struct ApplicationMetadata {
     pub total_watches: i32,
     pub hours_watched: i32,
+    pub is_subscriber: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

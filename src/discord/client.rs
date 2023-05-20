@@ -175,11 +175,14 @@ impl DiscordClient {
             .await?)
     }
 
-    pub fn generate_auth_success_url(&self) -> String {
-        format!(
-            "discord://discordapp.com/channels/{}/{}",
-            self.server_id, self.channel_id
-        )
+    pub fn generate_auth_success_url(&self, is_subscriber: bool) -> String {
+        match is_subscriber {
+            true => format!(
+                "discord://discordapp.com/channels/{}/{}",
+                self.server_id, self.channel_id
+            ),
+            false => "discord://-/".into(),
+        }
     }
 
     async fn send(

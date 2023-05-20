@@ -37,6 +37,7 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         discord_user_id -> Varchar,
+        is_subscriber -> Bool,
     }
 }
 
