@@ -37,10 +37,10 @@ pub struct ServerArgs {
     #[arg(long, env = "DISPLEX_HOSTNAME", required = true)]
     pub hostname: String,
 
-    #[arg(long, env = "DISPLEX_HOST", default_value = "127.0.0.1")]
+    #[arg(long, env = "DISPLEX_SERVER_HOST", default_value = "127.0.0.1")]
     pub host: String,
 
-    #[arg(long, env = "DISPLEX_PORT", default_value = "8080")]
+    #[arg(long, env = "DISPLEX_SERVER_PORT", default_value = "8080")]
     pub port: u16,
 
     #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
