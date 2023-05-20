@@ -1,28 +1,30 @@
 use anyhow::Result;
 
+use crate::config::ServerArgs;
+
 use super::{
     client::DiscordClient,
     models::ApplicationMetadataDefinition,
 };
 
-pub async fn register_metadata(client: &DiscordClient) -> Result<()> {
+pub async fn register_metadata(config: &ServerArgs, client: &DiscordClient) -> Result<()> {
     let metadata_spec = vec![
         ApplicationMetadataDefinition {
             key: "total_watches".into(),
-            name: "Watch Count".into(),
+            name: "Stream Count".into(),
             description: "Total watch count".into(),
             type_: 2,
         },
         ApplicationMetadataDefinition {
             key: "hours_watched".into(),
-            name: "Hours Watched".into(),
-            description: "Total hours spent watching".into(),
+            name: "Hours Streamed".into(),
+            description: "Hours spent streaming".into(),
             type_: 2,
         },
         ApplicationMetadataDefinition {
             key: "is_subscriber".into(),
-            name: "Sub".into(),
-            description: "Subscribed".into(),
+            name: "✅".into(),
+            description: format!("Access to {}", config.application_name),
             type_: 7,
         },
     ];
