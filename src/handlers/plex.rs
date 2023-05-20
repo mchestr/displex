@@ -2,9 +2,7 @@ use std::time::Duration;
 
 use actix_session::Session;
 use actix_web::{
-    error::{
-        ErrorInternalServerError,
-    },
+    error::ErrorInternalServerError,
     web::{
         self,
         Redirect,
@@ -98,7 +96,11 @@ pub async fn callback(
         ErrorInternalServerError("something bad happened")
     })?;
 
-    log::info!("{} is a subscriber: {}", discord_user.username, is_subscriber);
+    log::info!(
+        "{} is a subscriber: {}",
+        discord_user.username,
+        is_subscriber
+    );
     web::block(move || {
         // note that obtaining a connection from the pool is also potentially blocking
         let mut conn = pool.get()?;
@@ -168,40 +170,30 @@ pub async fn callback(
         ErrorInternalServerError("something bad happened")
     })?;
 
-    let metadata = match is_subscriber {
-        true => {
-            let watch_stats = tautulli_client
-                .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
-                .await
-                .map_err(|err| {
-                    log::error!("tautulli_client.get_user_watch_time_stats: {}", err);
-                    ErrorInternalServerError("something bad happened")
-                })?;
-
-            let mut data = ApplicationMetadata {
-                is_subscriber: true,
-                ..Default::default()
-            };
-            if let Some(latest) = watch_stats.get(0) {
-                data.total_watches = latest.total_plays;
-                data.hours_watched = latest.total_time / 3600;
-            };
-            ApplicationMetadataUpdate {
-                platform_name: String::from(&config.application_name),
-                metadata: data,
-            }
-        }
-        false => ApplicationMetadataUpdate {
-            platform_name: String::from(&config.application_name),
-            metadata: ApplicationMetadata {
-                is_subscriber: false,
-                ..Default::default()
-            },
+    let mut data = ApplicationMetadataUpdate {
+        platform_name: String::from(&config.application_name),
+        metadata: ApplicationMetadata {
+            is_subscriber: is_subscriber,
+            ..Default::default()
         },
+    };
+    if is_subscriber {
+        let watch_stats = tautulli_client
+            .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
+            .await
+            .map_err(|err| {
+                log::error!("tautulli_client.get_user_watch_time_stats: {}", err);
+                ErrorInternalServerError("something bad happened")
+            })?;
+
+        if let Some(latest) = watch_stats.get(0) {
+            data.metadata.total_watches = latest.total_plays;
+            data.metadata.hours_watched = latest.total_time / 3600;
+        };
     };
 
     discord_client
-        .link_application(&d_access_token, metadata)
+        .link_application(&d_access_token, data)
         .await
         .map_err(|err| {
             log::error!("discord_client.link_application: {}", err);
