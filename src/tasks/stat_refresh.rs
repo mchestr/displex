@@ -52,11 +52,11 @@ async fn main(config: RefreshArgs) {
 
     log::info!("Refreshing {} users", users.len());
     for (discord_user, plex_user) in users {
-        log::info!("refreshing stats for user {:?}", &discord_user.id);
+        log::info!("refreshing stats for user {}", &discord_user.username);
         let mut discord_token = get_latest_token(&mut conn, &discord_user.id).unwrap();
 
         if discord_token.expires_at < expire_window {
-            log::info!("refreshing token for user {:?}", &discord_user.id);
+            log::info!("refreshing token for user {}", &discord_user.username);
             let new_token = discord_client
                 .refresh_token(&discord_token.refresh_token)
                 .await
