@@ -1,18 +1,34 @@
 use std::error::Error;
 
 use anyhow::Result;
-use diesel::{pg::Pg, prelude::*, r2d2, PgConnection, QueryDsl};
+use diesel::{
+    pg::Pg,
+    prelude::*,
+    r2d2,
+    PgConnection,
+    QueryDsl,
+};
 
 pub mod discord;
 pub mod plex;
 
 pub type DbPool = r2d2::Pool<r2d2::ConnectionManager<PgConnection>>;
 
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use diesel_migrations::{
+    embed_migrations,
+    EmbeddedMigrations,
+    MigrationHarness,
+};
 
-use crate::schema::{discord_users, plex_users};
+use crate::schema::{
+    discord_users,
+    plex_users,
+};
 
-use self::{discord::DiscordUser, plex::PlexUser};
+use self::{
+    discord::DiscordUser,
+    plex::PlexUser,
+};
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 pub fn initialize_db_pool(database_url: &str) -> DbPool {

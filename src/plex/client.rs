@@ -3,11 +3,21 @@ use reqwest::Url;
 
 use super::{
     constants::{
-        PLEX_TV_APP_URL, PLEX_TV_AUTH_PATH, PLEX_TV_PIN_PATH, PLEX_TV_RESOURCES_PATH, PLEX_TV_URL,
+        PLEX_TV_APP_URL,
+        PLEX_TV_AUTH_PATH,
+        PLEX_TV_PIN_PATH,
+        PLEX_TV_RESOURCES_PATH,
+        PLEX_TV_URL,
         PLEX_TV_USER_PATH,
     },
     models::{
-        AuthContext, AuthDevice, AuthQueryParams, CreatePinResponse, Device, PinClaimResponse, User,
+        AuthContext,
+        AuthDevice,
+        AuthQueryParams,
+        CreatePinResponse,
+        Device,
+        PinClaimResponse,
+        User,
     },
 };
 

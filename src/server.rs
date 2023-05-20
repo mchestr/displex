@@ -1,20 +1,35 @@
 use std::time::Duration;
 
-use actix_session::{storage::CookieSessionStore, SessionMiddleware};
+use actix_session::{
+    storage::CookieSessionStore,
+    SessionMiddleware,
+};
 use actix_web::{
     body::MessageBody,
     cookie::Key,
-    dev::{ServiceFactory, ServiceRequest, ServiceResponse},
+    dev::{
+        ServiceFactory,
+        ServiceRequest,
+        ServiceResponse,
+    },
     middleware::Logger,
     rt,
-    web::{self},
-    App, Error, HttpServer,
+    web::{self,},
+    App,
+    Error,
+    HttpServer,
 };
 
 use crate::{
     config::ServerArgs,
-    db::{self, run_migrations},
-    discord::{client::DiscordClient, metadata::register_metadata},
+    db::{
+        self,
+        run_migrations,
+    },
+    discord::{
+        client::DiscordClient,
+        metadata::register_metadata,
+    },
     handlers,
     plex::client::PlexClient,
     tautulli::client::TautulliClient,

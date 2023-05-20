@@ -1,9 +1,15 @@
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use crate::db::discord::DiscordUser;
 
-use crate::schema::{plex_tokens, plex_users};
+use crate::schema::{
+    plex_tokens,
+    plex_users,
+};
 
 #[derive(Associations, Debug, Clone, Serialize, Deserialize, Queryable, Selectable)]
 #[diesel(belongs_to(PlexUser))]

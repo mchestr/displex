@@ -1,5 +1,8 @@
 use anyhow::Result;
-use diesel::{prelude::*, PgConnection};
+use diesel::{
+    prelude::*,
+    PgConnection,
+};
 
 pub use self::models::*;
 

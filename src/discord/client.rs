@@ -1,12 +1,29 @@
 use anyhow::Result;
 use oauth2::{
-    basic::{BasicClient, BasicTokenType},
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
-    HttpRequest, HttpResponse, RedirectUrl, RefreshToken, Scope, TokenUrl,
+    basic::{
+        BasicClient,
+        BasicTokenType,
+    },
+    AuthUrl,
+    AuthorizationCode,
+    ClientId,
+    ClientSecret,
+    CsrfToken,
+    EmptyExtraTokenFields,
+    HttpRequest,
+    HttpResponse,
+    RedirectUrl,
+    RefreshToken,
+    Scope,
+    TokenUrl,
 };
 use reqwest::Url;
 
-use super::models::{ApplicationMetadataDefinition, ApplicationMetadataUpdate, User};
+use super::models::{
+    ApplicationMetadataDefinition,
+    ApplicationMetadataUpdate,
+    User,
+};
 
 type OAuth2DiscordClient = oauth2::Client<
     oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,

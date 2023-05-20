@@ -2,9 +2,16 @@ use std::time::Duration;
 
 use actix_session::Session;
 use actix_web::{
-    error::{ErrorInternalServerError, ErrorUnauthorized},
-    web::{self, Redirect},
-    Responder, Result,
+    error::{
+        ErrorInternalServerError,
+        ErrorUnauthorized,
+    },
+    web::{
+        self,
+        Redirect,
+    },
+    Responder,
+    Result,
 };
 use oauth2::TokenResponse;
 use serde::Deserialize;
@@ -13,17 +20,29 @@ use crate::{
     config::ServerArgs,
     db::{
         self,
-        discord::{NewDiscordToken, NewDiscordUser},
-        plex::{NewPlexToken, NewPlexUser},
+        discord::{
+            NewDiscordToken,
+            NewDiscordUser,
+        },
+        plex::{
+            NewPlexToken,
+            NewPlexUser,
+        },
         DbPool,
     },
     discord::{
         client::DiscordClient,
-        models::{ApplicationMetadata, ApplicationMetadataUpdate},
+        models::{
+            ApplicationMetadata,
+            ApplicationMetadataUpdate,
+        },
     },
     plex::client::PlexClient,
     session,
-    tautulli::{client::TautulliClient, models::QueryDays},
+    tautulli::{
+        client::TautulliClient,
+        models::QueryDays,
+    },
 };
 
 #[derive(Debug, Deserialize)]

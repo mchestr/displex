@@ -1,8 +1,15 @@
-use clap::{Parser, Subcommand};
+use clap::{
+    Parser,
+    Subcommand,
+};
 use derive_more::Display;
 use displex::{
-    config::{RefreshArgs, ServerArgs},
-    server, tasks,
+    config::{
+        RefreshArgs,
+        ServerArgs,
+    },
+    server,
+    tasks,
 };
 
 #[derive(Parser, Display)] // requires `derive` feature

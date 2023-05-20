@@ -3,14 +3,25 @@ use std::time::Duration;
 use crate::{
     config::RefreshArgs,
     db::{
-        discord::{get_latest_token, insert_token, NewDiscordToken},
-        initialize_db_pool, list_users,
+        discord::{
+            get_latest_token,
+            insert_token,
+            NewDiscordToken,
+        },
+        initialize_db_pool,
+        list_users,
     },
     discord::{
         client::DiscordClient,
-        models::{ApplicationMetadata, ApplicationMetadataUpdate},
+        models::{
+            ApplicationMetadata,
+            ApplicationMetadataUpdate,
+        },
     },
-    tautulli::{client::TautulliClient, models::QueryDays},
+    tautulli::{
+        client::TautulliClient,
+        models::QueryDays,
+    },
 };
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;

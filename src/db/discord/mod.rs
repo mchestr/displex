@@ -1,5 +1,8 @@
 use anyhow::Result;
-use diesel::{prelude::*, PgConnection};
+use diesel::{
+    prelude::*,
+    PgConnection,
+};
 
 mod models;
 

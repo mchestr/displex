@@ -1,12 +1,23 @@
 use actix_session::Session;
 use actix_web::{
-    error::{ErrorBadRequest, ErrorInternalServerError},
-    web::{self, Redirect},
-    Responder, Result,
+    error::{
+        ErrorBadRequest,
+        ErrorInternalServerError,
+    },
+    web::{
+        self,
+        Redirect,
+    },
+    Responder,
+    Result,
 };
 use serde::Deserialize;
 
-use crate::{discord::client::DiscordClient, plex::client::PlexClient, session};
+use crate::{
+    discord::client::DiscordClient,
+    plex::client::PlexClient,
+    session,
+};
 
 pub async fn linked_role(
     discord_client: web::Data<DiscordClient>,

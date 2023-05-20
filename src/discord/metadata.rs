@@ -1,6 +1,9 @@
 use anyhow::Result;
 
-use super::{client::DiscordClient, models::ApplicationMetadataDefinition};
+use super::{
+    client::DiscordClient,
+    models::ApplicationMetadataDefinition,
+};
 
 pub async fn register_metadata(client: &DiscordClient) -> Result<()> {
     let metadata_spec = vec![

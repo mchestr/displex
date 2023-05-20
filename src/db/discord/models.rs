@@ -1,8 +1,14 @@
 use chrono::Utc;
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-use crate::schema::{discord_tokens, discord_users};
+use crate::schema::{
+    discord_tokens,
+    discord_users,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
 #[diesel(table_name = discord_tokens)]
