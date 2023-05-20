@@ -17,6 +17,11 @@ RUN cargo build --release --bin displex
 # We do not need the Rust toolchain to run the binary!
 FROM debian:buster-slim AS runtime
 RUN apt-get update && apt-get install -y libpq-dev ca-certificates
+
+ENV DISPLEX_HTTP_HOST=0.0.0.0 \
+    DISPLEX_HTTP_PORT=8080
+EXPOSE ${DISPLEX_HTTP_PORT}
+
 WORKDIR /app
 COPY --from=builder /app/target/release/displex /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/displex", "server"]

@@ -47,8 +47,8 @@ DISPLEX_TAUTULLI_URL="https://tautulli.example.com"
 |-------------------------------|---------------------------------------------------------------------------------------------------------|----------|-----------|
 | DISPLEX_HOSTNAME              | Hostname of application. Used to generate the redirect URLs for OAuth2.                                 | yes      |           |
 | DISPLEX_APPLICATION_NAME      | Name of application. Will be displayed on Plex Sign-in mostly.                                          | yes      |           |
-| DISPLEX_SERVICE_HOST          | Host to bind HTTP server.                                                                               | no       | 127.0.0.1 |
-| DISPLEX_SERVICE_PORT          | Port to bind HTTP server                                                                                | no       | 8080      |
+| DISPLEX_HTTP__HOST            | Host to bind HTTP server.                                                                               | no       | 127.0.0.1 |
+| DISPLEX_HTTP_PORT             | Port to bind HTTP server                                                                                | no       | 8080      |
 | DISPLEX_SESSION_SECRET_KEY    | Session secret value for encryption. Mostly used in OAuth2 flow to store state between requests         | yes      |           |
 | DISPLEX_DATABASE_URL          | PostgresQL database url. For example postgres://displex:password@localhost/displex                      | yes      |           |
 | DISPLEX_ACCEPT_INVALID_CERTS  | Control whether reqwest will validate SSL certs. Useful for MITM proxy development.                     | no       | false     |
