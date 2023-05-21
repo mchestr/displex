@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 actix-web = { version = "4",  optional = true }
 actix-session = { version = "0.7.2", features = ["cookie-session"], optional = true}
+axum = { version = "0.6.18", optional = true }
 
 anyhow = "1.0.71"
 async-trait = "0.1.68"
@@ -28,3 +29,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 [features]
 default = ["actix-web"]
 actix-web = ["dep:actix-web", "dep:actix-session"]
+axum = ["dep:axum"]
