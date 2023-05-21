@@ -1,6 +1,8 @@
 use clap::Args;
 use derive_more::Display;
 
+use crate::server::Server;
+
 #[derive(Display, Clone)]
 #[display(fmt = "********")]
 pub struct Secret(String);
@@ -45,6 +47,9 @@ pub struct ServerArgs {
 
     #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
     pub accept_invalid_certs: bool,
+
+    #[arg(long, env = "DISPLEX_HTTP_SERVER", value_enum, default_value_t = Server::ActixWeb)]
+    pub http_server: Server,
 
     #[command(flatten)]
     pub session: SessionArgs,

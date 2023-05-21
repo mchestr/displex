@@ -23,12 +23,14 @@ use crate::{
         client::DiscordClient,
         metadata::register_metadata,
     },
-    handlers,
     plex::client::PlexClient,
     tautulli::client::TautulliClient,
 };
 use db::initialize_db_pool;
 use reqwest::header::HeaderValue;
+
+mod handlers;
+
 
 pub async fn run(config: ServerArgs) -> std::io::Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();

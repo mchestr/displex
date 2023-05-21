@@ -686,6 +686,7 @@ dependencies = [
  "actix-session",
  "actix-web",
  "anyhow",
+ "async-trait",
  "chrono",
  "clap",
  "derive_more",

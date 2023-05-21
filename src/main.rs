@@ -8,7 +8,7 @@ use displex::{
         RefreshArgs,
         ServerArgs,
     },
-    server,
+    server::{self, DisplexHttpServer},
     tasks,
 };
 use tracing_subscriber::{
@@ -48,7 +48,7 @@ async fn main() -> std::io::Result<()> {
     tracing::info!("DisplexConfig({})", args);
 
     match args.command {
-        Commands::Server(args) => server::run(args).await?,
+        Commands::Server(args) => args.http_server.run(args.clone()).await,
         Commands::Refresh(args) => tasks::stat_refresh::run(args).await?,
     };
     Ok(())
