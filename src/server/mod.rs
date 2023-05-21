@@ -34,7 +34,7 @@ impl DisplexHttpServer for Server {
             #[cfg(feature = "actix-web")]
             Server::ActixWeb => actix_web::run(config).await.unwrap(),
             #[cfg(feature = "axum")]
-            Server::Axum => todo!(),
+            Server::Axum => axum::run(config).await,
         }
     }
 }
