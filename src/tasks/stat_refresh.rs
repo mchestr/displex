@@ -33,6 +33,7 @@ use crate::{
     },
 };
 use anyhow::Result;
+use deadpool_diesel::Manager;
 use diesel::PgConnection;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
@@ -64,15 +65,18 @@ pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
         &config.tautulli.tautulli_api_key.sensitive_string(),
     );
 
-    let pool = initialize_db_pool(&config.database.database_url.sensitive_string());
-    let mut conn = pool.get().unwrap();
+    let pool = initialize_db_pool(&config.database.database_url.sensitive_string()).unwrap();
+    let conn = pool.get().await.unwrap();
 
-    let users = list_users(&mut conn).unwrap();
+    let users = conn
+        .interact(|conn| list_users(conn).unwrap())
+        .await
+        .unwrap();
     tracing::info!("Refreshing {} users", users.len());
     for (discord_user, plex_user) in users {
         match refresh_user_stats(
             &config,
-            &mut conn,
+            &conn,
             &discord_client,
             &tautlli_client,
             &discord_user,
@@ -91,14 +95,20 @@ pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
 
 async fn refresh_user_stats(
     config: &RefreshArgs,
-    conn: &mut PgConnection,
+    conn: &deadpool::managed::Object<Manager<PgConnection>>,
     discord_client: &DiscordClient,
     tautulli_client: &TautulliClient,
     discord_user: &DiscordUser,
     plex_user: &PlexUser,
 ) -> Result<()> {
     tracing::info!("refreshing stats for user {}", &discord_user.username);
-    let discord_token = get_latest_token(conn, &discord_user.id)?;
+
+    let discord_user_id = discord_user.id.clone();
+    let discord_token = conn
+        .interact(move |conn| get_latest_token(conn, &discord_user_id).unwrap())
+        .await
+        .unwrap();
+
     let discord_token =
         maybe_refresh_token(conn, discord_client, discord_user, discord_token).await?;
 
@@ -127,7 +137,7 @@ async fn refresh_user_stats(
 }
 
 async fn maybe_refresh_token(
-    conn: &mut PgConnection,
+    conn: &deadpool::managed::Object<Manager<PgConnection>>,
     discord_client: &DiscordClient,
     discord_user: &DiscordUser,
     discord_token: DiscordToken,
@@ -137,7 +147,11 @@ async fn maybe_refresh_token(
         let new_token = discord_client
             .refresh_token(&discord_token.refresh_token)
             .await?;
-        let new_token = insert_token(
+
+        let discord_user = discord_user.clone();
+        let inserted_token = conn.interact(move |conn| {
+
+        insert_token(
             conn,
             NewDiscordToken {
                 access_token: new_token.access_token().secret().into(),
@@ -152,15 +166,18 @@ async fn maybe_refresh_token(
                         new_token
                             .expires_in()
                             .unwrap_or_else(|| {
-                                tracing::error!("failed to figure out when token will expire, defaulting to 3 days for {}",  discord_user.username);
+                                tracing::error!(
+                                    "failed to figure out when token will expire, defaulting to 3 days for {}",
+                                    discord_user.username
+                                );
                                 Duration::from_secs(3600 * 24 * 3)
                             })
                             .as_secs() as i64,
                     ),
                 discord_user_id: discord_user.id.clone(),
             },
-        )?;
-        Ok(new_token)
+        )}).await.unwrap().unwrap();
+        Ok(inserted_token)
     } else {
         Ok(discord_token)
     }

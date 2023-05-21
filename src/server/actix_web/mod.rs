@@ -31,7 +31,6 @@ use reqwest::header::HeaderValue;
 
 mod handlers;
 
-
 pub async fn run(config: ServerArgs) -> std::io::Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.append("Accept", HeaderValue::from_static("application/json"));

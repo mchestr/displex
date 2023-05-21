@@ -7,8 +7,9 @@ edition = "2021"
 actix-web = { version = "4",  optional = true }
 actix-session = { version = "0.7.2", features = ["cookie-session"], optional = true}
 
-axum = { version = "0.6.18", optional = true }
+axum = { version = "0.6.18", features = ["tracing"], optional = true }
 axum-sessions = { version = "0.5.0", optional = true }
+tower-http = { version = "0.4.0", features = ["trace"], optional = true }
 
 anyhow = "1.0.71"
 async-trait = "0.1.68"
@@ -17,6 +18,8 @@ clap = { version = "4.3.0", features = ["derive", "env"] }
 derive_more = "0.99.17"
 dotenvy = "0.15.7"
 diesel = { version = "2", features = ["postgres", "r2d2", "chrono"], default-features = false }
+deadpool = { version = "0.9.5", features = ["rt_tokio_1"], optional = true }
+deadpool-diesel = { version = "0.4.1", features = ["postgres"], optional = true }
 diesel_migrations = { version = "2.0.0", features = ["postgres"] }
 oauth2 = "4"
 reqwest = { version = "0.11.18", features = ["json"] }
@@ -31,4 +34,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 [features]
 default = ["axum"]
 actix-web = ["dep:actix-web", "dep:actix-session"]
-axum = ["dep:axum", "dep:axum-sessions"]
+axum = ["dep:axum", "dep:axum-sessions", "dep:tower-http", "deadpool-diesel", "dep:deadpool"]

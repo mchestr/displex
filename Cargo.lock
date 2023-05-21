@@ -442,6 +442,7 @@ dependencies = [
  "tower",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -459,6 +460,7 @@ dependencies = [
  "rustversion",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -830,6 +832,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "deadpool"
+version = "0.9.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "421fe0f90f2ab22016f32a9881be5134fdd71c65298917084b0c7477cbc3856e"
+dependencies = [
+ "async-trait",
+ "deadpool-runtime",
+ "num_cpus",
+ "retain_mut",
+ "tokio",
+]
+
+[[package]]
+name = "deadpool-diesel"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9ce884fff09b610fd0bbd9e9447327fda9f613d5bd1fa114f57905cbcfd8d27"
+dependencies = [
+ "deadpool",
+ "deadpool-sync",
+ "diesel",
+]
+
+[[package]]
+name = "deadpool-runtime"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eaa37046cc0f6c3cc6090fbdbf73ef0b8ef4cfcc37f6befc0020f63e8cf121e1"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
+name = "deadpool-sync"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1bea344b64b32537fde6e0f0179b1ede34d435636719dd40fe6a0f28218a61c"
+dependencies = [
+ "deadpool",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -912,6 +956,8 @@ dependencies = [
  "axum-sessions",
  "chrono",
  "clap",
+ "deadpool",
+ "deadpool-diesel",
  "derive_more",
  "diesel",
  "diesel_migrations",
@@ -922,6 +968,7 @@ dependencies = [
  "serde_json",
  "serde_qs",
  "tokio",
+ "tower-http",
  "tracing",
  "tracing-actix-web",
  "tracing-subscriber",
@@ -1988,6 +2035,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "retain_mut"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4389f1d5789befaf6029ebd9f7dac4af7f7e3d61b69d4f30e2ac02b57e7712b0"
+
+[[package]]
 name = "ring"
 version = "0.16.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2520,6 +2573,7 @@ dependencies = [
  "pin-project-lite",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]

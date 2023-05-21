@@ -8,7 +8,7 @@ use displex::{
         RefreshArgs,
         ServerArgs,
     },
-    server::{DisplexHttpServer},
+    server::DisplexHttpServer,
     tasks,
 };
 use tracing_subscriber::{
