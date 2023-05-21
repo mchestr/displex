@@ -78,8 +78,7 @@ pub async fn callback(
             ErrorInternalServerError("something bad happened")
         })?
         .iter()
-        .find(|&d| d.client_identifier == config.plex.plex_server_id)
-        .is_some();
+        .any(|d| d.client_identifier == config.plex.plex_server_id);
 
     let token = discord_client.token(&discord_token).await.map_err(|err| {
         log::error!("discord_client.token: {}", err);
@@ -147,7 +146,7 @@ pub async fn callback(
                     id: plex_user.id,
                     username: plex_user.username,
                     discord_user_id: String::from(&discord_user.id),
-                    is_subscriber: is_subscriber,
+                    is_subscriber,
                 },
             )?;
             log::debug!("inserted plex user: {:?}", plex_user);
@@ -174,7 +173,7 @@ pub async fn callback(
     let mut data = ApplicationMetadataUpdate {
         platform_name: String::from(&config.application_name),
         metadata: ApplicationMetadata {
-            is_subscriber: is_subscriber,
+            is_subscriber,
             ..Default::default()
         },
         ..Default::default()

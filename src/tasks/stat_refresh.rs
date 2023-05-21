@@ -97,7 +97,7 @@ async fn refresh_user_stats(
     log::info!("refreshing stats for user {}", &discord_user.username);
     let discord_token = get_latest_token(conn, &discord_user.id)?;
     let discord_token =
-        maybe_refresh_token(conn, discord_client, &discord_user, discord_token).await?;
+        maybe_refresh_token(conn, discord_client, discord_user, discord_token).await?;
 
     let watch_stats = tautulli_client
         .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
