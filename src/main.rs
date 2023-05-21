@@ -11,6 +11,11 @@ use displex::{
     server,
     tasks,
 };
+use tracing_subscriber::{
+    fmt,
+    prelude::*,
+    EnvFilter,
+};
 
 #[derive(Parser, Display)] // requires `derive` feature
 #[command(name = "displex")]
@@ -32,8 +37,12 @@ async fn main() -> std::io::Result<()> {
         Ok(_) => println!("loaded .env file."),
         Err(_) => println!("no .env file found."),
     };
-    let subscriber = tracing_subscriber::FmtSubscriber::new();
-    tracing::subscriber::set_global_default(subscriber).unwrap();
+
+    tracing_subscriber::registry()
+        // Continue logging to stdout
+        .with(fmt::Layer::default().with_filter(EnvFilter::from_default_env()))
+        .try_init()
+        .unwrap();
 
     let args = Cli::parse();
     tracing::info!("DisplexConfig({})", args);
