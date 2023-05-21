@@ -31,12 +31,12 @@ pub async fn register_metadata(config: &ServerArgs, client: &DiscordClient) -> R
 
     let current_metadata: Vec<ApplicationMetadataDefinition> =
         client.application_metadata().await?;
-    log::info!("Discord Metadata: {:#?}", current_metadata);
+    tracing::info!("Discord Metadata: {:#?}", current_metadata);
     if current_metadata != metadata_spec {
-        log::info!("Registering Discord application metadata");
+        tracing::info!("Registering Discord application metadata");
         client.register_application_metadata(metadata_spec).await?;
     } else {
-        log::info!("Discord application metadata is up to date")
+        tracing::info!("Discord application metadata is up to date")
     }
 
     Ok(())

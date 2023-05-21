@@ -10,7 +10,7 @@ pub use models::*;
 
 pub fn insert_token(conn: &mut PgConnection, new: NewDiscordToken) -> Result<DiscordToken> {
     use crate::schema::discord_tokens::dsl::*;
-    log::debug!("inserting record: {:?}", new);
+    tracing::debug!("inserting record: {:?}", new);
 
     let token = diesel::insert_into(discord_tokens)
         .values(&new)
@@ -24,7 +24,7 @@ pub fn insert_token(conn: &mut PgConnection, new: NewDiscordToken) -> Result<Dis
 
 pub fn insert_user(conn: &mut PgConnection, new: NewDiscordUser) -> Result<DiscordUser> {
     use crate::schema::discord_users::dsl::*;
-    log::debug!("inserting record: {:?}", new);
+    tracing::debug!("inserting record: {:?}", new);
 
     let token = diesel::insert_into(discord_users)
         .values(&new)

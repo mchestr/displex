@@ -10,7 +10,7 @@ mod models;
 
 pub fn insert_token(conn: &mut PgConnection, new: NewPlexToken) -> Result<PlexToken> {
     use crate::schema::plex_tokens::dsl::*;
-    log::debug!("inserting record: {:?}", new);
+    tracing::debug!("inserting record: {:?}", new);
 
     let token = diesel::insert_into(plex_tokens)
         .values(&new)
@@ -25,7 +25,7 @@ pub fn insert_token(conn: &mut PgConnection, new: NewPlexToken) -> Result<PlexTo
 
 pub fn insert_user(conn: &mut PgConnection, new: NewPlexUser) -> Result<PlexUser> {
     use crate::schema::plex_users::dsl::*;
-    log::debug!("inserting record: {:?}", new);
+    tracing::debug!("inserting record: {:?}", new);
 
     let token = diesel::insert_into(plex_users)
         .values(&new)

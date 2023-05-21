@@ -117,16 +117,6 @@ impl DiscordClient {
     }
 
     pub async fn user(&self, token: &str) -> Result<User> {
-        log::info!(
-            "{}",
-            self.client
-                .get("https://discord.com/api/v10/users/@me")
-                .bearer_auth(token)
-                .send()
-                .await?
-                .text()
-                .await?
-        );
         Ok(self
             .client
             .get("https://discord.com/api/v10/users/@me")

@@ -7,11 +7,11 @@ use actix_session::{
 use actix_web::{
     cookie::Key,
     middleware::Logger,
-    rt,
     web::{self,},
     App,
     HttpServer,
 };
+use tracing_actix_web::TracingLogger;
 
 use crate::{
     config::ServerArgs,
@@ -30,7 +30,7 @@ use crate::{
 use db::initialize_db_pool;
 use reqwest::header::HeaderValue;
 
-async fn run_app(config: ServerArgs) -> std::io::Result<()> {
+pub async fn run(config: ServerArgs) -> std::io::Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.append("Accept", HeaderValue::from_static("application/json"));
 
@@ -96,17 +96,11 @@ async fn run_app(config: ServerArgs) -> std::io::Result<()> {
                 .cookie_secure(true)
                 .build(),
             )
+            .wrap(TracingLogger::default())
     })
     .bind((host.clone(), port))?
     .run();
 
-    log::info!("starting HTTP server at http://{}:{}", host, port);
+    tracing::info!("starting HTTP server at http://{}:{}", host, port);
     server.await
-}
-
-pub fn run(config: ServerArgs) {
-    let server_future = run_app(config);
-    rt::System::new()
-        .block_on(server_future)
-        .expect("failed to gracefully shutdown");
 }

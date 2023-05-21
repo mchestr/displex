@@ -44,20 +44,20 @@ pub async fn callback(
         .get::<String>(session::DISCORD_STATE)?
         .expect("invalid state");
     if session_token != qs.state {
-        log::info!("session state does not match query parameters");
+        tracing::info!("session state does not match query parameters");
         return Err(ErrorBadRequest("invalid state"));
     }
     session.insert(session::DISCORD_CODE, &qs.code)?;
 
     let pin = plex_client.get_pin().await.map_err(|err| {
-        log::error!("{}", err);
+        tracing::error!("{}", err);
         ErrorInternalServerError("something bad happened")
     })?;
     let url = plex_client
         .generate_auth_url(pin.id, &pin.code)
         .await
         .map_err(|err| {
-            log::error!("{}", err);
+            tracing::error!("{}", err);
             ErrorInternalServerError("something bad happened")
         })?;
 

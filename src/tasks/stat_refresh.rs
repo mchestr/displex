@@ -37,7 +37,7 @@ use diesel::PgConnection;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
 
-async fn main(config: RefreshArgs) {
+pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.append("Accept", HeaderValue::from_static("application/json"));
 
@@ -68,7 +68,7 @@ async fn main(config: RefreshArgs) {
     let mut conn = pool.get().unwrap();
 
     let users = list_users(&mut conn).unwrap();
-    log::info!("Refreshing {} users", users.len());
+    tracing::info!("Refreshing {} users", users.len());
     for (discord_user, plex_user) in users {
         match refresh_user_stats(
             &config,
@@ -80,10 +80,13 @@ async fn main(config: RefreshArgs) {
         )
         .await
         {
-            Ok(_) => log::info!("Successfully refreshed {}", &discord_user.username),
-            Err(err) => log::error!("Failed to refresh user {}: {}", &discord_user.username, err),
+            Ok(_) => tracing::info!("Successfully refreshed {}", &discord_user.username),
+            Err(err) => {
+                tracing::error!("Failed to refresh user {}: {}", &discord_user.username, err)
+            }
         }
     }
+    Ok(())
 }
 
 async fn refresh_user_stats(
@@ -94,7 +97,7 @@ async fn refresh_user_stats(
     discord_user: &DiscordUser,
     plex_user: &PlexUser,
 ) -> Result<()> {
-    log::info!("refreshing stats for user {}", &discord_user.username);
+    tracing::info!("refreshing stats for user {}", &discord_user.username);
     let discord_token = get_latest_token(conn, &discord_user.id)?;
     let discord_token =
         maybe_refresh_token(conn, discord_client, discord_user, discord_token).await?;
@@ -130,7 +133,7 @@ async fn maybe_refresh_token(
     discord_token: DiscordToken,
 ) -> Result<DiscordToken> {
     if discord_token.expires_at < chrono::Utc::now() + chrono::Duration::days(-1) {
-        log::info!("refreshing token for user {}", &discord_user.username);
+        tracing::info!("refreshing token for user {}", &discord_user.username);
         let new_token = discord_client
             .refresh_token(&discord_token.refresh_token)
             .await?;
@@ -149,7 +152,7 @@ async fn maybe_refresh_token(
                         new_token
                             .expires_in()
                             .unwrap_or_else(|| {
-                                log::error!("failed to figure out when token will expire, defaulting to 3 days for {}",  discord_user.username);
+                                tracing::error!("failed to figure out when token will expire, defaulting to 3 days for {}",  discord_user.username);
                                 Duration::from_secs(3600 * 24 * 3)
                             })
                             .as_secs() as i64,
@@ -161,12 +164,4 @@ async fn maybe_refresh_token(
     } else {
         Ok(discord_token)
     }
-}
-
-pub fn run(config: RefreshArgs) {
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-        .block_on(async { main(config.clone()).await });
 }

@@ -2,11 +2,10 @@ use std::time::Duration;
 
 use actix_session::Session;
 use actix_web::{
-    error::{
-        ErrorInternalServerError,
-    },
+    error::ErrorInternalServerError,
     web::{
-        self, Redirect,
+        self,
+        Redirect,
     },
     Responder,
     Result,
@@ -62,7 +61,7 @@ pub async fn callback(
         .pin_claim(qs.id, &qs.code)
         .await
         .map_err(|err| {
-            log::error!("{}", err);
+            tracing::error!("{}", err);
             ErrorInternalServerError("something bad happened")
         })?;
 
@@ -74,29 +73,29 @@ pub async fn callback(
         .get_devices(&resp.auth_token)
         .await
         .map_err(|err| {
-            log::error!("{}", err);
+            tracing::error!("{}", err);
             ErrorInternalServerError("something bad happened")
         })?
         .iter()
         .any(|d| d.client_identifier == config.plex.plex_server_id);
 
     let token = discord_client.token(&discord_token).await.map_err(|err| {
-        log::error!("discord_client.token: {}", err);
+        tracing::error!("discord_client.token: {}", err);
         ErrorInternalServerError("something bad happened")
     })?;
 
     let d_access_token = String::from(token.access_token().secret());
     let discord_user = discord_client.user(&d_access_token).await.map_err(|err| {
-        log::error!("discord_client.user: {}", err);
+        tracing::error!("discord_client.user: {}", err);
         ErrorInternalServerError("something bad happened")
     })?;
 
     let plex_user = plex_client.user(&resp.auth_token).await.map_err(|err| {
-        log::error!("plex_client.user {}", err);
+        tracing::error!("plex_client.user {}", err);
         ErrorInternalServerError("something bad happened")
     })?;
 
-    log::info!(
+    tracing::info!(
         "{} is a subscriber: {}",
         discord_user.username,
         is_subscriber
@@ -114,7 +113,7 @@ pub async fn callback(
                     username: discord_user.username,
                 },
             )?;
-            log::debug!("inserted discord user: {:?}", discord_user);
+            tracing::debug!("inserted discord user: {:?}", discord_user);
 
             let discord_token = db::discord::insert_token(
                 conn,
@@ -138,7 +137,7 @@ pub async fn callback(
                     discord_user_id: String::from(&discord_user.id),
                 },
             )?;
-            log::debug!("inserted discord token: {:?}", discord_token);
+            tracing::debug!("inserted discord token: {:?}", discord_token);
 
             let plex_user = db::plex::insert_user(
                 conn,
@@ -149,7 +148,7 @@ pub async fn callback(
                     is_subscriber,
                 },
             )?;
-            log::debug!("inserted plex user: {:?}", plex_user);
+            tracing::debug!("inserted plex user: {:?}", plex_user);
 
             let plex_token = db::plex::insert_token(
                 conn,
@@ -158,7 +157,7 @@ pub async fn callback(
                     plex_user_id: plex_user.id,
                 },
             )?;
-            log::debug!("inserted plex token: {:?}", plex_token);
+            tracing::debug!("inserted plex token: {:?}", plex_token);
 
             Ok(())
         })
@@ -166,7 +165,7 @@ pub async fn callback(
     .await?
     // map diesel query errors to a 500 error response
     .map_err(|err| {
-        log::error!("db save: {}", err);
+        tracing::error!("db save: {}", err);
         ErrorInternalServerError("something bad happened")
     })?;
 
@@ -183,7 +182,7 @@ pub async fn callback(
             .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
             .await
             .map_err(|err| {
-                log::error!("tautulli_client.get_user_watch_time_stats: {}", err);
+                tracing::error!("tautulli_client.get_user_watch_time_stats: {}", err);
                 ErrorInternalServerError("something bad happened")
             })?;
 
@@ -197,8 +196,11 @@ pub async fn callback(
         .link_application(&d_access_token, data)
         .await
         .map_err(|err| {
-            log::error!("discord_client.link_application: {}", err);
+            tracing::error!("discord_client.link_application: {}", err);
             ErrorInternalServerError("something bad happened")
         })?;
-    Ok(Redirect::to(format!("discord://-/channels/{}/@home", config.discord.discord_server_id)))
+    Ok(Redirect::to(format!(
+        "discord://-/channels/{}/@home",
+        config.discord.discord_server_id
+    )))
 }

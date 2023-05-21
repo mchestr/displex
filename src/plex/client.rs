@@ -70,7 +70,7 @@ impl PlexClient {
         let mut url = Url::parse(&format!("{PLEX_TV_APP_URL}{PLEX_TV_AUTH_PATH}"))?;
         url.set_fragment(Some(&format!("?{}", &params)));
 
-        log::debug!("generate_auth_url: {}", url);
+        tracing::debug!("generate_auth_url: {}", url);
         Ok(url.to_string())
     }
 
@@ -85,7 +85,7 @@ impl PlexClient {
             &params,
         )?;
 
-        log::debug!("pin_claim: {}", url);
+        tracing::debug!("pin_claim: {}", url);
         Ok(self.client.get(url).send().await?.json().await?)
     }
 

@@ -26,18 +26,21 @@ enum Commands {
     Refresh(RefreshArgs),
 }
 
-fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
     match dotenvy::dotenv() {
-        Ok(_) => log::info!("loaded .env file."),
-        Err(_) => log::info!("no .env file found."),
+        Ok(_) => println!("loaded .env file."),
+        Err(_) => println!("no .env file found."),
     };
+    let subscriber = tracing_subscriber::FmtSubscriber::new();
+    tracing::subscriber::set_global_default(subscriber).unwrap();
+
     let args = Cli::parse();
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    log::info!("DisplexConfig({})", args);
+    tracing::info!("DisplexConfig({})", args);
 
     match args.command {
-        Commands::Server(args) => server::run(args),
-        Commands::Refresh(args) => tasks::stat_refresh::run(args),
+        Commands::Server(args) => server::run(args).await?,
+        Commands::Refresh(args) => tasks::stat_refresh::run(args).await?,
     };
     Ok(())
 }
