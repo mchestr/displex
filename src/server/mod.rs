@@ -6,8 +6,9 @@ use crate::config::ServerArgs;
 
 pub mod actix_web;
 
-#[derive(Debug, Display, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[derive(Debug, Copy, Clone, Default, Display, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum Server {
+    #[default]
     ActixWeb,
 }
 

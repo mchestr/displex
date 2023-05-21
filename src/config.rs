@@ -48,7 +48,7 @@ pub struct ServerArgs {
     #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
     pub accept_invalid_certs: bool,
 
-    #[arg(long, env = "DISPLEX_HTTP_SERVER", value_enum, default_value_t = Server::ActixWeb)]
+    #[arg(long, env = "DISPLEX_HTTP_SERVER", value_enum, default_value_t)]
     pub http_server: Server,
 
     #[command(flatten)]
