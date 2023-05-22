@@ -82,7 +82,6 @@ impl DiscordOAuth2Client {
             .url()
     }
 
-    #[tracing::instrument]
     pub async fn token(&self, code: &str) -> Result<DiscordOAuth2Token> {
         let resp = self
             .oauth_client
@@ -92,7 +91,6 @@ impl DiscordOAuth2Client {
         Ok(resp)
     }
 
-    #[tracing::instrument]
     pub async fn refresh_token(&self, refresh_token: &str) -> Result<DiscordOAuth2Token> {
         Ok(self
             .oauth_client
@@ -130,25 +128,25 @@ impl DiscordOAuth2Client {
 #[derive(Clone, Debug)]
 pub struct DiscordClient {
     client: reqwest::Client,
-    client_id: String,
     bot_token: String,
 }
 
 impl DiscordClient {
-    pub fn new(client: reqwest::Client, client_id: &str, bot_token: &str) -> DiscordClient {
+    pub fn new(client: reqwest::Client, bot_token: &str) -> DiscordClient {
         DiscordClient {
             client,
-            client_id: String::from(client_id),
             bot_token: String::from(bot_token),
         }
     }
 
-    pub async fn application_metadata(&self) -> Result<Vec<ApplicationMetadataDefinition>> {
+    pub async fn application_metadata(
+        &self,
+        application_id: &str,
+    ) -> Result<Vec<ApplicationMetadataDefinition>> {
         Ok(self
             .client
             .get(format_url(&format!(
-                "/applications/{}/role-connections/metadata",
-                self.client_id
+                "/applications/{application_id}/role-connections/metadata"
             )))
             .header("Authorization", format!("Bot {}", self.bot_token))
             .send()
@@ -159,13 +157,13 @@ impl DiscordClient {
 
     pub async fn register_application_metadata(
         &self,
+        application_id: &str,
         metadata: Vec<ApplicationMetadataDefinition>,
     ) -> Result<Vec<ApplicationMetadataDefinition>> {
         Ok(self
             .client
             .put(format_url(&format!(
-                "/applications/{}/role-connections/metadata",
-                self.client_id
+                "/applications/{application_id}/role-connections/metadata"
             )))
             .header("Authorization", format!("Bot {}", self.bot_token))
             .json(&metadata)
@@ -177,13 +175,13 @@ impl DiscordClient {
 
     pub async fn link_application(
         &self,
-        token: &str,
+        application_id: &str,
         metadata: ApplicationMetadataUpdate,
+        token: &str,
     ) -> Result<()> {
         self.client
             .put(format_url(&format!(
-                "/users/@me/applications/{}/role-connection",
-                self.client_id
+                "/users/@me/applications/{application_id}/role-connection"
             )))
             .bearer_auth(token)
             .json(&metadata)

@@ -3,6 +3,7 @@ pub mod config;
 pub mod db;
 pub mod discord;
 pub mod errors;
+pub mod metadata;
 pub mod plex;
 pub mod server;
 pub mod session;

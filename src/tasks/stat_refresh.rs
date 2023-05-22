@@ -39,7 +39,6 @@ use anyhow::Result;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
 use sqlx::PgConnection;
-use tracing::instrument;
 
 pub async fn run(config: RefreshArgs) {
     let mut default_headers = reqwest::header::HeaderMap::new();
@@ -56,7 +55,6 @@ pub async fn run(config: RefreshArgs) {
 
     let discord_client = DiscordClient::new(
         reqwest_client.clone(),
-        &config.discord.discord_client_id.sensitive_string(),
         &config.discord.discord_bot_token.sensitive_string(),
     );
 
@@ -100,7 +98,6 @@ pub async fn run(config: RefreshArgs) {
     }
 }
 
-#[instrument(skip(config, pool, discord_client, tautulli_client))]
 async fn refresh_user_stats(
     config: &RefreshArgs,
     pool: &mut PgConnection,
@@ -127,7 +124,7 @@ async fn refresh_user_stats(
         .ok_or_else(|| Error::new(ErrorKind::Other, "Failed to get latest stats"))?;
     discord_client
         .link_application(
-            &discord_token.access_token,
+            &config.discord.discord_client_id.sensitive_string(),
             ApplicationMetadataUpdate {
                 platform_name: String::from(&config.application_name),
                 metadata: ApplicationMetadata {
@@ -137,6 +134,7 @@ async fn refresh_user_stats(
                 },
                 ..Default::default()
             },
+            &discord_token.access_token,
         )
         .await?;
     Ok(())

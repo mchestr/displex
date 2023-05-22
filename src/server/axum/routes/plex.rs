@@ -161,7 +161,11 @@ async fn callback(
 
     state
         .discord_client
-        .link_application(&d_access_token, data)
+        .link_application(
+            &state.config.discord.discord_client_id.sensitive_string(),
+            data,
+            &d_access_token,
+        )
         .await?;
     Ok(Redirect::to(&format!(
         "discord://-/channels/{}/@home",

@@ -1,10 +1,7 @@
 use clap::Args;
 use derive_more::Display;
 
-use crate::{
-    bot::DiscordBot,
-    server::Server,
-};
+use crate::server::Server;
 
 #[derive(Display, Clone)]
 #[display(fmt = "********")]
@@ -101,8 +98,6 @@ pub struct DiscordArgs {
     pub discord_bot_token: Secret,
     #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
     pub discord_server_id: String,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT", value_enum, default_value_t)]
-    pub discord_bot: DiscordBot,
 }
 
 #[derive(Args, Clone, Display)]
@@ -186,4 +181,28 @@ pub struct RefreshArgs {
 
     #[clap(flatten)]
     pub database: DatabaseArgs,
+}
+
+#[derive(Args, Clone, Display)]
+#[display(fmt = "{{
+        discord_bot_token: {discord_bot_token},
+        discord_client_id: {discord_client_id},
+    }}")]
+pub struct SetMetadataArgs {
+    #[arg(
+        long,
+        env = "DISPLEX_DISCORD_CLIENT_ID",
+        required = true,
+        hide_env_values = true
+    )]
+    pub discord_client_id: Secret,
+    #[arg(
+        long,
+        env = "DISPLEX_DISCORD_BOT_TOKEN",
+        required = true,
+        hide_env_values = true
+    )]
+    pub discord_bot_token: Secret,
+    #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
+    pub accept_invalid_certs: bool,
 }

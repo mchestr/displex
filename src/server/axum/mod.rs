@@ -23,11 +23,9 @@ use tracing::info_span;
 use crate::{
     config::ServerArgs,
     db::{self,},
-    discord::{
-        client::{
-            DiscordClient,
-            DiscordOAuth2Client,
-        },
+    discord::client::{
+        DiscordClient,
+        DiscordOAuth2Client,
     },
     plex::client::PlexClient,
     tautulli::client::TautulliClient,
@@ -61,7 +59,6 @@ pub async fn run(mut kill: Receiver<()>, config: ServerArgs) {
 
     let discord_client = DiscordClient::new(
         reqwest_client.clone(),
-        &config.discord.discord_client_id.sensitive_string(),
         &config.discord.discord_bot_token.sensitive_string(),
     );
 
