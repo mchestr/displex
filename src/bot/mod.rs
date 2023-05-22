@@ -5,7 +5,7 @@ use tokio::sync::broadcast::Receiver;
 
 use crate::config::ServerArgs;
 
-mod discord;
+mod serenity;
 
 #[derive(Debug, Copy, Clone, Default, Display, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum DiscordBot {
@@ -23,7 +23,7 @@ pub trait DisplexBot {
 impl DisplexBot for DiscordBot {
     async fn run(&self, rx: Receiver<()>, config: ServerArgs) {
         match self {
-            DiscordBot::Serenity => discord::run(rx, config).await,
+            DiscordBot::Serenity => serenity::run(rx, config).await,
             DiscordBot::Disabled => tracing::info!("bot disabled"),
         }
     }
