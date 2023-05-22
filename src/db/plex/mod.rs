@@ -10,7 +10,8 @@ pub async fn insert_token(conn: &mut PgConnection, new: NewPlexToken) -> Result<
         PlexToken,
         // language=PostgresSQL
         r#"insert into "plex_tokens" (access_token, plex_user_id) values ($1, $2) 
-           on conflict (access_token) do nothing
+           on conflict (access_token) do update
+           set access_token = excluded.access_token
            returning *"#,
         new.access_token,
         new.plex_user_id
