@@ -35,9 +35,7 @@ use crate::{
 use anyhow::Result;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
-use sqlx::{
-    PgConnection,
-};
+use sqlx::PgConnection;
 use tracing::instrument;
 
 pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
