@@ -39,6 +39,7 @@ use sqlx::{
     Pool,
     Postgres,
 };
+use tracing::instrument;
 
 pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();
@@ -93,9 +94,10 @@ pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
     Ok(())
 }
 
+#[instrument(skip(config, pool, discord_client, tautulli_client))]
 async fn refresh_user_stats(
     config: &RefreshArgs,
-    conn: &Pool<Postgres>,
+    pool: &Pool<Postgres>,
     discord_client: &DiscordClient,
     tautulli_client: &TautulliClient,
     discord_user: &DiscordUser,
@@ -104,10 +106,10 @@ async fn refresh_user_stats(
     tracing::info!("refreshing stats for user {}", &discord_user.username);
 
     let discord_user_id = discord_user.id.clone();
-    let discord_token = get_latest_token(conn, &discord_user_id).await.unwrap();
+    let discord_token = get_latest_token(pool, &discord_user_id).await.unwrap();
 
     let discord_token =
-        maybe_refresh_token(conn, discord_client, discord_user, discord_token).await?;
+        maybe_refresh_token(pool, discord_client, discord_user, discord_token).await?;
 
     let watch_stats = tautulli_client
         .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
