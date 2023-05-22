@@ -37,6 +37,7 @@ impl PlexClient {
         }
     }
 
+    #[tracing::instrument]
     pub async fn get_pin(&self) -> Result<CreatePinResponse> {
         let form_params = [
             ("strong", "true"),
@@ -54,6 +55,7 @@ impl PlexClient {
             .await?)
     }
 
+    #[tracing::instrument]
     pub async fn generate_auth_url(&self, pin_id: u64, pin_code: &str) -> Result<String> {
         let qs = AuthQueryParams {
             client_id: String::from(&self.client_id),
@@ -74,6 +76,7 @@ impl PlexClient {
         Ok(url.to_string())
     }
 
+    #[tracing::instrument]
     pub async fn pin_claim(&self, pin_id: u64, pin_code: &str) -> Result<PinClaimResponse> {
         let params: [(&str, &str); 3] = [
             ("X-Plex-Product", &self.client_id),
@@ -89,7 +92,7 @@ impl PlexClient {
         Ok(self.client.get(url).send().await?.json().await?)
     }
 
-    #[allow(dead_code)]
+    #[tracing::instrument]
     pub async fn user(&self, auth_token: &str) -> Result<User> {
         let user_params: [(&str, &str); 3] = [
             ("X-Plex-Token", auth_token),
@@ -106,6 +109,7 @@ impl PlexClient {
             .await?)
     }
 
+    #[tracing::instrument]
     pub async fn get_devices(&self, auth_token: &str) -> Result<Vec<Device>> {
         let user_params: [(&str, &str); 3] = [
             ("X-Plex-Token", auth_token),

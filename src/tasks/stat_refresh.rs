@@ -33,10 +33,12 @@ use crate::{
     },
 };
 use anyhow::Result;
-use deadpool_diesel::Manager;
-use diesel::PgConnection;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
+use sqlx::{
+    Pool,
+    Postgres,
+};
 
 pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();
@@ -65,18 +67,16 @@ pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
         &config.tautulli.tautulli_api_key.sensitive_string(),
     );
 
-    let pool = initialize_db_pool(&config.database.database_url.sensitive_string()).unwrap();
-    let conn = pool.get().await.unwrap();
-
-    let users = conn
-        .interact(|conn| list_users(conn).unwrap())
+    let pool = initialize_db_pool(&config.database.database_url.sensitive_string())
         .await
         .unwrap();
+
+    let users = list_users(&pool).await.unwrap();
     tracing::info!("Refreshing {} users", users.len());
     for (discord_user, plex_user) in users {
         match refresh_user_stats(
             &config,
-            &conn,
+            &pool,
             &discord_client,
             &tautlli_client,
             &discord_user,
@@ -95,7 +95,7 @@ pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
 
 async fn refresh_user_stats(
     config: &RefreshArgs,
-    conn: &deadpool::managed::Object<Manager<PgConnection>>,
+    conn: &Pool<Postgres>,
     discord_client: &DiscordClient,
     tautulli_client: &TautulliClient,
     discord_user: &DiscordUser,
@@ -104,10 +104,7 @@ async fn refresh_user_stats(
     tracing::info!("refreshing stats for user {}", &discord_user.username);
 
     let discord_user_id = discord_user.id.clone();
-    let discord_token = conn
-        .interact(move |conn| get_latest_token(conn, &discord_user_id).unwrap())
-        .await
-        .unwrap();
+    let discord_token = get_latest_token(conn, &discord_user_id).await.unwrap();
 
     let discord_token =
         maybe_refresh_token(conn, discord_client, discord_user, discord_token).await?;
@@ -137,7 +134,7 @@ async fn refresh_user_stats(
 }
 
 async fn maybe_refresh_token(
-    conn: &deadpool::managed::Object<Manager<PgConnection>>,
+    conn: &Pool<Postgres>,
     discord_client: &DiscordClient,
     discord_user: &DiscordUser,
     discord_token: DiscordToken,
@@ -149,9 +146,7 @@ async fn maybe_refresh_token(
             .await?;
 
         let discord_user = discord_user.clone();
-        let inserted_token = conn.interact(move |conn| {
-
-        insert_token(
+        let inserted_token = insert_token(
             conn,
             NewDiscordToken {
                 access_token: new_token.access_token().secret().into(),
@@ -176,7 +171,7 @@ async fn maybe_refresh_token(
                     ),
                 discord_user_id: discord_user.id.clone(),
             },
-        )}).await.unwrap().unwrap();
+        ).await.unwrap();
         Ok(inserted_token)
     } else {
         Ok(discord_token)

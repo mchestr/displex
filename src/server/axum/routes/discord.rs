@@ -45,7 +45,7 @@ async fn callback(
 ) -> Result<impl IntoResponse, DisplexError> {
     let session_state = session
         .get::<String>(DISCORD_STATE)
-        .ok_or_else(|| anyhow::anyhow!("invalid state"))?;
+        .ok_or_else(|| anyhow::anyhow!("no state found in session"))?;
     verify_state(&session_state, &query_string.state)?;
 
     session.insert(DISCORD_CODE, &query_string.code)?;
@@ -59,7 +59,9 @@ async fn callback(
     Ok(Redirect::to(url.as_str()))
 }
 
+#[tracing::instrument]
 fn verify_state(session_state: &str, query_string_state: &str) -> Result<(), anyhow::Error> {
+    println!("got here");
     if session_state != query_string_state {
         tracing::info!("session state does not match query parameters");
         anyhow::bail!("invalid state")

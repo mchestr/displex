@@ -79,70 +79,65 @@ async fn callback(
         is_subscriber
     );
 
-    let conn = state.db.get().await?;
-    conn.interact(move |conn| {
-        let token = token.clone();
+    let mut transaction = state.db.begin().await?;
+    let discord_user = db::discord::insert_user(
+        &mut transaction,
+        NewDiscordUser {
+            id: discord_user.id,
+            username: discord_user.username,
+        },
+    )
+    .await?;
+    tracing::debug!("inserted discord user: {:?}", discord_user);
 
-        conn.build_transaction().run::<_, anyhow::Error, _>(|conn| {
-            let discord_user = db::discord::insert_user(
-                conn,
-                NewDiscordUser {
-                    id: discord_user.id,
-                    username: discord_user.username,
-                },
-            )?;
-            tracing::debug!("inserted discord user: {:?}", discord_user);
+    let discord_token = db::discord::insert_token(
+        &mut transaction,
+        NewDiscordToken {
+            access_token: token.access_token().secret().into(),
+            refresh_token: token
+                .refresh_token()
+                .expect("expecting refresh token")
+                .secret()
+                .into(),
+            scopes: token.scopes().map_or("".into(), |d| {
+                d.iter().map(|i| i.to_string() + ",").collect()
+            }),
+            expires_at: chrono::Utc::now()
+                + chrono::Duration::seconds(
+                    token
+                        .expires_in()
+                        .unwrap_or(Duration::from_secs(1800))
+                        .as_secs() as i64,
+                ),
+            discord_user_id: String::from(&discord_user.id),
+        },
+    )
+    .await?;
+    tracing::debug!("inserted discord token: {:?}", discord_token);
 
-            let discord_token = db::discord::insert_token(
-                conn,
-                NewDiscordToken {
-                    access_token: token.access_token().secret().into(),
-                    refresh_token: token
-                        .refresh_token()
-                        .expect("expecting refresh token")
-                        .secret()
-                        .into(),
-                    scopes: token.scopes().map_or("".into(), |d| {
-                        d.iter().map(|i| i.to_string() + ",").collect()
-                    }),
-                    expires_at: chrono::Utc::now()
-                        + chrono::Duration::seconds(
-                            token
-                                .expires_in()
-                                .unwrap_or(Duration::from_secs(1800))
-                                .as_secs() as i64,
-                        ),
-                    discord_user_id: String::from(&discord_user.id),
-                },
-            )?;
-            tracing::debug!("inserted discord token: {:?}", discord_token);
+    let plex_user = db::plex::insert_user(
+        &mut transaction,
+        NewPlexUser {
+            id: plex_user.id,
+            username: plex_user.username,
+            discord_user_id: String::from(&discord_user.id),
+            is_subscriber,
+        },
+    )
+    .await?;
+    tracing::debug!("inserted plex user: {:?}", plex_user);
 
-            let plex_user = db::plex::insert_user(
-                conn,
-                NewPlexUser {
-                    id: plex_user.id,
-                    username: plex_user.username,
-                    discord_user_id: String::from(&discord_user.id),
-                    is_subscriber,
-                },
-            )?;
-            tracing::debug!("inserted plex user: {:?}", plex_user);
+    let plex_token = db::plex::insert_token(
+        &mut transaction,
+        NewPlexToken {
+            access_token: resp.auth_token,
+            plex_user_id: plex_user.id,
+        },
+    )
+    .await?;
+    tracing::debug!("inserted plex token: {:?}", plex_token);
 
-            let plex_token = db::plex::insert_token(
-                conn,
-                NewPlexToken {
-                    access_token: resp.auth_token,
-                    plex_user_id: plex_user.id,
-                },
-            )?;
-            tracing::debug!("inserted plex token: {:?}", plex_token);
-
-            Ok(())
-        })
-    })
-    .await
-    .map_err(|_| anyhow!("failed to get conection"))?
-    .map_err(|_| anyhow!("failed to migrate"))?;
+    transaction.commit().await?;
 
     let mut data = ApplicationMetadataUpdate {
         platform_name: String::from(&state.config.application_name),

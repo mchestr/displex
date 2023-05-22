@@ -1,38 +1,38 @@
 use anyhow::Result;
-use diesel::{
-    prelude::*,
-    PgConnection,
-};
 
 pub use self::models::*;
 
 mod models;
 
-pub fn insert_token(conn: &mut PgConnection, new: NewPlexToken) -> Result<PlexToken> {
-    use crate::schema::plex_tokens::dsl::*;
-    tracing::debug!("inserting record: {:?}", new);
-
-    let token = diesel::insert_into(plex_tokens)
-        .values(&new)
-        .on_conflict(access_token)
-        // do_nothing will result in no data returned from database. Do a dummy update instead.
-        .do_update()
-        .set(access_token.eq(&new.access_token))
-        .get_result(conn)?;
-
-    Ok(token)
+pub async fn insert_token<'e, E>(conn: E, new: NewPlexToken) -> Result<PlexToken>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    Ok(sqlx::query_as!(
+        PlexToken,
+        // language=PostgresSQL
+        r#"insert into "plex_tokens" (access_token, plex_user_id) values ($1, $2) 
+           on conflict (access_token) do nothing
+           returning *"#,
+        new.access_token,
+        new.plex_user_id
+    )
+    .fetch_one(conn)
+    .await?)
 }
 
-pub fn insert_user(conn: &mut PgConnection, new: NewPlexUser) -> Result<PlexUser> {
-    use crate::schema::plex_users::dsl::*;
-    tracing::debug!("inserting record: {:?}", new);
-
-    let token = diesel::insert_into(plex_users)
-        .values(&new)
-        .on_conflict(id)
-        .do_update()
-        .set(username.eq(&new.username))
-        .get_result(conn)?;
-
-    Ok(token)
+pub async fn insert_user<'e, E>(conn: E, new: NewPlexUser) -> Result<PlexUser>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    Ok(sqlx::query_as!(
+        PlexUser,
+        // language=PostgresSQL
+        r#"insert into "plex_users" (id, username, discord_user_id, is_subscriber) values ($1, $2, $3, $4) 
+           on conflict (id) do update 
+           set username = excluded.username 
+           returning *"#,
+        new.id, new.username, new.discord_user_id, new.is_subscriber
+    ).fetch_one(conn)
+    .await?)
 }

@@ -3,7 +3,6 @@ pub mod db;
 pub mod discord;
 pub mod errors;
 pub mod plex;
-pub mod schema;
 pub mod server;
 pub mod session;
 pub mod tasks;

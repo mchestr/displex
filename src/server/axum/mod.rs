@@ -12,15 +12,16 @@ use axum_sessions::{
     async_session::CookieStore,
     SessionLayer,
 };
+use sqlx::{
+    Pool,
+    Postgres,
+};
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
 
 use crate::{
     config::ServerArgs,
-    db::{
-        self,
-        DbPool,
-    },
+    db::{self,},
     discord::client::DiscordClient,
     plex::client::PlexClient,
     tautulli::client::TautulliClient,
@@ -35,7 +36,7 @@ pub struct DisplexState {
     pub discord_client: DiscordClient,
     pub plex_client: PlexClient,
     pub tautulli_client: TautulliClient,
-    pub db: DbPool,
+    pub db: Pool<Postgres>,
 }
 
 pub async fn run(config: ServerArgs) {
@@ -88,7 +89,9 @@ pub async fn run(config: ServerArgs) {
     let store = CookieStore::new();
     let secret = config.session.session_secret_key.sensitive_string();
     let session_layer = SessionLayer::new(store, secret.as_bytes()).with_secure(false);
-    let db = db::initialize_db_pool(&config.database.database_url.sensitive_string()).unwrap();
+    let db = db::initialize_db_pool(&config.database.database_url.sensitive_string())
+        .await
+        .unwrap();
 
     db::run_migrations(&db).await.unwrap();
 

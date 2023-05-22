@@ -74,6 +74,7 @@ impl DiscordClient {
         }
     }
 
+    #[tracing::instrument]
     pub fn authorize_url(&self) -> (Url, CsrfToken) {
         self.oauth_client
             .authorize_url(CsrfToken::new_random)
@@ -82,6 +83,7 @@ impl DiscordClient {
             .url()
     }
 
+    #[tracing::instrument]
     pub async fn token(&self, code: &str) -> Result<DiscordOAuth2Token> {
         let resp = self
             .oauth_client
@@ -91,6 +93,7 @@ impl DiscordClient {
         Ok(resp)
     }
 
+    #[tracing::instrument]
     pub async fn refresh_token(&self, refresh_token: &str) -> Result<DiscordOAuth2Token> {
         Ok(self
             .oauth_client
@@ -99,6 +102,7 @@ impl DiscordClient {
             .await?)
     }
 
+    #[tracing::instrument]
     pub async fn link_application(
         &self,
         token: &str,
@@ -116,6 +120,7 @@ impl DiscordClient {
         Ok(())
     }
 
+    #[tracing::instrument]
     pub async fn user(&self, token: &str) -> Result<User> {
         Ok(self
             .client
@@ -127,6 +132,7 @@ impl DiscordClient {
             .await?)
     }
 
+    #[tracing::instrument]
     pub async fn application_metadata(&self) -> Result<Vec<ApplicationMetadataDefinition>> {
         Ok(self
             .client
@@ -141,6 +147,7 @@ impl DiscordClient {
             .await?)
     }
 
+    #[tracing::instrument]
     pub async fn register_application_metadata(
         &self,
         metadata: Vec<ApplicationMetadataDefinition>,
@@ -159,6 +166,7 @@ impl DiscordClient {
             .await?)
     }
 
+    #[tracing::instrument]
     async fn send(
         &self,
         request: HttpRequest,

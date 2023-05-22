@@ -1,87 +1,76 @@
-
-
 use anyhow::Result;
-use diesel::{
-    prelude::*,
-    PgConnection,
-    QueryDsl,
-};
-
-pub mod discord;
-pub mod plex;
-
-#[cfg(feature = "actix-web")]
-pub type DbPool = r2d2::Pool<r2d2::ConnectionManager<PgConnection>>;
-#[cfg(feature = "axum")]
-pub type DbPool = deadpool_diesel::postgres::Pool;
-
-use diesel_migrations::{
-    embed_migrations,
-    EmbeddedMigrations,
-    MigrationHarness,
-};
-
-use crate::schema::{
-    discord_users,
-    plex_users::{
-        self,
-        is_subscriber,
-    },
+use sqlx::{
+    postgres::PgPoolOptions,
+    PgPool,
 };
 
 use self::{
     discord::DiscordUser,
     plex::PlexUser,
 };
-pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
-#[cfg(feature = "actix-web")]
-pub fn initialize_db_pool(database_url: &str) -> DbPool {
-    let manager = diesel::r2d2::ConnectionManager::<PgConnection>::new(database_url);
-    diesel::r2d2::Pool::builder()
-        .build(manager)
-        .expect("unable to connect to postgres")
-}
+pub mod discord;
+pub mod plex;
 
-#[cfg(feature = "axum")]
-pub fn initialize_db_pool(database_url: &str) -> Result<DbPool> {
-    let manager =
-        deadpool_diesel::postgres::Manager::new(database_url, deadpool_diesel::Runtime::Tokio1);
-    let pool = deadpool_diesel::postgres::Pool::builder(manager).build()?;
-    Ok(pool)
-}
-
-#[cfg(features = "actix-web")]
-pub fn run_migrations(
-    connection: &mut impl MigrationHarness<Pg>,
-) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    // This will run the necessary migrations.
-    //
-    // See the documentation for `MigrationHarness` for
-    // all available methods.
-    connection.run_pending_migrations(MIGRATIONS)?;
-
-    Ok(())
-}
-
-#[cfg(feature = "axum")]
-pub async fn run_migrations(pool: &DbPool) -> Result<()> {
-    use anyhow::anyhow;
-
-    let conn = pool.get().await.unwrap();
-    conn.interact(|conn| conn.run_pending_migrations(MIGRATIONS).map(|_| ()))
+pub async fn initialize_db_pool(database_url: &str) -> Result<PgPool> {
+    Ok(PgPoolOptions::new()
+        // The default connection limit for a Postgres server is 100 connections, minus 3 for
+        // superusers. Since we're using the default superuser we don't have to worry about
+        // this too much, although we should leave some connections available for manual
+        // access.
+        //
+        // If you're deploying your application with multiple replicas, then the total
+        // across all replicas should not exceed the Postgres connection limit.
+        .max_connections(50)
+        .connect(&database_url)
         .await
-        .map_err(|_| anyhow!("failed to get conection"))?
-        .map_err(|_| anyhow!("failed to migrate"))?;
-    Ok(())
+        .unwrap())
 }
 
-pub fn list_users(conn: &mut PgConnection) -> Result<Vec<(DiscordUser, PlexUser)>> {
-    let users = discord_users::table
-        .inner_join(plex_users::table)
-        .select((DiscordUser::as_select(), PlexUser::as_select()))
-        .filter(is_subscriber)
-        .load::<(DiscordUser, PlexUser)>(conn)?;
+pub async fn run_migrations(db: &PgPool) -> Result<()> {
+    Ok(sqlx::migrate!().run(db).await?)
+}
 
-    Ok(users)
+//    pub id: i64,
+// pub username: String,
+// pub created_at: chrono::DateTime<Utc>,
+// pub updated_at: chrono::DateTime<Utc>,
+// pub discord_user_id: String,
+// pub is_subscriber: bool,
+
+pub async fn list_users<'e, E>(conn: E) -> Result<Vec<(DiscordUser, PlexUser)>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    let users = sqlx::query!(
+        r#"select d.id as did, d.username as du, d.created_at as dca, d.updated_at as dua, 
+           p.id, p.username, p.created_at, p.updated_at, p.discord_user_id, p.is_subscriber 
+           from discord_users as d 
+           inner join plex_users as p on d.id = p.discord_user_id 
+           where p.is_subscriber"#
+    )
+    .fetch_all(conn)
+    .await?;
+
+    Ok(users
+        .into_iter()
+        .map(|r| {
+            (
+                DiscordUser {
+                    id: r.did.unwrap(),
+                    username: r.du.unwrap(),
+                    created_at: r.created_at.unwrap(),
+                    updated_at: r.updated_at.unwrap(),
+                },
+                PlexUser {
+                    id: r.id.unwrap(),
+                    username: r.username.unwrap(),
+                    created_at: r.created_at.unwrap(),
+                    updated_at: r.updated_at.unwrap(),
+                    discord_user_id: r.discord_user_id.unwrap(),
+                    is_subscriber: r.is_subscriber.unwrap(),
+                },
+            )
+        })
+        .collect())
 }

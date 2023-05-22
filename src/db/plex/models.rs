@@ -1,49 +1,34 @@
-use diesel::prelude::*;
+use chrono::Utc;
 use serde::{
     Deserialize,
     Serialize,
 };
 
-use crate::db::discord::DiscordUser;
-
-use crate::schema::{
-    plex_tokens,
-    plex_users,
-};
-
-#[derive(Associations, Debug, Clone, Serialize, Deserialize, Queryable, Selectable)]
-#[diesel(belongs_to(PlexUser))]
-#[diesel(table_name = plex_tokens)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlexToken {
     pub access_token: String,
-    pub created_at: chrono::NaiveDateTime,
-    pub updated_at: chrono::NaiveDateTime,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: chrono::DateTime<Utc>,
     pub plex_user_id: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
-#[diesel(table_name = plex_tokens)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NewPlexToken {
     pub access_token: String,
     pub plex_user_id: i64,
 }
 
-#[derive(
-    Associations, Debug, Clone, Serialize, Deserialize, Identifiable, Queryable, Selectable,
-)]
-#[diesel(belongs_to(DiscordUser))]
-#[diesel(table_name = plex_users)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlexUser {
     pub id: i64,
     pub username: String,
-    pub created_at: chrono::NaiveDateTime,
-    pub updated_at: chrono::NaiveDateTime,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: chrono::DateTime<Utc>,
     pub discord_user_id: String,
     pub is_subscriber: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
-#[diesel(table_name = plex_users)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NewPlexUser {
     pub id: i64,
     pub username: String,
