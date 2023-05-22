@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use axum::{
     extract::{
         Query,
@@ -45,7 +46,7 @@ async fn callback(
 ) -> Result<impl IntoResponse, DisplexError> {
     let session_state = session
         .get::<String>(DISCORD_STATE)
-        .ok_or_else(|| anyhow::anyhow!("no state found in session"))?;
+        .ok_or_else(|| anyhow!("session state is invalid"))?;
     verify_state(&session_state, &query_string.state)?;
 
     session.insert(DISCORD_CODE, &query_string.code)?;

@@ -8,22 +8,21 @@ use axum_sessions::extractors::{
     WritableSession,
 };
 
+use crate::session::DISCORD_STATE;
+
 use super::DisplexState;
 
 mod discord;
 mod plex;
 
 async fn display_handler(session: ReadableSession) -> impl IntoResponse {
-    let mut count = 0;
-    count = session.get("count").unwrap_or(count);
+    let mut count: String = "test".into();
+    count = session.get(DISCORD_STATE).unwrap_or(count);
     format!("Count is: {count}; visit /inc to increment and /reset to reset")
 }
 
 async fn increment_handler(mut session: WritableSession) -> impl IntoResponse {
-    let mut count = 1;
-    count = session.get("count").map(|n: i32| n + 1).unwrap_or(count);
-    session.insert("count", count).unwrap();
-    format!("Count is: {count}")
+    session.insert("count", String::from("testss")).unwrap();
 }
 
 async fn reset_handler(mut session: WritableSession) -> impl IntoResponse {

@@ -88,7 +88,11 @@ pub async fn run(config: ServerArgs) {
 
     let store = CookieStore::new();
     let secret = config.session.session_secret_key.sensitive_string();
-    let session_layer = SessionLayer::new(store, secret.as_bytes()).with_secure(false);
+    let session_layer = SessionLayer::new(store, secret.as_bytes())
+        .with_secure(true)
+        .with_same_site_policy(axum_sessions::SameSite::Lax)
+        .with_cookie_domain(&config.hostname);
+
     let db = db::initialize_db_pool(&config.database.database_url.sensitive_string())
         .await
         .unwrap();
