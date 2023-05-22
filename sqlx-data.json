@@ -152,6 +152,45 @@
     },
     "query": "insert into \"discord_tokens\" (access_token, refresh_token, scopes, expires_at, discord_user_id) values ($1, $2, $3, $4, $5) \n           on conflict (access_token) do update\n           set refresh_token = excluded.refresh_token \n           returning *"
   },
+  "5752abd26eeb6fad62f3a9803ff1e50291f9018506438ec8e801a2ef3af0bd41": {
+    "describe": {
+      "columns": [
+        {
+          "name": "access_token",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 1,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "plex_user_id",
+          "ordinal": 3,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int8"
+        ]
+      }
+    },
+    "query": "insert into \"plex_tokens\" (access_token, plex_user_id) values ($1, $2) \n           on conflict (access_token) do update\n           set access_token = excluded.access_token\n           returning *"
+  },
   "7c369ba34ad9cd6d9d0b0f7d96ae9adbdb0f99bca0bce27de5d916b7ecce8211": {
     "describe": {
       "columns": [
@@ -207,45 +246,6 @@
       }
     },
     "query": "select * from discord_tokens where discord_user_id = $1 order by expires_at desc limit 1"
-  },
-  "86967d5e5ef2c52cbcd6c15d4c3459a8bad1fdee143726e00749868905e1e6f7": {
-    "describe": {
-      "columns": [
-        {
-          "name": "access_token",
-          "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at",
-          "ordinal": 1,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "updated_at",
-          "ordinal": 2,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "plex_user_id",
-          "ordinal": 3,
-          "type_info": "Int8"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Int8"
-        ]
-      }
-    },
-    "query": "insert into \"plex_tokens\" (access_token, plex_user_id) values ($1, $2) \n           on conflict (access_token) do nothing\n           returning *"
   },
   "f3105aff54e4e4952ca1c9968c15a5a82e1c956ce89009b1f6e255a74b95e2ea": {
     "describe": {
