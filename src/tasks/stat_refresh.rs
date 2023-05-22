@@ -36,8 +36,7 @@ use anyhow::Result;
 use oauth2::TokenResponse;
 use reqwest::header::HeaderValue;
 use sqlx::{
-    Pool,
-    Postgres,
+    PgConnection,
 };
 use tracing::instrument;
 
@@ -71,13 +70,14 @@ pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
     let pool = initialize_db_pool(&config.database.database_url.sensitive_string())
         .await
         .unwrap();
+    let mut conn = pool.acquire().await.unwrap();
 
-    let users = list_users(&pool).await.unwrap();
+    let users = list_users(&mut conn).await.unwrap();
     tracing::info!("Refreshing {} users", users.len());
     for (discord_user, plex_user) in users {
         match refresh_user_stats(
             &config,
-            &pool,
+            &mut conn,
             &discord_client,
             &tautlli_client,
             &discord_user,
@@ -97,7 +97,7 @@ pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
 #[instrument(skip(config, pool, discord_client, tautulli_client))]
 async fn refresh_user_stats(
     config: &RefreshArgs,
-    pool: &Pool<Postgres>,
+    pool: &mut PgConnection,
     discord_client: &DiscordClient,
     tautulli_client: &TautulliClient,
     discord_user: &DiscordUser,
@@ -136,7 +136,7 @@ async fn refresh_user_stats(
 }
 
 async fn maybe_refresh_token(
-    conn: &Pool<Postgres>,
+    conn: &mut PgConnection,
     discord_client: &DiscordClient,
     discord_user: &DiscordUser,
     discord_token: DiscordToken,

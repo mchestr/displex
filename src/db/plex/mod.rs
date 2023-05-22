@@ -1,13 +1,11 @@
 use anyhow::Result;
+use sqlx::PgConnection;
 
 pub use self::models::*;
 
 mod models;
 
-pub async fn insert_token<'e, E>(conn: E, new: NewPlexToken) -> Result<PlexToken>
-where
-    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
-{
+pub async fn insert_token(conn: &mut PgConnection, new: NewPlexToken) -> Result<PlexToken> {
     Ok(sqlx::query_as!(
         PlexToken,
         // language=PostgresSQL
@@ -21,10 +19,7 @@ where
     .await?)
 }
 
-pub async fn insert_user<'e, E>(conn: E, new: NewPlexUser) -> Result<PlexUser>
-where
-    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
-{
+pub async fn insert_user(conn: &mut PgConnection, new: NewPlexUser) -> Result<PlexUser> {
     Ok(sqlx::query_as!(
         PlexUser,
         // language=PostgresSQL

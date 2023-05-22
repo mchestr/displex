@@ -1,6 +1,7 @@
 use anyhow::Result;
 use sqlx::{
     postgres::PgPoolOptions,
+    PgConnection,
     PgPool,
 };
 
@@ -38,10 +39,7 @@ pub async fn run_migrations(db: &PgPool) -> Result<()> {
 // pub discord_user_id: String,
 // pub is_subscriber: bool,
 
-pub async fn list_users<'e, E>(conn: E) -> Result<Vec<(DiscordUser, PlexUser)>>
-where
-    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
-{
+pub async fn list_users(conn: &mut PgConnection) -> Result<Vec<(DiscordUser, PlexUser)>> {
     let users = sqlx::query!(
         r#"select d.id as did, d.username as du, d.created_at as dca, d.updated_at as dua, 
            p.id, p.username, p.created_at, p.updated_at, p.discord_user_id, p.is_subscriber 
@@ -57,18 +55,18 @@ where
         .map(|r| {
             (
                 DiscordUser {
-                    id: r.did.unwrap(),
-                    username: r.du.unwrap(),
-                    created_at: r.created_at.unwrap(),
-                    updated_at: r.updated_at.unwrap(),
+                    id: r.did,
+                    username: r.du,
+                    created_at: r.created_at,
+                    updated_at: r.updated_at,
                 },
                 PlexUser {
-                    id: r.id.unwrap(),
-                    username: r.username.unwrap(),
-                    created_at: r.created_at.unwrap(),
-                    updated_at: r.updated_at.unwrap(),
-                    discord_user_id: r.discord_user_id.unwrap(),
-                    is_subscriber: r.is_subscriber.unwrap(),
+                    id: r.id,
+                    username: r.username,
+                    created_at: r.created_at,
+                    updated_at: r.updated_at,
+                    discord_user_id: r.discord_user_id,
+                    is_subscriber: r.is_subscriber,
                 },
             )
         })

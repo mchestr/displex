@@ -3,11 +3,9 @@ use anyhow::Result;
 mod models;
 
 pub use models::*;
+use sqlx::PgConnection;
 
-pub async fn insert_token<'e, E>(conn: E, new: NewDiscordToken) -> Result<DiscordToken>
-where
-    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
-{
+pub async fn insert_token(conn: &mut PgConnection, new: NewDiscordToken) -> Result<DiscordToken> {
     Ok(sqlx::query_as!(
         DiscordToken,
         // language=PostgresSQL
@@ -25,10 +23,7 @@ where
     .await?)
 }
 
-pub async fn insert_user<'e, E>(conn: E, new: NewDiscordUser) -> Result<DiscordUser>
-where
-    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
-{
+pub async fn insert_user(conn: &mut PgConnection, new: NewDiscordUser) -> Result<DiscordUser> {
     Ok(sqlx::query_as!(
         DiscordUser,
         // language=PostgresSQL
@@ -43,10 +38,7 @@ where
     .await?)
 }
 
-pub async fn get_latest_token<'e, E>(conn: E, user_id: &str) -> Result<DiscordToken>
-where
-    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
-{
+pub async fn get_latest_token(conn: &mut PgConnection, user_id: &str) -> Result<DiscordToken> {
     Ok(sqlx::query_as!(
         DiscordToken,
         r#"select * from discord_tokens where discord_user_id = $1 order by expires_at desc limit 1"#,
