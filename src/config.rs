@@ -1,7 +1,7 @@
 use clap::Args;
 use derive_more::Display;
 
-use crate::{server::Server, bot::Bot};
+use crate::{server::Server, bot::DiscordBot};
 
 #[derive(Display, Clone)]
 #[display(fmt = "********")]
@@ -99,7 +99,7 @@ pub struct DiscordArgs {
     #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
     pub discord_server_id: String,
     #[arg(long, env = "DISPLEX_DISCORD_BOT", value_enum, default_value_t)]
-    pub discord_bot: Bot,
+    pub discord_bot: DiscordBot,
 
 }
 

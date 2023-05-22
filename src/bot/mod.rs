@@ -9,8 +9,8 @@ mod discord;
 
 
 #[derive(Debug, Copy, Clone, Default, Display, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum Bot {
-    Discord,
+pub enum DiscordBot {
+    Serenity,
     #[default]
     Disabled,
 }
@@ -22,11 +22,11 @@ pub trait DisplexBot {
 }
 
 #[async_trait]
-impl DisplexBot for Bot {
+impl DisplexBot for DiscordBot {
     async fn run(&self, rx: Receiver<()>, config: ServerArgs) {
         match self {
-            Bot::Discord => discord::run(rx, config).await,
-            Bot::Disabled => tracing::info!("bot disabled"),
+            DiscordBot::Serenity => discord::run(rx, config).await,
+            DiscordBot::Disabled => tracing::info!("bot disabled"),
         }
     }
 }
