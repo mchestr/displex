@@ -12,33 +12,6 @@ services:
     ports:
       - 5432:5432
 
-  mitm:
-    image: mitmproxy/mitmproxy
-    restart: always
-    ports:
-      - 8888:8080
-      - 8081:8081
-    command:
-      - mitmweb
-      - --web-host
-      - "0.0.0.0"
-      - --set 
-      - ssl-insecure=true
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    volumes:
-      - $HOME/.cloudflared:/etc/cloudflared
-    command:
-      - --url 
-      - displex:8080 
-      - --hostname 
-      - displex-dev 
-      - --name 
-      - displex-dev 
-      - --overwrite-dns
-      - run
-
   displex:
     build: .
     ports:
