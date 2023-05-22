@@ -23,7 +23,7 @@ pub async fn initialize_db_pool(database_url: &str) -> Result<PgPool> {
         // If you're deploying your application with multiple replicas, then the total
         // across all replicas should not exceed the Postgres connection limit.
         .max_connections(50)
-        .connect(&database_url)
+        .connect(database_url)
         .await
         .unwrap())
 }
