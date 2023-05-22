@@ -7,14 +7,12 @@ use crate::config::ServerArgs;
 
 mod discord;
 
-
 #[derive(Debug, Copy, Clone, Default, Display, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum DiscordBot {
     Serenity,
     #[default]
     Disabled,
 }
-
 
 #[async_trait]
 pub trait DisplexBot {

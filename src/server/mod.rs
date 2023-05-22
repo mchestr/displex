@@ -20,7 +20,7 @@ pub trait DisplexHttpServer {
 
 #[async_trait]
 impl DisplexHttpServer for Server {
-async fn run(&self, rx: tokio::sync::broadcast::Receiver<()>, config: ServerArgs) {
+    async fn run(&self, rx: tokio::sync::broadcast::Receiver<()>, config: ServerArgs) {
         match self {
             Server::Axum => axum::run(rx, config).await,
             Server::Disabled => tracing::info!("server disabled"),

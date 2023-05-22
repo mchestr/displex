@@ -4,7 +4,7 @@ use clap::{
 };
 use derive_more::Display;
 use displex::{
-    bot::{DisplexBot},
+    bot::DisplexBot,
     config::{
         RefreshArgs,
         ServerArgs,
@@ -12,7 +12,10 @@ use displex::{
     server::DisplexHttpServer,
     tasks,
 };
-use tokio::signal::unix::{SignalKind, signal};
+use tokio::signal::unix::{
+    signal,
+    SignalKind,
+};
 use tracing_subscriber::{
     fmt,
     prelude::*,
@@ -66,7 +69,7 @@ async fn main() -> std::io::Result<()> {
         Commands::Server(args) => {
             let bot_kill = tx.subscribe();
             tokio::join!(
-                args.http_server.run(rx, args.clone()), 
+                args.http_server.run(rx, args.clone()),
                 args.discord.discord_bot.run(bot_kill, args.clone())
             );
         }

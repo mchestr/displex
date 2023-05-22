@@ -17,7 +17,7 @@ use serenity::{
     },
     prelude::*,
 };
-use tokio::{sync::broadcast::Receiver};
+use tokio::sync::broadcast::Receiver;
 
 use crate::config::ServerArgs;
 
