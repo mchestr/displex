@@ -10,8 +10,8 @@ mod discord;
 
 #[derive(Debug, Copy, Clone, Default, Display, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum Bot {
-    #[default]
     Discord,
+    #[default]
     Disabled,
 }
 
