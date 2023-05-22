@@ -78,8 +78,10 @@ pub async fn run(config: ServerArgs) {
             .get::<MatchedPath>()
             .map(MatchedPath::as_str);
 
+        let request_id = uuid::Uuid::new_v4().to_string();
         info_span!(
-            "http_request",
+            "req",
+            id = request_id,
             method = ?request.method(),
             matched_path,
             some_other_field = tracing::field::Empty,
