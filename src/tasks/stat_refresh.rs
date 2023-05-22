@@ -38,7 +38,7 @@ use reqwest::header::HeaderValue;
 use sqlx::PgConnection;
 use tracing::instrument;
 
-pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
+pub async fn run(config: RefreshArgs) {
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.append("Accept", HeaderValue::from_static("application/json"));
 
@@ -89,7 +89,6 @@ pub async fn run(config: RefreshArgs) -> std::io::Result<()> {
             }
         }
     }
-    Ok(())
 }
 
 #[instrument(skip(config, pool, discord_client, tautulli_client))]

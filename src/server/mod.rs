@@ -10,18 +10,20 @@ pub mod axum;
 pub enum Server {
     #[default]
     Axum,
+    Disabled,
 }
 
 #[async_trait]
 pub trait DisplexHttpServer {
-    async fn run(&self, config: ServerArgs);
+    async fn run(&self, rx: tokio::sync::broadcast::Receiver<()>, config: ServerArgs);
 }
 
 #[async_trait]
 impl DisplexHttpServer for Server {
-    async fn run(&self, config: ServerArgs) {
+async fn run(&self, rx: tokio::sync::broadcast::Receiver<()>, config: ServerArgs) {
         match self {
-            Server::Axum => axum::run(config).await,
+            Server::Axum => axum::run(rx, config).await,
+            Server::Disabled => tracing::info!("server disabled"),
         }
     }
 }

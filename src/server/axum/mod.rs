@@ -16,6 +16,7 @@ use sqlx::{
     Pool,
     Postgres,
 };
+use tokio::sync::broadcast::Receiver;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
 
@@ -39,7 +40,7 @@ pub struct DisplexState {
     pub db: Pool<Postgres>,
 }
 
-pub async fn run(config: ServerArgs) {
+pub async fn run(mut kill: Receiver<()>, config: ServerArgs) {
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.append("Accept", HeaderValue::from_static("application/json"));
 
@@ -118,6 +119,11 @@ pub async fn run(config: ServerArgs) {
     tracing::info!("starting server on {}", &addr);
     axum::Server::bind(&addr.parse().unwrap())
         .serve(app.into_make_service())
+        .with_graceful_shutdown(async {
+            tokio::select! {
+                _ = kill.recv() => tracing::info!("shutting down http server..."),
+            }
+        })
         .await
         .unwrap();
 }

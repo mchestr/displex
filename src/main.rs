@@ -4,6 +4,7 @@ use clap::{
 };
 use derive_more::Display;
 use displex::{
+    bot::{DisplexBot},
     config::{
         RefreshArgs,
         ServerArgs,
@@ -11,6 +12,7 @@ use displex::{
     server::DisplexHttpServer,
     tasks,
 };
+use tokio::signal::unix::{SignalKind, signal};
 use tracing_subscriber::{
     fmt,
     prelude::*,
@@ -47,9 +49,30 @@ async fn main() -> std::io::Result<()> {
     let args = Cli::parse();
     tracing::info!("DisplexConfig({})", args);
 
+    let (tx, rx) = tokio::sync::broadcast::channel::<()>(1);
+    let kill = tx.clone();
+    tokio::spawn(async move {
+        let mut int = signal(SignalKind::interrupt()).expect("error");
+        let mut term = signal(SignalKind::terminate()).expect("error");
+
+        tokio::select! {
+            _ = int.recv() => tracing::info!("sigint received"),
+            _ = term.recv() => tracing::info!("sigterm received"),
+        };
+        kill.send(())
+    });
+
     match args.command {
-        Commands::Server(args) => args.http_server.run(args.clone()).await,
-        Commands::Refresh(args) => tasks::stat_refresh::run(args).await?,
+        Commands::Server(args) => {
+            let bot_kill = tx.subscribe();
+            tokio::join!(
+                args.http_server.run(rx, args.clone()), 
+                args.discord.discord_bot.run(bot_kill, args.clone())
+            );
+        }
+        Commands::Refresh(args) => {
+            tokio::join!(tasks::stat_refresh::run(args));
+        }
     };
     Ok(())
 }
