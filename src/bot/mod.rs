@@ -3,7 +3,7 @@ use clap::ValueEnum;
 use derive_more::Display;
 use tokio::sync::broadcast::Receiver;
 
-use crate::config::ServerArgs;
+use crate::config::{DiscordBotArgs};
 
 mod serenity;
 
@@ -16,12 +16,12 @@ pub enum DiscordBot {
 
 #[async_trait]
 pub trait DisplexBot {
-    async fn run(&self, rx: Receiver<()>, config: ServerArgs);
+    async fn run(&self, rx: Receiver<()>, config: DiscordBotArgs);
 }
 
 #[async_trait]
 impl DisplexBot for DiscordBot {
-    async fn run(&self, rx: Receiver<()>, config: ServerArgs) {
+    async fn run(&self, rx: Receiver<()>, config: DiscordBotArgs) {
         match self {
             DiscordBot::Serenity => serenity::run(rx, config).await,
             DiscordBot::Disabled => tracing::info!("bot disabled"),

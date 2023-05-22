@@ -1,7 +1,7 @@
 use clap::Args;
 use derive_more::Display;
 
-use crate::server::Server;
+use crate::{server::Server, bot::{DiscordBot}};
 
 #[derive(Display, Clone)]
 #[display(fmt = "********")]
@@ -205,4 +205,21 @@ pub struct SetMetadataArgs {
     pub discord_bot_token: Secret,
     #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
     pub accept_invalid_certs: bool,
+}
+
+
+#[derive(Args, Clone, Display)]
+#[display(fmt = "{{
+    }}")]
+pub struct DiscordBotArgs {
+    #[arg(long, env = "DISPLEX_DISCORD_BOT", value_enum, default_value_t)]
+    pub discord_bot: DiscordBot,
+
+    #[arg(
+        long,
+        env = "DISPLEX_DISCORD_BOT_TOKEN",
+        required = true,
+        hide_env_values = true
+    )]
+    pub discord_bot_token: Secret,
 }

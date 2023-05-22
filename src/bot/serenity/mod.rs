@@ -19,7 +19,7 @@ use serenity::{
 };
 use tokio::sync::broadcast::Receiver;
 
-use crate::config::ServerArgs;
+use crate::config::{DiscordBotArgs};
 
 struct Handler;
 
@@ -68,7 +68,7 @@ impl EventHandler for Handler {
     }
 }
 
-pub async fn run(mut kill: Receiver<()>, config: ServerArgs) {
+pub async fn run(mut kill: Receiver<()>, config: DiscordBotArgs) {
     // Configure the client with your Discord bot token in the environment.
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES
@@ -81,7 +81,7 @@ pub async fn run(mut kill: Receiver<()>, config: ServerArgs) {
     // automatically prepend your bot token with "Bot ", which is a requirement
     // by Discord for bot users.
     let mut client = Client::builder(
-        &config.discord.discord_bot_token.sensitive_string(),
+        &config.discord_bot_token.sensitive_string(),
         intents,
     )
     .event_handler(Handler)

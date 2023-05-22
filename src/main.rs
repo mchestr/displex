@@ -7,11 +7,11 @@ use displex::{
     config::{
         RefreshArgs,
         ServerArgs,
-        SetMetadataArgs,
+        SetMetadataArgs, DiscordBotArgs,
     },
     metadata,
     server::DisplexHttpServer,
-    tasks,
+    tasks, bot::DisplexBot,
 };
 use tokio::signal::unix::{
     signal,
@@ -36,6 +36,7 @@ enum Commands {
     Server(ServerArgs),
     Refresh(RefreshArgs),
     SetMetadata(SetMetadataArgs),
+    DiscordBot(DiscordBotArgs),
 }
 
 #[tokio::main]
@@ -70,6 +71,7 @@ async fn main() -> std::io::Result<()> {
         Commands::Server(args) => args.http_server.run(rx, args.clone()).await,
         Commands::Refresh(args) => tasks::stat_refresh::run(args).await,
         Commands::SetMetadata(args) => metadata::set_metadata(args).await,
+        Commands::DiscordBot(args) => args.discord_bot.run(rx, args.clone()).await,
     };
     Ok(())
 }
