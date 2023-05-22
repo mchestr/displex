@@ -66,7 +66,7 @@ async fn callback(
         .iter()
         .any(|d| d.client_identifier == state.config.plex.plex_server_id);
 
-    let token = state.discord_client.token(&discord_token).await?;
+    let token = state.discord_oauth_client.token(&discord_token).await?;
 
     let d_access_token = String::from(token.access_token().secret());
     let discord_user = state.discord_client.user(&d_access_token).await?;

@@ -27,7 +27,7 @@ async fn linked_role(
     mut session: WritableSession,
     State(state): State<DisplexState>,
 ) -> Result<impl IntoResponse, DisplexError> {
-    let (url, state) = state.discord_client.authorize_url();
+    let (url, state) = state.discord_oauth_client.authorize_url();
     session.insert(DISCORD_STATE, state.secret())?;
 
     Ok(Redirect::to(url.as_str()))

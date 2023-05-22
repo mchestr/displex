@@ -23,7 +23,12 @@ use tracing::info_span;
 use crate::{
     config::ServerArgs,
     db::{self,},
-    discord::client::DiscordClient,
+    discord::{
+        client::{
+            DiscordClient,
+            DiscordOAuth2Client,
+        },
+    },
     plex::client::PlexClient,
     tautulli::client::TautulliClient,
 };
@@ -35,6 +40,7 @@ mod routes;
 pub struct DisplexState {
     pub config: ServerArgs,
     pub discord_client: DiscordClient,
+    pub discord_oauth_client: DiscordOAuth2Client,
     pub plex_client: PlexClient,
     pub tautulli_client: TautulliClient,
     pub db: Pool<Postgres>,
@@ -54,11 +60,16 @@ pub async fn run(mut kill: Receiver<()>, config: ServerArgs) {
         .unwrap();
 
     let discord_client = DiscordClient::new(
-        &reqwest_client,
+        reqwest_client.clone(),
+        &config.discord.discord_client_id.sensitive_string(),
+        &config.discord.discord_bot_token.sensitive_string(),
+    );
+
+    let discord_oauth_client = DiscordOAuth2Client::new(
+        reqwest_client.clone(),
         &config.discord.discord_client_id.sensitive_string(),
         &config.discord.discord_client_secret.sensitive_string(),
-        &format!("https://{}/discord/callback", &config.hostname),
-        &config.discord.discord_bot_token.sensitive_string(),
+        Some(&format!("https://{}/discord/callback", &config.hostname)),
     );
 
     let plex_client = PlexClient::new(
@@ -109,6 +120,7 @@ pub async fn run(mut kill: Receiver<()>, config: ServerArgs) {
         .with_state(DisplexState {
             config,
             discord_client,
+            discord_oauth_client,
             plex_client,
             tautulli_client,
             db,

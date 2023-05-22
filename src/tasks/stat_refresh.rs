@@ -21,7 +21,10 @@ use crate::{
         plex::PlexUser,
     },
     discord::{
-        client::DiscordClient,
+        client::{
+            DiscordClient,
+            DiscordOAuth2Client,
+        },
         models::{
             ApplicationMetadata,
             ApplicationMetadataUpdate,
@@ -52,11 +55,16 @@ pub async fn run(config: RefreshArgs) {
         .unwrap();
 
     let discord_client = DiscordClient::new(
-        &reqwest_client,
+        reqwest_client.clone(),
         &config.discord.discord_client_id.sensitive_string(),
-        &config.discord.discord_client_secret.sensitive_string(),
-        &format!("https://{}/discord/callback", &config.hostname),
         &config.discord.discord_bot_token.sensitive_string(),
+    );
+
+    let discord_oauth_client = DiscordOAuth2Client::new(
+        reqwest_client.clone(),
+        &config.discord.discord_client_id.sensitive_string(),
+        &config.discord.discord_bot_token.sensitive_string(),
+        None,
     );
 
     let tautlli_client = TautulliClient::new(
@@ -77,6 +85,7 @@ pub async fn run(config: RefreshArgs) {
             &config,
             &mut conn,
             &discord_client,
+            &discord_oauth_client,
             &tautlli_client,
             &discord_user,
             &plex_user,
@@ -96,6 +105,7 @@ async fn refresh_user_stats(
     config: &RefreshArgs,
     pool: &mut PgConnection,
     discord_client: &DiscordClient,
+    discord_oauth_client: &DiscordOAuth2Client,
     tautulli_client: &TautulliClient,
     discord_user: &DiscordUser,
     plex_user: &PlexUser,
@@ -106,7 +116,7 @@ async fn refresh_user_stats(
     let discord_token = get_latest_token(pool, &discord_user_id).await.unwrap();
 
     let discord_token =
-        maybe_refresh_token(pool, discord_client, discord_user, discord_token).await?;
+        maybe_refresh_token(pool, discord_oauth_client, discord_user, discord_token).await?;
 
     let watch_stats = tautulli_client
         .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
@@ -134,13 +144,13 @@ async fn refresh_user_stats(
 
 async fn maybe_refresh_token(
     conn: &mut PgConnection,
-    discord_client: &DiscordClient,
+    discord_oauth_client: &DiscordOAuth2Client,
     discord_user: &DiscordUser,
     discord_token: DiscordToken,
 ) -> Result<DiscordToken> {
     if discord_token.expires_at < chrono::Utc::now() + chrono::Duration::days(-1) {
         tracing::info!("refreshing token for user {}", &discord_user.username);
-        let new_token = discord_client
+        let new_token = discord_oauth_client
             .refresh_token(&discord_token.refresh_token)
             .await?;
 
