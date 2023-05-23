@@ -10,10 +10,14 @@
 name: Create and publish a Docker image
 
 on:
-  create:
-    branches: ['main']
   push:
     branches: ['main']
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'docker-compose-yaml'
+      - '.example.env'
+      - '.gitignore'
   release:
     types: [published]
 
