@@ -94,7 +94,6 @@ pub async fn setup(
         .find(|&r| r.name.eq("@everyone"))
         .ok_or_else(|| anyhow::anyhow!("unable to find @everyone role"))?;
 
-    let _channels = client.get_channels(config.discord_server_id).await.unwrap();
     let everyone_perms = Permissions::VIEW_CHANNEL | Permissions::CONNECT;
     let sub_perms = Permissions::VIEW_CHANNEL;
     let bot_perms = Permissions::VIEW_CHANNEL
