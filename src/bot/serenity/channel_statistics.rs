@@ -205,7 +205,7 @@ async fn update_channel_name(client: &Arc<Http>, channel: &GuildChannel, new_nam
         map.insert("name".into(), new_name.into());
         client.edit_channel(channel.id.0, &map, None).await.unwrap();
     } else {
-        tracing::info!("channel name '{new_name}' is the same, skipping...");
+        tracing::info!("channel name is the same, skipping...");
     }
 }
 
