@@ -2,6 +2,15 @@
 
 Discord & Plex & Tautulli (& more maybe one day) application.
 
+There are 2 parts to this project at the moment, the server and bot.
+
+1. The server is used to authenitcate Discord users to your backend Plex installation. 
+2. The bot is used to refresh Plex stats on Discord. The bot only has the `~Ping` command at the moment, but will probably expand it.
+
+The README is a bit lacking, but you can head over to my [k8s cluster](https://github.com/mchestr/home-cluster/tree/main/kubernetes/apps/default/displex) to see how I deployed it via Helm.
+
+Also I am sure the Rust could be much better in this project, and will clean it up as I go! No tests either, so sweet!
+
 ## Features
 
 ### Discord Linked Role
@@ -74,9 +83,8 @@ DISPLEX_TAUTULLI_URL="https://tautulli.example.com"
 | DISPLEX_DISCORD_BOT_ROLE_NAME            | Name of the Discord role for the Bot                                                                    | no       | Bot            |
 | DISPLEX_DISCORD_BOT_LIB_TV_EPISODES_NAME | Name of the Discord role for subscribers                                                                | no       | Subscriber     |
 | DISPLEX_DISCORD_BOT_STATUS               | Name of the watching activity for the bot                                                               | no       | DisPlex        |
-| DISPLEX_DISCORD_STAT_UPDATE_INTERVAL          | How often to update Discord channels                                                                    | no       | 60s            |
-| DISPLEX_DISCORD_USER_UPDATE_INTERVAL          | How often to update Discord users metadata                                                                    | no       | 3600s            |
-
+| DISPLEX_DISCORD_STAT_UPDATE_INTERVAL     | How often to update Discord channels                                                                    | no       | 60s            |
+| DISPLEX_DISCORD_USER_UPDATE_INTERVAL     | How often to update Discord users metadata                                                              | no       | 3600s          |
 | DISPLEX_DISCORD_BOT                      | Can be used to disable the bot which refreshes Discord channels                                         | no       | Serenity/None  |
 | DISPLEX_HTTP_SERVER                      | Can be used to disable the http server used for linking roles Discord                                   | no       | Axum/None      |
 
