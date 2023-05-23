@@ -3,7 +3,10 @@ use reqwest::Url;
 
 use super::models::{
     ApiResponse,
+    GetActivity,
+    GetLibrary,
     QueryDays,
+    ServerStatus,
     UserWatchStat,
 };
 
@@ -50,6 +53,43 @@ impl TautulliClient {
 
         let url = Url::parse_with_params(&format!("{}/api/v2", self.url), &params)?;
         let response: ApiResponse<Vec<UserWatchStat>> =
+            self.client.get(url).send().await?.json().await?;
+
+        Ok(response.response.data)
+    }
+
+    pub async fn server_status(&self) -> Result<ServerStatus> {
+        let params = vec![
+            ("apikey", self.api_key.clone()),
+            ("cmd", "server_status".into()),
+        ];
+
+        let url = Url::parse_with_params(&format!("{}/api/v2", self.url), &params)?;
+        let response: ApiResponse<ServerStatus> = self.client.get(url).send().await?.json().await?;
+
+        Ok(response.response.data)
+    }
+
+    pub async fn get_activity(&self) -> Result<GetActivity> {
+        let params = vec![
+            ("apikey", self.api_key.clone()),
+            ("cmd", "get_activity".into()),
+        ];
+
+        let url = Url::parse_with_params(&format!("{}/api/v2", self.url), &params)?;
+        let response: ApiResponse<GetActivity> = self.client.get(url).send().await?.json().await?;
+
+        Ok(response.response.data)
+    }
+
+    pub async fn get_libraries(&self) -> Result<Vec<GetLibrary>> {
+        let params = vec![
+            ("apikey", self.api_key.clone()),
+            ("cmd", "get_libraries".into()),
+        ];
+
+        let url = Url::parse_with_params(&format!("{}/api/v2", self.url), &params)?;
+        let response: ApiResponse<Vec<GetLibrary>> =
             self.client.get(url).send().await?.json().await?;
 
         Ok(response.response.data)

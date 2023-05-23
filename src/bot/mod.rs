@@ -3,7 +3,7 @@ use clap::ValueEnum;
 use derive_more::Display;
 use tokio::sync::broadcast::Receiver;
 
-use crate::config::{DiscordBotArgs};
+use crate::config::DiscordBotArgs;
 
 mod serenity;
 

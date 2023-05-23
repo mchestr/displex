@@ -1,3 +1,6 @@
+use std::time::Duration;
+
+use axum::http::HeaderValue;
 use serenity::{
     async_trait,
     framework::{
@@ -14,14 +17,23 @@ use serenity::{
     model::{
         channel::Message,
         gateway::Ready,
+        prelude::Activity,
     },
     prelude::*,
 };
 use tokio::sync::broadcast::Receiver;
 
-use crate::config::{DiscordBotArgs};
 
-struct Handler;
+use crate::{
+    config::{DiscordBotArgs},
+    tautulli::client::TautulliClient,
+};
+
+mod channel_statistics;
+
+struct Handler {
+    config: DiscordBotArgs,
+}
 
 #[group]
 #[commands(ping)]
@@ -59,8 +71,9 @@ impl EventHandler for Handler {
     // private channels, and more.
     //
     // In this case, just print what the current user's username is.
-    async fn ready(&self, _: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
+    async fn ready(&self, ctx: Context, _: Ready) {
+        ctx.set_activity(Activity::watching(&self.config.discord_bot_status))
+            .await;
     }
 
     async fn unknown(&self, _ctx: Context, _name: String, _raw: Value) {
@@ -69,31 +82,21 @@ impl EventHandler for Handler {
 }
 
 pub async fn run(mut kill: Receiver<()>, config: DiscordBotArgs) {
-    // Configure the client with your Discord bot token in the environment.
-    // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
     let framework = StandardFramework::new().group(&GENERAL_GROUP);
 
-    // Create a new instance of the Client, logging in as a bot. This will
-    // automatically prepend your bot token with "Bot ", which is a requirement
-    // by Discord for bot users.
-    let mut client = Client::builder(
-        &config.discord_bot_token.sensitive_string(),
-        intents,
-    )
-    .event_handler(Handler)
-    .framework(framework)
-    .await
-    .expect("Err creating client");
+    let mut client = Client::builder(&config.discord_bot_token.sensitive_string(), intents)
+        .event_handler(Handler {
+            config: config.clone(),
+        })
+        .framework(framework)
+        .await
+        .expect("Err creating client");
 
-    // Here we clone a lock to the Shard Manager, and then move it into a new
-    // thread. The thread will unlock the manager and print shards' status on a
-    // loop.
     let manager = client.shard_manager.clone();
-
     tokio::spawn(async move {
         tokio::select! {
             _ = kill.recv() => tracing::info!("shutting down bot..."),
@@ -102,7 +105,32 @@ pub async fn run(mut kill: Receiver<()>, config: DiscordBotArgs) {
         lock.shutdown_all().await;
     });
 
-    // Start two shards. Note that there is an ~5 second ratelimit period
-    // between when one shard can start after another.
+    let mut default_headers = reqwest::header::HeaderMap::new();
+    default_headers.append("Accept", HeaderValue::from_static("application/json"));
+
+    let reqwest_client = reqwest::ClientBuilder::new()
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(30))
+        .pool_idle_timeout(Duration::from_secs(90))
+        .default_headers(default_headers)
+        .build()
+        .unwrap();
+
+    let tautulli_client = TautulliClient::new(
+        &reqwest_client,
+        &config.tautulli.tautulli_url,
+        &config.tautulli.tautulli_api_key.sensitive_string(),
+    );
+
+    channel_statistics::setup(
+        config.discord_stat_update_interval.as_secs().try_into().unwrap(),
+        client.cache_and_http.clone(),
+        tautulli_client,
+        config.channel_config,
+    )
+    .await
+    .unwrap();
+
+
     client.start().await.unwrap();
 }

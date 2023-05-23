@@ -1,7 +1,12 @@
 use clap::Args;
+use humantime::Duration;
+
 use derive_more::Display;
 
-use crate::{server::Server, bot::{DiscordBot}};
+use crate::{
+    bot::DiscordBot,
+    server::Server,
+};
 
 #[derive(Display, Clone)]
 #[display(fmt = "********")]
@@ -97,7 +102,7 @@ pub struct DiscordArgs {
     )]
     pub discord_bot_token: Secret,
     #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
-    pub discord_server_id: String,
+    pub discord_server_id: u64,
 }
 
 #[derive(Args, Clone, Display)]
@@ -157,7 +162,6 @@ pub struct TautulliArgs {
 #[derive(Args, Clone, Display)]
 #[display(fmt = "{{
         application_name: {application_name},
-        hostname: {hostname},
         accept_invalid_certs: {accept_invalid_certs},
         discord: {discord},
         tautulli: {tautulli},
@@ -166,9 +170,6 @@ pub struct TautulliArgs {
 pub struct RefreshArgs {
     #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
     pub application_name: String,
-
-    #[arg(long, env = "DISPLEX_HOSTNAME", required = true)]
-    pub hostname: String,
 
     #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
     pub accept_invalid_certs: bool,
@@ -207,13 +208,34 @@ pub struct SetMetadataArgs {
     pub accept_invalid_certs: bool,
 }
 
-
 #[derive(Args, Clone, Display)]
 #[display(fmt = "{{
+    discord_bot: {discord_bot},
+    discord_bot_status: {discord_bot_status},
+    discord_update_interval: {discord_stat_update_interval},
+    discord_user_update_interval: {discord_user_update_interval},
+    discord_bot_token: {discord_bot_token},
+    tautulli: {tautulli},
+    channel_config: {channel_config:#?},
     }}")]
 pub struct DiscordBotArgs {
+    #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
+    pub application_name: String,
+
+    #[arg(long, env = "DISPLEX_HOSTNAME", required = true)]
+    pub hostname: String,
+
     #[arg(long, env = "DISPLEX_DISCORD_BOT", value_enum, default_value_t)]
     pub discord_bot: DiscordBot,
+
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STATUS", default_value = "DisPlex")]
+    pub discord_bot_status: String,
+
+    #[arg(long, env = "DISPLEX_DISCORD_STAT_UPDATE_INTERVAL", default_value = "60s")]
+    pub discord_stat_update_interval: Duration,
+
+    #[arg(long, env = "DISPLEX_DISCORD_USER_UPDATE_INTERVAL", default_value = "60s")]
+    pub discord_user_update_interval: Duration,
 
     #[arg(
         long,
@@ -222,4 +244,55 @@ pub struct DiscordBotArgs {
         hide_env_values = true
     )]
     pub discord_bot_token: Secret,
+
+    #[clap(flatten)]
+    pub tautulli: TautulliArgs,
+
+    #[clap(flatten)]
+    pub channel_config: UpdateChannelConfig,
+
+    #[clap(flatten)]
+    pub database: DatabaseArgs,
+}
+
+
+#[derive(Args, Clone, Debug)]
+pub struct UpdateChannelConfig {
+    #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
+    pub discord_server_id: u64,
+    #[arg(long, default_value = "Bot", env = "DISPLEX_DISCORD_BOT_ROLE_NAME")]
+    pub bot_role_name: String,
+    #[arg(long, default_value = "Subscriber", env = "DISPLEX_DISCORD_SUBSCRIBER_ROLE_NAME")]
+    pub subscriber_role_name: String,
+
+    #[clap(flatten)]
+    pub stats_category: Option<StatCategoryConfig>,
+    #[clap(flatten)]
+    pub library_category: Option<LibraryCategoryConfig>,
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct StatCategoryConfig {
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_CATEGORY_NAME")]
+    pub stat_category_name: String,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_STATUS_NAME")]
+    pub status_name: Option<String>,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_STREAM_NAME")]
+    pub stream_name: Option<String>,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_TRANSCODE_NAME")]
+    pub transcode_name: Option<String>,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_BANDWIDTH_NAME")]
+    pub bandwidth_name: Option<String>,
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct LibraryCategoryConfig {
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_LIB_CATEGORY_NAME")]
+    pub lib_category_name: String,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_LIB_MOVIES_NAME")]
+    pub movies_name: Option<String>,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_LIB_TV_SHOWS_NAME")]
+    pub tv_shows_name: Option<String>,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_LIB_TV_EPISODES_NAME")]
+    pub tv_episodes_name: Option<String>,
 }

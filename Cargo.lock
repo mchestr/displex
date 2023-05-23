@@ -817,6 +817,7 @@ dependencies = [
  "clap",
  "derive_more",
  "dotenvy",
+ "humantime",
  "oauth2",
  "reqwest",
  "serde",
@@ -825,6 +826,7 @@ dependencies = [
  "serenity",
  "sqlx",
  "tokio",
+ "tokio_schedule",
  "tower-http",
  "tracing",
  "tracing-actix-web",
@@ -1220,6 +1222,12 @@ name = "httpdate"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
+
+[[package]]
+name = "humantime"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
@@ -2626,6 +2634,16 @@ dependencies = [
  "pin-project-lite",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "tokio_schedule"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b91f371e5032da918342685fde2ca040710d38aaec985378e121055fbf031e9"
+dependencies = [
+ "chrono",
+ "tokio",
 ]
 
 [[package]]

@@ -4,14 +4,16 @@ use clap::{
 };
 use derive_more::Display;
 use displex::{
+    bot::DisplexBot,
     config::{
+        DiscordBotArgs,
         RefreshArgs,
         ServerArgs,
-        SetMetadataArgs, DiscordBotArgs,
+        SetMetadataArgs,
     },
     metadata,
     server::DisplexHttpServer,
-    tasks, bot::DisplexBot,
+    tasks,
 };
 use tokio::signal::unix::{
     signal,
@@ -53,7 +55,7 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
 
     let args = Cli::parse();
-    tracing::info!("DisplexConfig({})", args);
+    tracing::info!("DisplexConfig({:#})", args);
 
     let (tx, rx) = tokio::sync::broadcast::channel::<()>(1);
     tokio::spawn(async move {
