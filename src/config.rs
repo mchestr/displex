@@ -231,10 +231,18 @@ pub struct DiscordBotArgs {
     #[arg(long, env = "DISPLEX_DISCORD_BOT_STATUS", default_value = "DisPlex")]
     pub discord_bot_status: String,
 
-    #[arg(long, env = "DISPLEX_DISCORD_STAT_UPDATE_INTERVAL", default_value = "60s")]
+    #[arg(
+        long,
+        env = "DISPLEX_DISCORD_STAT_UPDATE_INTERVAL",
+        default_value = "60s"
+    )]
     pub discord_stat_update_interval: Duration,
 
-    #[arg(long, env = "DISPLEX_DISCORD_USER_UPDATE_INTERVAL", default_value = "60s")]
+    #[arg(
+        long,
+        env = "DISPLEX_DISCORD_USER_UPDATE_INTERVAL",
+        default_value = "60s"
+    )]
     pub discord_user_update_interval: Duration,
 
     #[arg(
@@ -255,14 +263,17 @@ pub struct DiscordBotArgs {
     pub database: DatabaseArgs,
 }
 
-
 #[derive(Args, Clone, Debug)]
 pub struct UpdateChannelConfig {
     #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
     pub discord_server_id: u64,
     #[arg(long, default_value = "Bot", env = "DISPLEX_DISCORD_BOT_ROLE_NAME")]
     pub bot_role_name: String,
-    #[arg(long, default_value = "Subscriber", env = "DISPLEX_DISCORD_SUBSCRIBER_ROLE_NAME")]
+    #[arg(
+        long,
+        default_value = "Subscriber",
+        env = "DISPLEX_DISCORD_SUBSCRIBER_ROLE_NAME"
+    )]
     pub subscriber_role_name: String,
 
     #[clap(flatten)]
@@ -275,8 +286,6 @@ pub struct UpdateChannelConfig {
 pub struct StatCategoryConfig {
     #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_CATEGORY_NAME")]
     pub stat_category_name: String,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_STATUS_NAME")]
-    pub status_name: Option<String>,
     #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_STREAM_NAME")]
     pub stream_name: Option<String>,
     #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_TRANSCODE_NAME")]

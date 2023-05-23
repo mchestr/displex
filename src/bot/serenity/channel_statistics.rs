@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    sync::Arc,
+    time::Duration,
+};
 
 use serde_json::{
     Map,
@@ -16,18 +19,21 @@ use serenity::{
     },
     CacheAndHttp,
 };
-use tokio_schedule::{
-    every,
-    Job,
+use tokio::{
+    select,
+    time,
 };
 
-use crate::{tautulli::{
-    client::TautulliClient,
-    models::{
-        GetActivity,
-        GetLibrary,
+use crate::{
+    config::UpdateChannelConfig,
+    tautulli::{
+        client::TautulliClient,
+        models::{
+            GetActivity,
+            GetLibrary,
+        },
     },
-}, config::UpdateChannelConfig};
+};
 
 #[derive(Clone, Debug)]
 struct CreateChannelConfig {
@@ -58,15 +64,22 @@ struct LibraryStatCategoryChannels {
 }
 
 pub async fn setup(
-    interval_seconds: u32,
+    kill: tokio::sync::broadcast::Receiver<()>,
+    interval_seconds: Duration,
     cache_and_http_client: Arc<CacheAndHttp>,
     tautulli_client: TautulliClient,
     config: UpdateChannelConfig,
 ) -> anyhow::Result<()> {
-    tracing::info!("refreshing channel statistics every {}s", interval_seconds);
+    tracing::info!(
+        "refreshing channel statistics every {}s",
+        interval_seconds.as_secs()
+    );
     let client = cache_and_http_client.http.clone();
 
-    let roles = client.get_guild_roles(config.discord_server_id).await.unwrap();
+    let roles = client
+        .get_guild_roles(config.discord_server_id)
+        .await
+        .unwrap();
     let bot_role = roles
         .iter()
         .find(|&r| r.name.eq(&config.bot_role_name))
@@ -81,7 +94,7 @@ pub async fn setup(
         .find(|&r| r.name.eq("@everyone"))
         .ok_or_else(|| anyhow::anyhow!("unable to find @everyone role"))?;
 
-    let channels = client.get_channels(config.discord_server_id).await.unwrap();
+    let _channels = client.get_channels(config.discord_server_id).await.unwrap();
     let everyone_perms = Permissions::VIEW_CHANNEL | Permissions::CONNECT;
     let sub_perms = Permissions::VIEW_CHANNEL;
     let bot_perms = Permissions::VIEW_CHANNEL
@@ -106,55 +119,58 @@ pub async fn setup(
 
     let permissions = vec![bot_permissions, sub_permissions, everyone_permissions];
 
-    let stats_category_channels = generate_stats_categories(
-        &client,
-        &config,
-        channels.clone(),
-        permissions.clone(),
-    )
-    .await;
-
-    let lib_category_channels =
-        generate_library_categories(&client, &config, channels, permissions.clone()).await;
-
-    update_library_stats(&client, &tautulli_client, &lib_category_channels).await;
-    update_stats(&client, &tautulli_client, &stats_category_channels).await;
-    tokio::spawn(every(interval_seconds).seconds().perform(move || {
-        let http_client = cache_and_http_client.http.clone();
-        let tautulli_client = tautulli_client.clone();
-        let config = config.clone();
-        let permissions = permissions.clone();
-        async move {
-            let channels = http_client.get_channels(config.discord_server_id).await.unwrap();
-            let stats_category_channels = generate_stats_categories(
-                &http_client,
-                &config,
-                channels.clone(),
-                permissions.clone(),
-            )
-            .await;
-            update_stats(&http_client, &tautulli_client, &stats_category_channels).await;
-
-            let lib_category_channels =
-                generate_library_categories(&http_client, &config, channels, permissions).await;
-            update_library_stats(&http_client, &tautulli_client, &lib_category_channels).await;
-        }
-    }));
+    tokio::spawn(periodic_refresh(
+        kill,
+        interval_seconds,
+        client.clone(),
+        tautulli_client.clone(),
+        config.clone(),
+        permissions,
+    ));
     Ok(())
+}
+
+async fn periodic_refresh(
+    mut kill: tokio::sync::broadcast::Receiver<()>,
+    interval: std::time::Duration,
+    client: Arc<Http>,
+    tautulli_client: TautulliClient,
+    config: UpdateChannelConfig,
+    permissions: Vec<Map<String, Value>>,
+) {
+    let mut interval = time::interval(interval);
+    loop {
+        select! {
+            _ = interval.tick() => {
+                let channels = client.get_channels(config.discord_server_id).await.unwrap();
+                let stats_category_channels =
+                    generate_stats_categories(&client, &config, &channels, &permissions).await;
+                update_stats(&client, &tautulli_client, &stats_category_channels).await;
+
+                let lib_category_channels =
+                    generate_library_categories(&client, &config, &channels, &permissions).await;
+                update_library_stats(&client, &tautulli_client, &lib_category_channels).await;
+            }
+            _ = kill.recv() => {
+                tracing::info!("shutting down periodic job...");
+                return;
+            },
+        }
+    }
 }
 
 async fn get_or_create_stat_category(
     client: &Arc<Http>,
-    channels: Vec<GuildChannel>,
+    channels: &[GuildChannel],
     create: CreateChannelConfig,
 ) -> GuildChannel {
     match channels
-        .into_iter()
+        .iter()
         .find(|c| c.name.starts_with(&create.name_prefix))
     {
         Some(channel) => {
             tracing::info!("found channel: {}", channel.name);
-            channel
+            channel.to_owned()
         }
         None => {
             tracing::info!("creating channel: {}", create.name_prefix);
@@ -219,21 +235,23 @@ async fn channel_update_stats_status(
     tautulli_client: &TautulliClient,
     channel: &GuildChannel,
 ) {
-    let server_status = tautulli_client.server_status().await.unwrap();
-    let name_split: Vec<&str> = channel.name.split(':').collect();
-    let prefix = name_split[0];
-
-    let new_name = format!(
-        "{prefix}: {}",
-        match server_status.connected {
-            true => "Online 🟢",
-            false => "Offline 🔴",
+    let server_status = match tautulli_client.server_status().await {
+        Ok(result) => match result.connected {
+            true => "🟢",
+            false => "🔴",
+        },
+        Err(why) => {
+            tracing::error!("failed to fetch server status: {why}");
+            "🟡"
         }
-    );
+    };
+    let name_split: Vec<&str> = channel.name.split('(').collect();
+    let prefix = name_split[0].trim_start();
+
+    let new_name = format!("{prefix} ({server_status})",);
     update_channel_name(client, channel, &new_name).await;
 }
 
-#[tracing::instrument(skip(client, channel))]
 async fn channel_update_stats_streams(
     client: &Arc<Http>,
     data: &GetActivity,
@@ -246,7 +264,6 @@ async fn channel_update_stats_streams(
     update_channel_name(client, channel, &new_name).await;
 }
 
-#[tracing::instrument(skip(client, channel))]
 async fn channel_update_stats_transcodes(
     client: &Arc<Http>,
     data: &GetActivity,
@@ -341,8 +358,8 @@ async fn update_tv_episodes(client: &Arc<Http>, data: &GetLibrary, channel: &Gui
 async fn generate_stats_categories(
     client: &Arc<Http>,
     update_config: &UpdateChannelConfig,
-    channels: Vec<GuildChannel>,
-    permissions: Vec<Map<String, Value>>,
+    channels: &[GuildChannel],
+    permissions: &[Map<String, Value>],
 ) -> StatCategoryChannels {
     {
         let mut stat_channels = StatCategoryChannels {
@@ -352,47 +369,31 @@ async fn generate_stats_categories(
             Some(config) => {
                 let category = get_or_create_stat_category(
                     client,
-                    channels.clone(),
+                    channels,
                     CreateChannelConfig {
                         name_prefix: String::from(&config.stat_category_name),
                         position: Some(5),
                         type_: ChannelType::Category,
-                        permissions: permissions.clone(),
+                        permissions: permissions.to_owned(),
                         parent_channel: None,
                         server_id: update_config.discord_server_id,
                     },
                 )
                 .await;
-
-                if let Some(name) = &config.status_name {
-                    stat_channels.status = Some(
-                        get_or_create_stat_category(
-                            client,
-                            channels.clone(),
-                            CreateChannelConfig {
-                                name_prefix: String::from(name),
-                                position: Some(0),
-                                permissions: permissions.clone(),
-                                type_: ChannelType::Voice,
-                                parent_channel: Some(category.id.0),
-                                server_id: update_config.discord_server_id,
-                            },
-                        )
-                        .await,
-                    );
-                };
+                let category_id = category.id.0;
+                stat_channels.status = Some(category);
 
                 if let Some(name) = &config.stream_name {
                     stat_channels.streams = Some(
                         get_or_create_stat_category(
                             client,
-                            channels.clone(),
+                            channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
                                 position: Some(0),
-                                permissions: permissions.clone(),
+                                permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
-                                parent_channel: Some(category.id.0),
+                                parent_channel: Some(category_id),
                                 server_id: update_config.discord_server_id,
                             },
                         )
@@ -404,13 +405,13 @@ async fn generate_stats_categories(
                     stat_channels.transcodes = Some(
                         get_or_create_stat_category(
                             client,
-                            channels.clone(),
+                            channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
                                 position: Some(0),
-                                permissions: permissions.clone(),
+                                permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
-                                parent_channel: Some(category.id.0),
+                                parent_channel: Some(category_id),
                                 server_id: update_config.discord_server_id,
                             },
                         )
@@ -422,13 +423,13 @@ async fn generate_stats_categories(
                     stat_channels.bandwidth = Some(
                         get_or_create_stat_category(
                             client,
-                            channels.clone(),
+                            channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
                                 position: Some(0),
-                                permissions: permissions.clone(),
+                                permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
-                                parent_channel: Some(category.id.0),
+                                parent_channel: Some(category_id),
                                 server_id: update_config.discord_server_id,
                             },
                         )
@@ -446,8 +447,8 @@ async fn generate_stats_categories(
 async fn generate_library_categories(
     client: &Arc<Http>,
     update_config: &UpdateChannelConfig,
-    channels: Vec<GuildChannel>,
-    permissions: Vec<Map<String, Value>>,
+    channels: &[GuildChannel],
+    permissions: &[Map<String, Value>],
 ) -> LibraryStatCategoryChannels {
     {
         let mut lib_channels = LibraryStatCategoryChannels {
@@ -457,12 +458,12 @@ async fn generate_library_categories(
             Some(config) => {
                 let category = get_or_create_stat_category(
                     client,
-                    channels.clone(),
+                    channels,
                     CreateChannelConfig {
                         name_prefix: String::from(&config.lib_category_name),
                         position: Some(5),
                         type_: ChannelType::Category,
-                        permissions: permissions.clone(),
+                        permissions: permissions.to_owned(),
                         parent_channel: None,
                         server_id: update_config.discord_server_id,
                     },
@@ -473,11 +474,11 @@ async fn generate_library_categories(
                     lib_channels.movies = Some(
                         get_or_create_stat_category(
                             client,
-                            channels.clone(),
+                            channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
                                 position: Some(0),
-                                permissions: permissions.clone(),
+                                permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category.id.0),
                                 server_id: update_config.discord_server_id,
@@ -491,11 +492,11 @@ async fn generate_library_categories(
                     lib_channels.tv_shows = Some(
                         get_or_create_stat_category(
                             client,
-                            channels.clone(),
+                            channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
                                 position: Some(0),
-                                permissions: permissions.clone(),
+                                permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category.id.0),
                                 server_id: update_config.discord_server_id,
@@ -509,11 +510,11 @@ async fn generate_library_categories(
                     lib_channels.tv_episodes = Some(
                         get_or_create_stat_category(
                             client,
-                            channels.clone(),
+                            channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
                                 position: Some(0),
-                                permissions: permissions.clone(),
+                                permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category.id.0),
                                 server_id: update_config.discord_server_id,

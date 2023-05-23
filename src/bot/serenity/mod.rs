@@ -4,11 +4,7 @@ use axum::http::HeaderValue;
 use serenity::{
     async_trait,
     framework::{
-        standard::{
-            macros::{
-                group,
-            },
-        },
+        standard::macros::group,
         StandardFramework,
     },
     json::Value,
@@ -20,9 +16,8 @@ use serenity::{
 };
 use tokio::sync::broadcast::Receiver;
 
-
 use crate::{
-    config::{DiscordBotArgs},
+    config::DiscordBotArgs,
     tautulli::client::TautulliClient,
 };
 
@@ -67,6 +62,7 @@ pub async fn run(mut kill: Receiver<()>, config: DiscordBotArgs) {
         .expect("Err creating client");
 
     let manager = client.shard_manager.clone();
+    let stat_kill = kill.resubscribe();
     tokio::spawn(async move {
         tokio::select! {
             _ = kill.recv() => tracing::info!("shutting down bot..."),
@@ -93,14 +89,14 @@ pub async fn run(mut kill: Receiver<()>, config: DiscordBotArgs) {
     );
 
     channel_statistics::setup(
-        config.discord_stat_update_interval.as_secs().try_into().unwrap(),
+        stat_kill,
+        config.discord_stat_update_interval.into(),
         client.cache_and_http.clone(),
         tautulli_client,
         config.channel_config,
     )
     .await
     .unwrap();
-
 
     client.start().await.unwrap();
 }
