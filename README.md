@@ -1,57 +1,59 @@
+<div align="center">
+
 # DisPlex
 
-Discord & Plex & Tautulli (& more maybe one day) application.
+A Discord, Plex, & Tautulli Bot that displays live data in Discord + allows users to verify their identity with your Plex server.
 
-There are 2 parts to this project at the moment, the server and bot.
+[![Release](https://img.shields.io/github/v/release/mchestr/displex?color=blue&include_prereleases&label=version&style=flat-square)](https://github.com/mchestr/displex/releases)
+[![Licence](https://img.shields.io/github/license/mchestr/displex?style=flat-square&color=blue)](https://opensource.org/licenses/MIT)
 
-1. The server is used to authenitcate Discord users to your backend Plex installation. 
-2. The bot is used to refresh Plex stats on Discord. The bot only has the `~Ping` command at the moment, but will probably expand it.
+<img src="https://raw.githubusercontent.com/mchestr/displex/assets/images/displex.jpg" width="50%" height="50%" alt="logo">
 
-The README is a bit lacking, but you can head over to my [k8s cluster](https://github.com/mchestr/home-cluster/tree/main/kubernetes/apps/default/displex) to see how I deployed it via Helm.
+</div>
 
-Also I am sure the Rust could be much better in this project, and will clean it up as I go! No tests either, so sweet!
+# Features
 
-## Features
+DisPlex uses the Tautulli API to pull information from Tautulli and display them in a Discord channel, including:
 
-### Discord Linked Role
+### Overview:
 
-You can use this bot to create a [Discord Linked Roles](https://support.discord.com/hc/en-us/articles/8063233404823-Connections-Linked-Roles-Community-Members) which verifies the user has access to your Plex instance.
-It requires you to deploy the app behind proper HTTPS certificates, [cloudflared](https://github.com/cloudflare/cloudflared) can be used during developement to easily issue valid SSL certs in testing.
+* Status of Plex server
+* Number of current streams
+* Number of transcoding streams
+* Total bandwidth
+* Library item counts
+* [Discord Linked Roles](https://support.discord.com/hc/en-us/articles/8063233404823-Connections-Linked-Roles-Community-Members) 
 
-## Getting Started
+#### Channel Stats
 
-1. [Create a Discord Application](https://discord.com/developers/applications)
-1. Generate the configuration.
+<img src="https://raw.githubusercontent.com/mchestr/displex/assets/images/stats.png" width="25%" height="25%" alt="logo">
 
-```bash
-> cat .env
-# General App Settings
-DISPLEX_HOSTNAME="displex.example.com"
-DISPLEX_APPLICATION_NAME="MyPlex"
-# Can generate with `openssl rand -hex 32`
-DISPLEX_SESSION_SECRET_KEY="secret"
-DISPLEX_ACCEPT_INVALID_CERTS=false  # optional
+#### User Metadata
 
-# visit https://<plex>:32400/identity the value of 'machineIdentifier'
-DISPLEX_PLEX_SERVER_ID="plex-server-id"
+<img src="https://raw.githubusercontent.com/mchestr/displex/assets/images/meta.png" width="25%" height="25%" alt="logo">
 
-# Discord Application Settings
-DISPLEX_DISCORD_CLIENT_ID="clientid"
-DISPLEX_DISCORD_CLIENT_SECRET="clientsecret"
-DISPLEX_DISCORD_BOT_TOKEN="bottoken"
-DISPLEX_DISCORD_SERVER_ID="serverid"
-DISPLEX_DISCORD_CHANNEL_ID="channelid"
 
-DISPLEX_TAUTULLI_API_KEY="apikey"
-DISPLEX_TAUTULLI_URL="https://tautulli.example.com"
-```
+# Installation and setup
 
-3. Populate settings in Discord Application
+## Requirements
 
-   1. `Linked Roles Verification URL` = `https://displex.example.com/discord/linked-role`
-   1. `OAuth2 Redirects` = `https://displex.example.com/discord/callback`
+- A Plex Media Server
+- Tautulli (formerly known as PlexPy)
+- A Discord server
+- Postgres 
+- Valid SSL Cert
+- Docker
+- [A Discord bot token](https://www.digitaltrends.com/gaming/how-to-make-a-discord-bot/)
+    - Permissions required:
+        - Manage Channels
+        - View Channels
+        - Send Messages
+    - **Shortcut**: Use the following link to invite your bot to your server with the above permissions:
+      https://discord.com/oauth2/authorize?client_id=YOUR_APPLICATION_ID&scope=bot&permissions=2064
+      
+DisPlex runs as a Docker container. The Dockerfile is included in this repository, or can be pulled
+from [GitHub Packages](https://github.com/mchestr/displex/pkgs/container/displex).
 
-4. Associate the App to a Roles Links in the Discord server.
 
 ### Environment Variables
 
@@ -84,14 +86,11 @@ DISPLEX_TAUTULLI_URL="https://tautulli.example.com"
 | DISPLEX_DISCORD_BOT_LIB_TV_EPISODES_NAME | Name of the Discord role for subscribers                                                                | no       | Subscriber     |
 | DISPLEX_DISCORD_BOT_STATUS               | Name of the watching activity for the bot                                                               | no       | DisPlex        |
 | DISPLEX_DISCORD_STAT_UPDATE_INTERVAL     | How often to update Discord channels                                                                    | no       | 60s            |
-| DISPLEX_DISCORD_USER_UPDATE_INTERVAL     | How often to update Discord users metadata                                                              | no       | 3600s          |
+| DISPLEX_DISCORD_USER_UPDATE_INTERVAL     | How often to update Discord users metadata                                                              | no       | 1h          |
 | DISPLEX_DISCORD_BOT                      | Can be used to disable the bot which refreshes Discord channels                                         | no       | Serenity/None  |
 | DISPLEX_HTTP_SERVER                      | Can be used to disable the http server used for linking roles Discord                                   | no       | Axum/None      |
 
-## Development
+# Development
 
-Checkout [docker-compose.yaml](./docker-compose.yaml) for a sample of how you can easily setup a dev environment. [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/) (or similiar) can be used to easily put your development instance behind HTTPS with valid certificates which are needed for the OAuth2 flow with Discord.
-
-# For Development if on MacOS you have to run cloudflared via CLI since docker host networking doesn't work.
-
-TODO
+This bot is still a work in progress. If you have any ideas for improving or adding to Displex, please open an issue
+or a pull request.
