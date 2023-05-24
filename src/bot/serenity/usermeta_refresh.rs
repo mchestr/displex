@@ -65,7 +65,10 @@ async fn periodic_refresh(
     loop {
         select! {
             _ = interval.tick() => {
-                refresh_all_active_subscribers(&args).await;
+                match refresh_all_active_subscribers(&args).await {
+                    Ok(_) => (),
+                    Err(why) => tracing::error!("failed to refresh user metadata: {why}"),
+                };
             },
             _ = kill.recv() => {
                 tracing::info!("shutting down periodic job...");
@@ -75,9 +78,9 @@ async fn periodic_refresh(
     }
 }
 
-async fn refresh_all_active_subscribers(args: &UserMetadataRefreshArgs) {
-    let mut conn = args.pool.acquire().await.unwrap();
-    let users = list_users(&mut conn).await.unwrap();
+async fn refresh_all_active_subscribers(args: &UserMetadataRefreshArgs) -> Result<()> {
+    let mut conn = args.pool.acquire().await?;
+    let users = list_users(&mut conn).await?;
     tracing::info!("Refreshing {} users", users.len());
     for (discord_user, plex_user) in users {
         match refresh_user_stats(&mut conn, args, &discord_user, &plex_user).await {
@@ -87,6 +90,7 @@ async fn refresh_all_active_subscribers(args: &UserMetadataRefreshArgs) {
             }
         }
     }
+    Ok(())
 }
 
 async fn refresh_user_stats(
@@ -98,7 +102,7 @@ async fn refresh_user_stats(
     tracing::info!("refreshing stats for user {}", &discord_user.username);
 
     let discord_user_id = discord_user.id.clone();
-    let discord_token = get_latest_token(conn, &discord_user_id).await.unwrap();
+    let discord_token = get_latest_token(conn, &discord_user_id).await?;
 
     let discord_token = maybe_refresh_token(
         conn,
@@ -173,7 +177,7 @@ async fn maybe_refresh_token(
                     ),
                 discord_user_id: discord_user.id.clone(),
             },
-        ).await.unwrap();
+        ).await?;
         Ok(inserted_token)
     } else {
         Ok(discord_token)
