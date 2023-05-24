@@ -48,19 +48,25 @@ struct CreateChannelConfig {
     server_id: u64,
 }
 
+#[derive(Clone, Debug)]
+struct ChannelData {
+    prefix: String,
+    channel: GuildChannel,
+}
+
 #[derive(Clone, Debug, Default)]
 struct StatCategoryChannels {
-    status: Option<GuildChannel>,
-    streams: Option<GuildChannel>,
-    transcodes: Option<GuildChannel>,
-    bandwidth: Option<GuildChannel>,
+    status: Option<ChannelData>,
+    streams: Option<ChannelData>,
+    transcodes: Option<ChannelData>,
+    bandwidth: Option<ChannelData>,
 }
 
 #[derive(Clone, Debug, Default)]
 struct LibraryStatCategoryChannels {
-    movies: Option<GuildChannel>,
-    tv_shows: Option<GuildChannel>,
-    tv_episodes: Option<GuildChannel>,
+    movies: Option<ChannelData>,
+    tv_shows: Option<ChannelData>,
+    tv_episodes: Option<ChannelData>,
 }
 
 pub async fn setup(
@@ -162,18 +168,23 @@ async fn get_or_create_stat_category(
     client: &Arc<Http>,
     channels: &[GuildChannel],
     create: CreateChannelConfig,
-) -> GuildChannel {
+) -> ChannelData {
     match channels
         .iter()
         .find(|c| c.name.starts_with(&create.name_prefix))
     {
         Some(channel) => {
             tracing::info!("found channel: {}", channel.name);
-            channel.to_owned()
+            ChannelData {
+                prefix: create.name_prefix,
+                channel: channel.to_owned(),
+            }
         }
         None => {
-            tracing::info!("creating channel: {}", create.name_prefix);
-            create_category(client, create).await
+            let prefix = String::from(&create.name_prefix);
+            tracing::info!("creating channel: {}", prefix);
+            let channel = create_category(client, create).await;
+            ChannelData { prefix, channel }
         }
     }
 }
@@ -232,7 +243,7 @@ async fn update_stats(
 async fn channel_update_stats_status(
     client: &Arc<Http>,
     tautulli_client: &TautulliClient,
-    channel: &GuildChannel,
+    channel: &ChannelData,
 ) {
     let server_status = match tautulli_client.server_status().await {
         Ok(result) => match result.connected {
@@ -244,55 +255,44 @@ async fn channel_update_stats_status(
             "🟡"
         }
     };
-    let name_split: Vec<&str> = channel.name.split('(').collect();
-    let prefix = name_split[0].trim_start();
 
-    let new_name = format!("{prefix} ({server_status})",);
-    update_channel_name(client, channel, &new_name).await;
+    let new_name = format!("{} ({server_status})", channel.prefix);
+    update_channel_name(client, &channel.channel, &new_name).await;
 }
 
 async fn channel_update_stats_streams(
     client: &Arc<Http>,
     data: &GetActivity,
-    channel: &GuildChannel,
+    channel: &ChannelData,
 ) {
-    let name_split: Vec<&str> = channel.name.split(':').collect();
-    let prefix = name_split[0];
-
-    let new_name = format!("{prefix}: {}", data.stream_count,);
-    update_channel_name(client, channel, &new_name).await;
+    let new_name = format!("{}: {}", channel.prefix, data.stream_count);
+    update_channel_name(client, &channel.channel, &new_name).await;
 }
 
 async fn channel_update_stats_transcodes(
     client: &Arc<Http>,
     data: &GetActivity,
-    channel: &GuildChannel,
+    channel: &ChannelData,
 ) {
-    let name_split: Vec<&str> = channel.name.split(':').collect();
-    let prefix = name_split[0];
-
-    let new_name = format!("{prefix}: {}", data.stream_count_transcode,);
-    update_channel_name(client, channel, &new_name).await;
+    let new_name = format!("{}: {}", channel.prefix, data.stream_count_transcode);
+    update_channel_name(client, &channel.channel, &new_name).await;
 }
 
 async fn channel_update_stats_bandwidth(
     client: &Arc<Http>,
     data: &GetActivity,
-    channel: &GuildChannel,
+    channel: &ChannelData,
 ) {
-    let name_split: Vec<&str> = channel.name.split(':').collect();
-    let prefix = name_split[0];
-
     let new_name = {
         if data.total_bandwidth > 1024 {
             let n = data.total_bandwidth as f32 / 1024.0;
-            format!("{prefix}: {n:.1} Mbps")
+            format!("{}: {n:.1} Mbps", channel.prefix)
         } else {
             let n = data.total_bandwidth as f32;
-            format!("{prefix}: {n:.1} Kbps")
+            format!("{}: {n:.1} Kbps", channel.prefix)
         }
     };
-    update_channel_name(client, channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await;
 }
 
 async fn update_library_stats(
@@ -324,34 +324,25 @@ async fn update_library_stats(
     }
 }
 
-async fn update_movies(client: &Arc<Http>, data: &GetLibrary, channel: &GuildChannel) {
-    let name_split: Vec<&str> = channel.name.split(':').collect();
-    let prefix = name_split[0];
-    let new_name = format!("{}: {}", prefix, data.count);
-
-    update_channel_name(client, channel, &new_name).await;
+async fn update_movies(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) {
+    let new_name = format!("{}: {}", channel.prefix, data.count);
+    update_channel_name(client, &channel.channel, &new_name).await;
 }
 
-async fn update_tv_shows(client: &Arc<Http>, data: &GetLibrary, channel: &GuildChannel) {
-    let name_split: Vec<&str> = channel.name.split(':').collect();
-    let prefix = name_split[0];
-
-    let new_name = format!("{}: {}", prefix, data.count);
-    update_channel_name(client, channel, &new_name).await;
+async fn update_tv_shows(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) {
+    let new_name = format!("{}: {}", channel.prefix, data.count);
+    update_channel_name(client, &channel.channel, &new_name).await;
 }
 
-async fn update_tv_episodes(client: &Arc<Http>, data: &GetLibrary, channel: &GuildChannel) {
-    let name_split: Vec<&str> = channel.name.split(':').collect();
-    let prefix = name_split[0];
-
+async fn update_tv_episodes(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) {
     let new_name = {
         if let Some(episodes) = &data.child_count {
-            format!("{prefix}: {episodes}")
+            format!("{}: {episodes}", channel.prefix)
         } else {
-            String::from(&channel.name)
+            format!("{}: N/A", channel.prefix)
         }
     };
-    update_channel_name(client, channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await;
 }
 
 async fn generate_stats_categories(
@@ -379,7 +370,7 @@ async fn generate_stats_categories(
                     },
                 )
                 .await;
-                let category_id = category.id.0;
+                let category_id = category.channel.id.0;
                 stat_channels.status = Some(category);
 
                 if let Some(name) = &config.stream_name {
@@ -468,6 +459,7 @@ async fn generate_library_categories(
                     },
                 )
                 .await;
+                let category_id = category.channel.id.0;
 
                 if let Some(name) = &config.movies_name {
                     lib_channels.movies = Some(
@@ -479,7 +471,7 @@ async fn generate_library_categories(
                                 position: Some(0),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
-                                parent_channel: Some(category.id.0),
+                                parent_channel: Some(category_id),
                                 server_id: update_config.discord_server_id,
                             },
                         )
@@ -497,7 +489,7 @@ async fn generate_library_categories(
                                 position: Some(0),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
-                                parent_channel: Some(category.id.0),
+                                parent_channel: Some(category_id),
                                 server_id: update_config.discord_server_id,
                             },
                         )
@@ -515,7 +507,7 @@ async fn generate_library_categories(
                                 position: Some(0),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
-                                parent_channel: Some(category.id.0),
+                                parent_channel: Some(category_id),
                                 server_id: update_config.discord_server_id,
                             },
                         )
