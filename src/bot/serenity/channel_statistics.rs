@@ -3,6 +3,7 @@ use std::{
     time::Duration,
 };
 
+use anyhow::Result;
 use serde_json::{
     Map,
     Value,
@@ -75,7 +76,7 @@ pub async fn setup(
     cache_and_http_client: Arc<CacheAndHttp>,
     tautulli_client: TautulliClient,
     config: UpdateChannelConfig,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     tracing::info!(
         "refreshing channel statistics every {}s",
         interval_seconds.as_secs()
@@ -85,7 +86,7 @@ pub async fn setup(
     let roles = client
         .get_guild_roles(config.discord_server_id)
         .await
-        .unwrap();
+        .expect("failed to list discord roles");
     let bot_role = roles
         .iter()
         .find(|&r| r.name.eq(&config.bot_role_name))
@@ -147,14 +148,25 @@ async fn periodic_refresh(
     loop {
         select! {
             _ = interval.tick() => {
-                let channels = client.get_channels(config.discord_server_id).await.unwrap();
-                let stats_category_channels =
-                    generate_stats_categories(&client, &config, &channels, &permissions).await;
-                update_stats(&client, &tautulli_client, &stats_category_channels).await;
-
-                let lib_category_channels =
-                    generate_library_categories(&client, &config, &channels, &permissions).await;
-                update_library_stats(&client, &tautulli_client, &lib_category_channels).await;
+                match client.get_channels(config.discord_server_id).await {
+                    Ok(channels) => {
+                        match generate_stats_categories(&client, &config, &channels, &permissions).await {
+                            Ok(categories) => match update_stats(&client, &tautulli_client, &categories).await {
+                                Ok(_) => (),
+                                Err(why) => tracing::error!("failed to update stats: {why}"),
+                            },
+                            Err(why) => tracing::error!("failed to update stats: {why}"),
+                        };
+                        match generate_library_categories(&client, &config, &channels, &permissions).await {
+                            Ok(categories) => match update_library_stats(&client, &tautulli_client, &categories).await {
+                                Ok(_) => (),
+                                Err(why) => tracing::error!("failed to update library stats: {why}"),
+                            },
+                            Err(why) => tracing::error!("failed to update library stats: {why}"),
+                        };
+                    },
+                    Err(why) => tracing::error!("failed to get Discord channels: {why}"),
+                }
             }
             _ = kill.recv() => {
                 tracing::info!("shutting down periodic job...");
@@ -168,28 +180,28 @@ async fn get_or_create_stat_category(
     client: &Arc<Http>,
     channels: &[GuildChannel],
     create: CreateChannelConfig,
-) -> ChannelData {
+) -> Result<ChannelData> {
     match channels
         .iter()
         .find(|c| c.name.starts_with(&create.name_prefix))
     {
         Some(channel) => {
             tracing::info!("found channel: {}", channel.name);
-            ChannelData {
+            Ok(ChannelData {
                 prefix: create.name_prefix,
                 channel: channel.to_owned(),
-            }
+            })
         }
         None => {
             let prefix = String::from(&create.name_prefix);
             tracing::info!("creating channel: {}", prefix);
-            let channel = create_category(client, create).await;
-            ChannelData { prefix, channel }
+            let channel = create_category(client, create).await?;
+            Ok(ChannelData { prefix, channel })
         }
     }
 }
 
-async fn create_category(client: &Arc<Http>, config: CreateChannelConfig) -> GuildChannel {
+async fn create_category(client: &Arc<Http>, config: CreateChannelConfig) -> Result<GuildChannel> {
     let mut create_channel_map = JsonMap::new();
     create_channel_map.insert("name".into(), config.name_prefix.as_str().into());
     create_channel_map.insert("type".into(), config.type_.num().into());
@@ -203,48 +215,53 @@ async fn create_category(client: &Arc<Http>, config: CreateChannelConfig) -> Gui
         create_channel_map.insert("parent_id".into(), parent_channel.into());
     }
 
-    client
+    Ok(client
         .create_channel(config.server_id, &create_channel_map, None)
-        .await
-        .unwrap()
+        .await?)
 }
 
 #[tracing::instrument(skip(client, channel), fields(channel.name = channel.name))]
-async fn update_channel_name(client: &Arc<Http>, channel: &GuildChannel, new_name: &str) {
+async fn update_channel_name(
+    client: &Arc<Http>,
+    channel: &GuildChannel,
+    new_name: &str,
+) -> Result<()> {
     if !channel.name.eq(&new_name) {
         let mut map = JsonMap::new();
         map.insert("name".into(), new_name.into());
-        client.edit_channel(channel.id.0, &map, None).await.unwrap();
+        client.edit_channel(channel.id.0, &map, None).await?;
     } else {
         tracing::info!("channel name is the same, skipping...");
     }
+    Ok(())
 }
 
 async fn update_stats(
     client: &Arc<Http>,
     tautulli_client: &TautulliClient,
     channels: &StatCategoryChannels,
-) {
+) -> Result<()> {
     if let Some(channel) = &channels.status {
-        channel_update_stats_status(client, tautulli_client, channel).await;
+        channel_update_stats_status(client, tautulli_client, channel).await?;
     }
-    let activity = tautulli_client.get_activity().await.unwrap();
+    let activity = tautulli_client.get_activity().await?;
     if let Some(channel) = &channels.streams {
-        channel_update_stats_streams(client, &activity, channel).await;
+        channel_update_stats_streams(client, &activity, channel).await?;
     }
     if let Some(channel) = &channels.transcodes {
-        channel_update_stats_transcodes(client, &activity, channel).await;
+        channel_update_stats_transcodes(client, &activity, channel).await?;
     }
     if let Some(channel) = &channels.bandwidth {
-        channel_update_stats_bandwidth(client, &activity, channel).await;
+        channel_update_stats_bandwidth(client, &activity, channel).await?;
     }
+    Ok(())
 }
 
 async fn channel_update_stats_status(
     client: &Arc<Http>,
     tautulli_client: &TautulliClient,
     channel: &ChannelData,
-) {
+) -> Result<()> {
     let server_status = match tautulli_client.server_status().await {
         Ok(result) => match result.connected {
             true => "🟢",
@@ -257,32 +274,35 @@ async fn channel_update_stats_status(
     };
 
     let new_name = format!("{} ({server_status})", channel.prefix);
-    update_channel_name(client, &channel.channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await?;
+    Ok(())
 }
 
 async fn channel_update_stats_streams(
     client: &Arc<Http>,
     data: &GetActivity,
     channel: &ChannelData,
-) {
+) -> Result<()> {
     let new_name = format!("{}: {}", channel.prefix, data.stream_count);
-    update_channel_name(client, &channel.channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await?;
+    Ok(())
 }
 
 async fn channel_update_stats_transcodes(
     client: &Arc<Http>,
     data: &GetActivity,
     channel: &ChannelData,
-) {
+) -> Result<()> {
     let new_name = format!("{}: {}", channel.prefix, data.stream_count_transcode);
-    update_channel_name(client, &channel.channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await?;
+    Ok(())
 }
 
 async fn channel_update_stats_bandwidth(
     client: &Arc<Http>,
     data: &GetActivity,
     channel: &ChannelData,
-) {
+) -> Result<()> {
     let new_name = {
         if data.total_bandwidth > 1024 {
             let n = data.total_bandwidth as f32 / 1024.0;
@@ -292,21 +312,22 @@ async fn channel_update_stats_bandwidth(
             format!("{}: {n:.1} Kbps", channel.prefix)
         }
     };
-    update_channel_name(client, &channel.channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await?;
+    Ok(())
 }
 
 async fn update_library_stats(
     client: &Arc<Http>,
     tautulli_client: &TautulliClient,
     channels: &LibraryStatCategoryChannels,
-) {
-    let stats = tautulli_client.get_libraries().await.unwrap();
+) -> Result<()> {
+    let stats = tautulli_client.get_libraries().await?;
     let movies = stats.iter().find(|s| s.section_name.eq("Movies"));
     let tv = stats.iter().find(|s| s.section_name.eq("TV Shows"));
 
     if let Some(data) = movies {
         if let Some(channel) = &channels.movies {
-            update_movies(client, data, channel).await;
+            update_movies(client, data, channel).await?;
         }
     } else {
         tracing::error!("failed to find library '{}'", "Movies");
@@ -314,27 +335,38 @@ async fn update_library_stats(
 
     if let Some(data) = tv {
         if let Some(channel) = &channels.tv_shows {
-            update_tv_shows(client, data, channel).await;
+            update_tv_shows(client, data, channel).await?;
         }
         if let Some(channel) = &channels.tv_episodes {
-            update_tv_episodes(client, data, channel).await;
+            update_tv_episodes(client, data, channel).await?;
         }
     } else {
         tracing::error!("failed to find library '{}'", "TV Shows");
     }
+    Ok(())
 }
 
-async fn update_movies(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) {
+async fn update_movies(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) -> Result<()> {
     let new_name = format!("{}: {}", channel.prefix, data.count);
-    update_channel_name(client, &channel.channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await?;
+    Ok(())
 }
 
-async fn update_tv_shows(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) {
+async fn update_tv_shows(
+    client: &Arc<Http>,
+    data: &GetLibrary,
+    channel: &ChannelData,
+) -> Result<()> {
     let new_name = format!("{}: {}", channel.prefix, data.count);
-    update_channel_name(client, &channel.channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await?;
+    Ok(())
 }
 
-async fn update_tv_episodes(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) {
+async fn update_tv_episodes(
+    client: &Arc<Http>,
+    data: &GetLibrary,
+    channel: &ChannelData,
+) -> Result<()> {
     let new_name = {
         if let Some(episodes) = &data.child_count {
             format!("{}: {episodes}", channel.prefix)
@@ -342,7 +374,8 @@ async fn update_tv_episodes(client: &Arc<Http>, data: &GetLibrary, channel: &Cha
             format!("{}: N/A", channel.prefix)
         }
     };
-    update_channel_name(client, &channel.channel, &new_name).await;
+    update_channel_name(client, &channel.channel, &new_name).await?;
+    Ok(())
 }
 
 async fn generate_stats_categories(
@@ -350,7 +383,7 @@ async fn generate_stats_categories(
     update_config: &UpdateChannelConfig,
     channels: &[GuildChannel],
     permissions: &[Map<String, Value>],
-) -> StatCategoryChannels {
+) -> Result<StatCategoryChannels> {
     {
         let mut stat_channels = StatCategoryChannels {
             ..Default::default()
@@ -369,7 +402,7 @@ async fn generate_stats_categories(
                         server_id: update_config.discord_server_id,
                     },
                 )
-                .await;
+                .await?;
                 let category_id = category.channel.id.0;
                 stat_channels.status = Some(category);
 
@@ -387,7 +420,7 @@ async fn generate_stats_categories(
                                 server_id: update_config.discord_server_id,
                             },
                         )
-                        .await,
+                        .await?,
                     );
                 };
 
@@ -405,7 +438,7 @@ async fn generate_stats_categories(
                                 server_id: update_config.discord_server_id,
                             },
                         )
-                        .await,
+                        .await?,
                     );
                 };
 
@@ -423,13 +456,13 @@ async fn generate_stats_categories(
                                 server_id: update_config.discord_server_id,
                             },
                         )
-                        .await,
+                        .await?,
                     );
                 };
 
-                stat_channels
+                Ok(stat_channels)
             }
-            None => stat_channels,
+            None => Ok(stat_channels),
         }
     }
 }
@@ -439,7 +472,7 @@ async fn generate_library_categories(
     update_config: &UpdateChannelConfig,
     channels: &[GuildChannel],
     permissions: &[Map<String, Value>],
-) -> LibraryStatCategoryChannels {
+) -> Result<LibraryStatCategoryChannels> {
     {
         let mut lib_channels = LibraryStatCategoryChannels {
             ..Default::default()
@@ -458,7 +491,7 @@ async fn generate_library_categories(
                         server_id: update_config.discord_server_id,
                     },
                 )
-                .await;
+                .await?;
                 let category_id = category.channel.id.0;
 
                 if let Some(name) = &config.movies_name {
@@ -475,7 +508,7 @@ async fn generate_library_categories(
                                 server_id: update_config.discord_server_id,
                             },
                         )
-                        .await,
+                        .await?,
                     );
                 }
 
@@ -493,7 +526,7 @@ async fn generate_library_categories(
                                 server_id: update_config.discord_server_id,
                             },
                         )
-                        .await,
+                        .await?,
                     );
                 }
 
@@ -511,13 +544,13 @@ async fn generate_library_categories(
                                 server_id: update_config.discord_server_id,
                             },
                         )
-                        .await,
+                        .await?,
                     );
                 }
 
-                lib_channels
+                Ok(lib_channels)
             }
-            None => lib_channels,
+            None => Ok(lib_channels),
         }
     }
 }
