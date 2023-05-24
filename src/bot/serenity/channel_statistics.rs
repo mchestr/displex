@@ -155,14 +155,14 @@ async fn periodic_refresh(
                                 Ok(_) => (),
                                 Err(why) => tracing::error!("failed to update stats: {why}"),
                             },
-                            Err(why) => tracing::error!("failed to update stats: {why}"),
+                            Err(why) => tracing::error!("failed to generate stat channels: {why}"),
                         };
                         match generate_library_categories(&client, &config, &channels, &permissions).await {
                             Ok(categories) => match update_library_stats(&client, &tautulli_client, &categories).await {
                                 Ok(_) => (),
                                 Err(why) => tracing::error!("failed to update library stats: {why}"),
                             },
-                            Err(why) => tracing::error!("failed to update library stats: {why}"),
+                            Err(why) => tracing::error!("failed to generate library channels: {why}"),
                         };
                     },
                     Err(why) => tracing::error!("failed to get Discord channels: {why}"),
