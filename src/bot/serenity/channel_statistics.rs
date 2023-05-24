@@ -76,6 +76,7 @@ pub async fn setup(
     cache_and_http_client: Arc<CacheAndHttp>,
     tautulli_client: TautulliClient,
     config: UpdateChannelConfig,
+    server_id: u64,
 ) -> Result<()> {
     tracing::info!(
         "refreshing channel statistics every {}s",
@@ -84,7 +85,7 @@ pub async fn setup(
     let client = cache_and_http_client.http.clone();
 
     let roles = client
-        .get_guild_roles(config.discord_server_id)
+        .get_guild_roles(server_id)
         .await
         .expect("failed to list discord roles");
     let bot_role = roles
@@ -132,6 +133,7 @@ pub async fn setup(
         tautulli_client.clone(),
         config.clone(),
         permissions,
+        server_id,
     ));
     Ok(())
 }
@@ -143,21 +145,22 @@ async fn periodic_refresh(
     tautulli_client: TautulliClient,
     config: UpdateChannelConfig,
     permissions: Vec<Map<String, Value>>,
+    server_id: u64,
 ) {
     let mut interval = time::interval(interval);
     loop {
         select! {
             _ = interval.tick() => {
-                match client.get_channels(config.discord_server_id).await {
+                match client.get_channels(server_id).await {
                     Ok(channels) => {
-                        match generate_stats_categories(&client, &config, &channels, &permissions).await {
+                        match generate_stats_categories(&client, &config, &channels, &permissions, server_id).await {
                             Ok(categories) => match update_stats(&client, &tautulli_client, &categories).await {
                                 Ok(_) => (),
                                 Err(why) => tracing::error!("failed to update stats: {why}"),
                             },
                             Err(why) => tracing::error!("failed to generate stat channels: {why}"),
                         };
-                        match generate_library_categories(&client, &config, &channels, &permissions).await {
+                        match generate_library_categories(&client, &config, &channels, &permissions, server_id).await {
                             Ok(categories) => match update_library_stats(&client, &tautulli_client, &categories).await {
                                 Ok(_) => (),
                                 Err(why) => tracing::error!("failed to update library stats: {why}"),
@@ -383,6 +386,7 @@ async fn generate_stats_categories(
     update_config: &UpdateChannelConfig,
     channels: &[GuildChannel],
     permissions: &[Map<String, Value>],
+    server_id: u64,
 ) -> Result<StatCategoryChannels> {
     {
         let mut stat_channels = StatCategoryChannels {
@@ -399,7 +403,7 @@ async fn generate_stats_categories(
                         type_: ChannelType::Category,
                         permissions: permissions.to_owned(),
                         parent_channel: None,
-                        server_id: update_config.discord_server_id,
+                        server_id,
                     },
                 )
                 .await?;
@@ -417,7 +421,7 @@ async fn generate_stats_categories(
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
-                                server_id: update_config.discord_server_id,
+                                server_id,
                             },
                         )
                         .await?,
@@ -435,7 +439,7 @@ async fn generate_stats_categories(
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
-                                server_id: update_config.discord_server_id,
+                                server_id,
                             },
                         )
                         .await?,
@@ -453,7 +457,7 @@ async fn generate_stats_categories(
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
-                                server_id: update_config.discord_server_id,
+                                server_id,
                             },
                         )
                         .await?,
@@ -472,6 +476,7 @@ async fn generate_library_categories(
     update_config: &UpdateChannelConfig,
     channels: &[GuildChannel],
     permissions: &[Map<String, Value>],
+    server_id: u64,
 ) -> Result<LibraryStatCategoryChannels> {
     {
         let mut lib_channels = LibraryStatCategoryChannels {
@@ -488,7 +493,7 @@ async fn generate_library_categories(
                         type_: ChannelType::Category,
                         permissions: permissions.to_owned(),
                         parent_channel: None,
-                        server_id: update_config.discord_server_id,
+                        server_id,
                     },
                 )
                 .await?;
@@ -505,7 +510,7 @@ async fn generate_library_categories(
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
-                                server_id: update_config.discord_server_id,
+                                server_id,
                             },
                         )
                         .await?,
@@ -523,7 +528,7 @@ async fn generate_library_categories(
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
-                                server_id: update_config.discord_server_id,
+                                server_id,
                             },
                         )
                         .await?,
@@ -541,7 +546,7 @@ async fn generate_library_categories(
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
-                                server_id: update_config.discord_server_id,
+                                server_id,
                             },
                         )
                         .await?,

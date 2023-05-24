@@ -161,31 +161,6 @@ pub struct TautulliArgs {
 
 #[derive(Args, Clone, Display)]
 #[display(fmt = "{{
-        application_name: {application_name},
-        accept_invalid_certs: {accept_invalid_certs},
-        discord: {discord},
-        tautulli: {tautulli},
-        database: {database},
-    }}")]
-pub struct RefreshArgs {
-    #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
-    pub application_name: String,
-
-    #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
-    pub accept_invalid_certs: bool,
-
-    #[command(flatten)]
-    pub discord: DiscordArgs,
-
-    #[clap(flatten)]
-    pub tautulli: TautulliArgs,
-
-    #[clap(flatten)]
-    pub database: DatabaseArgs,
-}
-
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
         discord_bot_token: {discord_bot_token},
         discord_client_id: {discord_client_id},
     }}")]
@@ -214,7 +189,7 @@ pub struct SetMetadataArgs {
     discord_bot_status: {discord_bot_status},
     discord_update_interval: {discord_stat_update_interval},
     discord_user_update_interval: {discord_user_update_interval},
-    discord_bot_token: {discord_bot_token},
+    discord: {discord},
     tautulli: {tautulli},
     channel_config: {channel_config:#?},
     }}")]
@@ -241,17 +216,12 @@ pub struct DiscordBotArgs {
     #[arg(
         long,
         env = "DISPLEX_DISCORD_USER_UPDATE_INTERVAL",
-        default_value = "60s"
+        default_value = "3600s"
     )]
     pub discord_user_update_interval: Duration,
 
-    #[arg(
-        long,
-        env = "DISPLEX_DISCORD_BOT_TOKEN",
-        required = true,
-        hide_env_values = true
-    )]
-    pub discord_bot_token: Secret,
+    #[clap(flatten)]
+    pub discord: DiscordArgs,
 
     #[clap(flatten)]
     pub tautulli: TautulliArgs,
@@ -265,8 +235,6 @@ pub struct DiscordBotArgs {
 
 #[derive(Args, Clone, Debug)]
 pub struct UpdateChannelConfig {
-    #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
-    pub discord_server_id: u64,
     #[arg(long, default_value = "Bot", env = "DISPLEX_DISCORD_BOT_ROLE_NAME")]
     pub bot_role_name: String,
     #[arg(

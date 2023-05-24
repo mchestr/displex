@@ -7,5 +7,4 @@ pub mod metadata;
 pub mod plex;
 pub mod server;
 pub mod session;
-pub mod tasks;
 pub mod tautulli;

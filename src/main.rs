@@ -7,13 +7,11 @@ use displex::{
     bot::DisplexBot,
     config::{
         DiscordBotArgs,
-        RefreshArgs,
         ServerArgs,
         SetMetadataArgs,
     },
     metadata,
     server::DisplexHttpServer,
-    tasks,
 };
 use tokio::signal::unix::{
     signal,
@@ -33,10 +31,10 @@ struct Cli {
     command: Commands,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand, Display)]
 enum Commands {
     Server(ServerArgs),
-    Refresh(RefreshArgs),
     SetMetadata(SetMetadataArgs),
     DiscordBot(DiscordBotArgs),
 }
@@ -71,7 +69,6 @@ async fn main() -> std::io::Result<()> {
 
     match args.command {
         Commands::Server(args) => args.http_server.run(rx, args.clone()).await,
-        Commands::Refresh(args) => tasks::stat_refresh::run(args).await,
         Commands::SetMetadata(args) => metadata::set_metadata(args).await,
         Commands::DiscordBot(args) => args.discord_bot.run(rx, args.clone()).await,
     };
