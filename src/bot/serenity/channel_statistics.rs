@@ -328,23 +328,25 @@ async fn update_library_stats(
     let movies = stats.iter().find(|s| s.section_name.eq("Movies"));
     let tv = stats.iter().find(|s| s.section_name.eq("TV Shows"));
 
-    if let Some(data) = movies {
-        if let Some(channel) = &channels.movies {
-            update_movies(client, data, channel).await?;
+    match movies {
+        Some(data) => {
+            if let Some(channel) = &channels.movies {
+                update_movies(client, data, channel).await?;
+            }
         }
-    } else {
-        tracing::error!("failed to find library '{}'", "Movies");
+        None => tracing::error!("failed to find library 'Movies'"),
     }
 
-    if let Some(data) = tv {
-        if let Some(channel) = &channels.tv_shows {
-            update_tv_shows(client, data, channel).await?;
+    match tv {
+        Some(data) => {
+            if let Some(channel) = &channels.tv_shows {
+                update_tv_shows(client, data, channel).await?;
+            }
+            if let Some(channel) = &channels.tv_episodes {
+                update_tv_episodes(client, data, channel).await?;
+            }
         }
-        if let Some(channel) = &channels.tv_episodes {
-            update_tv_episodes(client, data, channel).await?;
-        }
-    } else {
-        tracing::error!("failed to find library '{}'", "TV Shows");
+        None => tracing::error!("failed to find library 'TV Shows'"),
     }
     Ok(())
 }
