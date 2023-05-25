@@ -60,7 +60,9 @@ struct StatCategoryChannels {
     status: Option<ChannelData>,
     streams: Option<ChannelData>,
     transcodes: Option<ChannelData>,
-    bandwidth: Option<ChannelData>,
+    total_bandwidth: Option<ChannelData>,
+    local_bandwidth: Option<ChannelData>,
+    remote_bandwidth: Option<ChannelData>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -254,8 +256,14 @@ async fn update_stats(
     if let Some(channel) = &channels.transcodes {
         channel_update_stats_transcodes(client, &activity, channel).await?;
     }
-    if let Some(channel) = &channels.bandwidth {
-        channel_update_stats_bandwidth(client, &activity, channel).await?;
+    if let Some(channel) = &channels.total_bandwidth {
+        channel_update_stats_bandwidth(client, channel, activity.total_bandwidth).await?;
+    }
+    if let Some(channel) = &channels.local_bandwidth {
+        channel_update_stats_bandwidth(client, channel, activity.lan_bandwidth).await?;
+    }
+    if let Some(channel) = &channels.remote_bandwidth {
+        channel_update_stats_bandwidth(client, channel, activity.wan_bandwidth).await?;
     }
     Ok(())
 }
@@ -303,17 +311,13 @@ async fn channel_update_stats_transcodes(
 
 async fn channel_update_stats_bandwidth(
     client: &Arc<Http>,
-    data: &GetActivity,
     channel: &ChannelData,
+    bandwidth: u32,
 ) -> Result<()> {
-    let new_name = {
-        if data.total_bandwidth > 1024 {
-            let n = data.total_bandwidth as f32 / 1024.0;
-            format!("{}: {n:.1} Mbps", channel.prefix)
-        } else {
-            let n = data.total_bandwidth as f32;
-            format!("{}: {n:.1} Kbps", channel.prefix)
-        }
+    let new_name = match bandwidth {
+        n if n >= 1024 => format!("{}: {:.1} Mbps", channel.prefix, n as f32 / 1024.0),
+        n if n > 0 && n < 1024 => format!("{}: {n:.1} Kbps", channel.prefix),
+        _ => format!("{}: N/A", channel.prefix),
     };
     update_channel_name(client, &channel.channel, &new_name).await?;
     Ok(())
@@ -448,8 +452,44 @@ async fn generate_stats_categories(
                     );
                 };
 
-                if let Some(name) = &config.bandwidth_name {
-                    stat_channels.bandwidth = Some(
+                if let Some(name) = &config.bandwidth_total_name {
+                    stat_channels.total_bandwidth = Some(
+                        get_or_create_stat_category(
+                            client,
+                            channels,
+                            CreateChannelConfig {
+                                name_prefix: String::from(name),
+                                position: Some(0),
+                                permissions: permissions.to_owned(),
+                                type_: ChannelType::Voice,
+                                parent_channel: Some(category_id),
+                                server_id,
+                            },
+                        )
+                        .await?,
+                    );
+                };
+
+                if let Some(name) = &config.bandwidth_local_name {
+                    stat_channels.local_bandwidth = Some(
+                        get_or_create_stat_category(
+                            client,
+                            channels,
+                            CreateChannelConfig {
+                                name_prefix: String::from(name),
+                                position: Some(0),
+                                permissions: permissions.to_owned(),
+                                type_: ChannelType::Voice,
+                                parent_channel: Some(category_id),
+                                server_id,
+                            },
+                        )
+                        .await?,
+                    );
+                };
+
+                if let Some(name) = &config.bandwidth_remote_name {
+                    stat_channels.remote_bandwidth = Some(
                         get_or_create_stat_category(
                             client,
                             channels,

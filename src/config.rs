@@ -258,8 +258,12 @@ pub struct StatCategoryConfig {
     pub stream_name: Option<String>,
     #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_TRANSCODE_NAME")]
     pub transcode_name: Option<String>,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_BANDWIDTH_NAME")]
-    pub bandwidth_name: Option<String>,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_TOTAL_BANDWIDTH_NAME")]
+    pub bandwidth_total_name: Option<String>,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_LOCAL_BANDWIDTH_NAME")]
+    pub bandwidth_local_name: Option<String>,
+    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_REMOTE_BANDWIDTH_NAME")]
+    pub bandwidth_remote_name: Option<String>,
 }
 
 #[derive(Args, Clone, Debug)]
