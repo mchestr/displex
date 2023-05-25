@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y libpq-dev ca-certificates
 
 ENV DISPLEX_HTTP_HOST=0.0.0.0 \
     DISPLEX_HTTP_PORT=8080 \
-    RUST_LOG="displex=debug,tower_http=debug,axum::rejection=trace,serenity=info"
+    RUST_LOG="displex=info,tower_http=info,axum::rejection=info,serenity=info"
 EXPOSE ${DISPLEX_HTTP_PORT}
 
 WORKDIR /app
