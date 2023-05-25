@@ -189,7 +189,7 @@ async fn get_or_create_stat_category(
         .find(|c| c.name.starts_with(&create.name_prefix))
     {
         Some(channel) => {
-            tracing::info!("found channel: {}", channel.name);
+            tracing::debug!("found channel: {}", channel.name);
             Ok(ChannelData {
                 prefix: create.name_prefix,
                 channel: channel.to_owned(),
@@ -223,18 +223,18 @@ async fn create_category(client: &Arc<Http>, config: CreateChannelConfig) -> Res
         .await?)
 }
 
-#[tracing::instrument(skip(client, channel), fields(channel.name = channel.name))]
 async fn update_channel_name(
     client: &Arc<Http>,
     channel: &GuildChannel,
     new_name: &str,
 ) -> Result<()> {
     if !channel.name.eq(&new_name) {
+        tracing::info!("updating channel name {new_name}");
         let mut map = JsonMap::new();
         map.insert("name".into(), new_name.into());
         client.edit_channel(channel.id.0, &map, None).await?;
     } else {
-        tracing::info!("channel name is the same, skipping...");
+        tracing::debug!("channel name is the same, skipping...");
     }
     Ok(())
 }
