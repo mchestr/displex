@@ -441,7 +441,7 @@ async fn generate_stats_categories(
                             channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
-                                position: Some(0),
+                                position: Some(1),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
@@ -459,7 +459,7 @@ async fn generate_stats_categories(
                             channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
-                                position: Some(0),
+                                position: Some(2),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
@@ -477,7 +477,7 @@ async fn generate_stats_categories(
                             channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
-                                position: Some(0),
+                                position: Some(3),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
@@ -495,7 +495,7 @@ async fn generate_stats_categories(
                             channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
-                                position: Some(0),
+                                position: Some(4),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
@@ -566,7 +566,7 @@ async fn generate_library_categories(
                             channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
-                                position: Some(0),
+                                position: Some(1),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
@@ -584,7 +584,7 @@ async fn generate_library_categories(
                             channels,
                             CreateChannelConfig {
                                 name_prefix: String::from(name),
-                                position: Some(0),
+                                position: Some(2),
                                 permissions: permissions.to_owned(),
                                 type_: ChannelType::Voice,
                                 parent_channel: Some(category_id),
