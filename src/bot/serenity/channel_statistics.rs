@@ -317,7 +317,7 @@ async fn channel_update_stats_bandwidth(
     let new_name = match bandwidth {
         n if n >= 1024 => format!("{}: {:.1} Mbps", channel.prefix, n as f32 / 1024.0),
         n if n > 0 && n < 1024 => format!("{}: {n:.1} Kbps", channel.prefix),
-        _ => format!("{}: N/A", channel.prefix),
+        _ => format!("{}: -", channel.prefix),
     };
     update_channel_name(client, &channel.channel, &new_name).await?;
     Ok(())
