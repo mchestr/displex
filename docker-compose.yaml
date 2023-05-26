@@ -12,6 +12,14 @@ services:
     ports:
       - 5432:5432
 
+  mitm:
+    image: mitmproxy/mitmproxy
+    tty: true
+    ports:
+      - 8888:8080
+      - 8081:8081
+    command: mitmweb --web-host 0.0.0.0
+
   displex:
     build: .
     ports:
