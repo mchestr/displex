@@ -1,4 +1,5 @@
 // Make our own error that wraps `anyhow::Error`.
+#[derive(Debug)]
 pub struct DisplexError(pub anyhow::Error);
 
 // This enables using `?` on functions that return `Result<_, anyhow::Error>` to turn them into
