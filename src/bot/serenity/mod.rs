@@ -31,6 +31,7 @@ mod commands;
 mod usermeta_refresh;
 
 use self::{
+    channel_statistics::ChannelStatisticArgs,
     commands::*,
     usermeta_refresh::UserMetadataRefreshArgs,
 };
@@ -133,11 +134,13 @@ pub async fn run(mut kill: Receiver<()>, config: DiscordBotArgs) {
 
     channel_statistics::setup(
         stat_kill,
-        config.discord_stat_update_interval.into(),
-        client.cache_and_http.clone(),
-        tautulli_client,
-        config.channel_config,
-        config.discord.discord_server_id,
+        ChannelStatisticArgs {
+            tautulli_client,
+            interval_seconds: config.discord_stat_update_interval.into(),
+            cache_and_http_client: client.cache_and_http.clone(),
+            config: config.channel_config,
+            server_id: config.discord.discord_server_id,
+        },
     )
     .await
     .unwrap();

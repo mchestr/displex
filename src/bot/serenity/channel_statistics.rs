@@ -72,31 +72,36 @@ struct LibraryStatCategoryChannels {
     tv_episodes: Option<ChannelData>,
 }
 
+#[derive(Clone)]
+pub struct ChannelStatisticArgs {
+    pub interval_seconds: Duration,
+    pub cache_and_http_client: Arc<CacheAndHttp>,
+    pub tautulli_client: TautulliClient,
+    pub config: UpdateChannelConfig,
+    pub server_id: u64,
+}
+
 pub async fn setup(
     kill: tokio::sync::broadcast::Receiver<()>,
-    interval_seconds: Duration,
-    cache_and_http_client: Arc<CacheAndHttp>,
-    tautulli_client: TautulliClient,
-    config: UpdateChannelConfig,
-    server_id: u64,
+    args: ChannelStatisticArgs,
 ) -> Result<()> {
     tracing::info!(
         "refreshing channel statistics every {}s",
-        interval_seconds.as_secs()
+        args.interval_seconds.as_secs()
     );
-    let client = cache_and_http_client.http.clone();
+    let client = args.cache_and_http_client.http.clone();
 
     let roles = client
-        .get_guild_roles(server_id)
+        .get_guild_roles(args.server_id)
         .await
         .expect("failed to list discord roles");
     let bot_role = roles
         .iter()
-        .find(|&r| r.name.eq(&config.bot_role_name))
+        .find(|&r| r.name.eq(&args.config.bot_role_name))
         .ok_or_else(|| anyhow::anyhow!("unable to find bot role"))?;
     let sub_role = roles
         .iter()
-        .find(|&r| r.name.eq(&config.subscriber_role_name))
+        .find(|&r| r.name.eq(&args.config.subscriber_role_name))
         .ok_or_else(|| anyhow::anyhow!("unable to find subscriber role"))?;
 
     let everyone_role = roles
@@ -130,12 +135,12 @@ pub async fn setup(
 
     tokio::spawn(periodic_refresh(
         kill,
-        interval_seconds,
+        args.interval_seconds,
         client.clone(),
-        tautulli_client.clone(),
-        config.clone(),
+        args.tautulli_client.clone(),
+        args.config.clone(),
         permissions,
-        server_id,
+        args.server_id,
     ));
     Ok(())
 }
