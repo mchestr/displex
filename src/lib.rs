@@ -6,5 +6,4 @@ pub mod errors;
 pub mod metadata;
 pub mod plex;
 pub mod server;
-pub mod session;
 pub mod tautulli;

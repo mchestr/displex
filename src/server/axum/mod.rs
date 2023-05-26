@@ -34,6 +34,9 @@ use crate::{
 mod errors;
 mod routes;
 
+pub const DISCORD_CODE: &str = "code";
+pub const DISCORD_STATE: &str = "state";
+
 #[derive(Clone)]
 pub struct DisplexState {
     pub config: ServerArgs,

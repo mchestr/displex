@@ -34,8 +34,7 @@ use crate::{
         ApplicationMetadataUpdate,
     },
     errors::DisplexError,
-    server::axum::DisplexState,
-    session::DISCORD_CODE,
+    server::axum::{DisplexState, DISCORD_CODE},
     tautulli::models::QueryDays,
 };
 

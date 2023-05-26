@@ -16,11 +16,7 @@ use serde::Deserialize;
 
 use crate::{
     errors::DisplexError,
-    server::axum::DisplexState,
-    session::{
-        DISCORD_CODE,
-        DISCORD_STATE,
-    },
+    server::axum::{DisplexState, DISCORD_CODE, DISCORD_STATE},
 };
 
 async fn linked_role(

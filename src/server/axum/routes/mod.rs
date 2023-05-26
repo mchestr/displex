@@ -8,7 +8,7 @@ use axum_sessions::extractors::{
     WritableSession,
 };
 
-use crate::session::DISCORD_STATE;
+use crate::server::axum::DISCORD_STATE;
 
 use super::DisplexState;
 
