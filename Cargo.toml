@@ -1,6 +1,6 @@
 [package]
 name = "displex"
-version = "0.9.6"
+version = "0.9.9"
 edition = "2021"
 authors = ["Mike Chester <mike@chester.dev>"]
 readme = "README.md"
