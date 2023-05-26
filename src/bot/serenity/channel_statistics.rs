@@ -320,7 +320,10 @@ async fn channel_update_stats_bandwidth(
     bandwidth: u32,
 ) -> Result<()> {
     let new_name = match bandwidth {
-        n if n >= 1024 => format!("{}: {:.1} Mbps", channel.prefix, n as f32 / 1024.0),
+        n if n >= 1048576 => format!("{}: 🔥", channel.prefix),
+        n if n >= 1024 && n < 1048576 => {
+            format!("{}: {:.1} Mbps", channel.prefix, n as f32 / 1024.0)
+        }
         n if n > 0 && n < 1024 => format!("{}: {n:.1} Kbps", channel.prefix),
         _ => format!("{}: -", channel.prefix),
     };
