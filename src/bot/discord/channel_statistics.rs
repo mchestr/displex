@@ -18,7 +18,6 @@ use serenity::{
         },
         Permissions,
     },
-    CacheAndHttp,
 };
 use tokio::{
     select,

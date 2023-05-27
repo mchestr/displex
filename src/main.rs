@@ -1,22 +1,16 @@
-use std::time::Duration;
+
 
 use anyhow::{
     Context,
     Result,
 };
-use axum::http::HeaderValue;
+
 use clap::Parser;
 
 use displex::{
     bot::DisplexBot,
     config::{self,},
-    db,
-    discord::client::{
-        DiscordClient,
-        DiscordOAuth2Client,
-    },
-    server::DisplexHttpServer,
-    tautulli::client::TautulliClient, utils,
+    server::DisplexHttpServer, utils,
 };
 use tokio::signal::unix::{
     signal,
@@ -44,12 +38,9 @@ async fn main() -> Result<()> {
         Err(_) => println!("no .env file found."),
     };
 
-    let rust_log = match std::option_env!("RUST_LOG") {
-        Some(value) => value,
-        None => {
-            "displex=info,tower_http=info,axum::rejection=debug,h2=warn,serenity=info,reqwest=info"
-        }
-    };
+    let rust_log = std::option_env!("RUST_LOG").unwrap_or({
+        "displex=info,tower_http=info,axum::rejection=debug,h2=warn,serenity=info,reqwest=info"
+    });
 
     tracing_subscriber::registry()
         // Continue logging to stdout

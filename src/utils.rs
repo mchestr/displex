@@ -2,7 +2,7 @@ use std::{time::Duration, sync::Arc};
 
 use anyhow::Result;
 use axum::http::HeaderValue;
-use serenity::{prelude::GatewayIntents, framework::StandardFramework};
+
 use sqlx::{
     Pool,
     Postgres,
@@ -48,7 +48,7 @@ pub async fn initialize_clients(config: &DisplexConfig) -> Result<(serenity::Cli
 
     let pool = db::initialize_db_pool(&config.database.url).await.unwrap();
 
-    let discord_oauth_client = DiscordOAuth2Client::new(
+    let _discord_oauth_client = DiscordOAuth2Client::new(
         reqwest_client.clone(),
         config.discord.client_id,
         &config.discord.client_secret,

@@ -1,7 +1,7 @@
-use std::time::Duration;
+
 
 use anyhow::Result;
-use axum::http::HeaderValue;
+
 use serenity::{
     async_trait,
     framework::{
@@ -18,13 +18,7 @@ use serenity::{
 use tokio::sync::broadcast::Receiver;
 
 use crate::{
-    config::DisplexConfig,
-    db,
-    discord::client::{
-        DiscordClient,
-        DiscordOAuth2Client,
-    },
-    tautulli::client::TautulliClient, utils::DisplexClients,
+    config::DisplexConfig, utils::DisplexClients,
 };
 
 mod channel_statistics;
