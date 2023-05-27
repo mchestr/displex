@@ -62,7 +62,6 @@ async fn callback(
 
 #[tracing::instrument]
 fn verify_state(session_state: &str, query_string_state: &str) -> Result<(), anyhow::Error> {
-    println!("got here");
     if session_state != query_string_state {
         tracing::info!("session state does not match query parameters");
         anyhow::bail!("invalid state")

@@ -53,43 +53,6 @@ DisPlex uses the Tautulli API to pull information from Tautulli and display them
 DisPlex runs as a Docker container. The Dockerfile is included in this repository, or can be pulled
 from [GitHub Packages](https://github.com/mchestr/displex/pkgs/container/displex).
 
-### Environment Variables
-
-| Name                                           | Description                                                                                             | Required | Default/Values |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------- | -------------- |
-| DISPLEX_HOSTNAME                               | Hostname of application. Used to generate the redirect URLs for OAuth2.                                 | yes      |                |
-| DISPLEX_APPLICATION_NAME                       | Name of application. Will be displayed on Plex Sign-in mostly.                                          | yes      |                |
-| DISPLEX_HTTP_HOST                              | Host to bind HTTP server.                                                                               | no       | 127.0.0.1      |
-| DISPLEX_HTTP_PORT                              | Port to bind HTTP server                                                                                | no       | 8080           |
-| DISPLEX_SESSION_SECRET_KEY                     | Session secret value for encryption. Mostly used in OAuth2 flow to store state between requests         | yes      |                |
-| DISPLEX_DATABASE_URL                           | PostgresQL database url. For example postgres://displex:password@localhost/displex                      | yes      |                |
-| DISPLEX_ACCEPT_INVALID_CERTS                   | Control whether reqwest will validate SSL certs. Useful for MITM proxy development.                     | no       | false          |
-| DISPLEX_PLEX_SERVER_ID                         | Plex Server ID. When a user attempts to link the role, it will check if they have access to the server. | yes      |                |
-| DISPLEX_DISCORD_CLIENT_ID                      | Discord Application Client ID.                                                                          | yes      |                |
-| DISPLEX_DISCORD_CLIENT_SECRET                  | Discord Application Client Secret.                                                                      | yes      |                |
-| DISPLEX_DISCORD_BOT_TOKEN                      | Discord Application Bot Token. Only used at the moment to register the application metadata.            | yes      |                |
-| DISPLEX_DISCORD_SERVER_ID                      | Discord Server ID, used for the redirect back to Discord after authorization flow.                      | yes      |                |
-| DISPLEX_TAUTULLI_API_KEY                       | Tautulli API key.                                                                                       | yes      |                |
-| DISPLEX_TAUTULLI_URL                           | URL to Tautulli server. For example https://localhost:8181                                              | yes      |                |
-| DISPLEX_DISCORD_BOT_STAT_CATEGORY_NAME         | Name of the category in Discord for stats, if omitted no channels are created                           | no       |                |
-| DISPLEX_DISCORD_BOT_STAT_STATUS_NAME           | Name of the stat status channel, if omitted no channel is created                                       | no       |                |
-| DISPLEX_DISCORD_BOT_STAT_STREAM_NAME           | Name of the stat stream channel, if omitted no channel is created                                       | no       |                |
-| DISPLEX_DISCORD_BOT_STAT_TRANSCODE_NAME        | Name of the stat transcode channel, if omitted no channel is created                                    | no       |                |
-| DISPLEX_DISCORD_BOT_STAT_TOTAL_BANDWIDTH_NAME  | Name of the stat total bandwidth channel, if omitted no channel is created                              | no       |                |
-| DISPLEX_DISCORD_BOT_STAT_LOCAL_BANDWIDTH_NAME  | Name of the stat local bandwidth channel, if omitted no channel is created                              | no       |                |
-| DISPLEX_DISCORD_BOT_STAT_REMOTE_BANDWIDTH_NAME | Name of the stat remote bandwidth channel, if omitted no channel is created                             | no       |                |
-| DISPLEX_DISCORD_BOT_LIB_CATEGORY_NAME          | Name of the library category in Discord, if omitted no channels are created                             | no       |                |
-| DISPLEX_DISCORD_BOT_LIB_MOVIES_NAME            | Name of the library movies channel, if omitted no channel is created                                    | no       |                |
-| DISPLEX_DISCORD_BOT_LIB_TV_SHOWS_NAME          | Name of the library tv shows channel, if omitted no channel is created                                  | no       |                |
-| DISPLEX_DISCORD_BOT_LIB_TV_EPISODES_NAME       | Name of the library tv episodes channel, if omitted no channel is created                               | no       |                |
-| DISPLEX_DISCORD_BOT_ROLE_NAME                  | Name of the Discord role for the Bot                                                                    | no       | Bot            |
-| DISPLEX_DISCORD_BOT_LIB_TV_EPISODES_NAME       | Name of the Discord role for subscribers                                                                | no       | Subscriber     |
-| DISPLEX_DISCORD_BOT_STATUS                     | Name of the watching activity for the bot                                                               | no       | DisPlex        |
-| DISPLEX_DISCORD_STAT_UPDATE_INTERVAL           | How often to update Discord channels                                                                    | no       | 60s            |
-| DISPLEX_DISCORD_USER_UPDATE_INTERVAL           | How often to update Discord users metadata                                                              | no       | 1h             |
-| DISPLEX_DISCORD_BOT                            | Can be used to disable the bot which refreshes Discord channels                                         | no       | Serenity/None  |
-| DISPLEX_HTTP_SERVER                            | Can be used to disable the http server used for linking roles Discord                                   | no       | Axum/None      |
-
 # Development
 
 This bot is still a work in progress. If you have any ideas for improving or adding to Displex, please open an issue

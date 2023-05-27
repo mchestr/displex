@@ -48,13 +48,6 @@ pub async fn initialize_clients(config: &DisplexConfig) -> Result<(serenity::Cli
 
     let pool = db::initialize_db_pool(&config.database.url).await.unwrap();
 
-    let _discord_oauth_client = DiscordOAuth2Client::new(
-        reqwest_client.clone(),
-        config.discord.client_id,
-        &config.discord.client_secret,
-        None,
-    );
-
     let discord_client = DiscordClient::new(reqwest_client.clone(), &config.discord_bot.token);
     let discord_oauth2_client = DiscordOAuth2Client::new(
         reqwest_client.clone(),
