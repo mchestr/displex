@@ -18,9 +18,9 @@ RUN cargo build --release --bin displex
 FROM debian:buster-slim AS runtime
 RUN apt-get update && apt-get install -y libpq-dev ca-certificates
 
-ENV DISPLEX_HTTP_HOST=0.0.0.0 \
-    DISPLEX_HTTP_PORT=8080
-EXPOSE ${DISPLEX_HTTP_PORT}
+ENV DISPLEX_HTTP__HOST=0.0.0.0 \
+    DISPLEX_HTTP__PORT=8080
+EXPOSE ${DISPLEX_HTTP__PORT}
 
 WORKDIR /app
 COPY --from=builder /app/target/release/displex /usr/local/bin
