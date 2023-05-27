@@ -1,59 +1,71 @@
-use clap::{
-    Parser,
-    Subcommand,
+use std::time::Duration;
+
+use anyhow::{
+    Context,
+    Result,
 };
-use derive_more::Display;
+use axum::http::HeaderValue;
+use clap::Parser;
+
 use displex::{
     bot::DisplexBot,
-    config::{
-        DiscordBotArgs,
-        ServerArgs,
-        SetMetadataArgs,
+    config::{self,},
+    db,
+    discord::client::{
+        DiscordClient,
+        DiscordOAuth2Client,
     },
-    metadata,
     server::DisplexHttpServer,
+    tautulli::client::TautulliClient, utils,
 };
 use tokio::signal::unix::{
     signal,
     SignalKind,
 };
+use tracing::metadata::LevelFilter;
 use tracing_subscriber::{
     fmt,
     prelude::*,
     EnvFilter,
 };
 
-#[derive(Parser, Display)]
+#[derive(Parser)]
 #[command(name = "displex")]
 #[command(about = "A Discord/Plex/Tautulli Application", long_about = None)]
 struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-}
-
-#[allow(clippy::large_enum_variant)]
-#[derive(Subcommand, Display)]
-enum Commands {
-    Server(ServerArgs),
-    SetMetadata(SetMetadataArgs),
-    DiscordBot(DiscordBotArgs),
+    #[clap(short, long, default_value = "config.toml")]
+    config_file: String,
 }
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> Result<()> {
     match dotenvy::dotenv() {
         Ok(_) => println!("loaded .env file."),
         Err(_) => println!("no .env file found."),
     };
 
+    let rust_log = match std::option_env!("RUST_LOG") {
+        Some(value) => value,
+        None => {
+            "displex=info,tower_http=info,axum::rejection=debug,h2=warn,serenity=info,reqwest=info"
+        }
+    };
+
     tracing_subscriber::registry()
         // Continue logging to stdout
-        .with(fmt::Layer::default().with_filter(EnvFilter::from_default_env()))
+        .with(
+            fmt::Layer::default().with_filter(
+                EnvFilter::builder()
+                    .with_default_directive(LevelFilter::INFO.into())
+                    .parse_lossy(rust_log),
+            ),
+        )
         .try_init()
-        .unwrap();
+        .context("failed to initialize logging")?;
 
     let args = Cli::parse();
-    tracing::info!("DisplexConfig({:#})", args);
+    let config = config::load(&args.config_file)?;
+    tracing::info!("{:#?}", config);
 
     let (tx, rx) = tokio::sync::broadcast::channel::<()>(1);
     tokio::spawn(async move {
@@ -67,10 +79,11 @@ async fn main() -> std::io::Result<()> {
         tx.send(())
     });
 
-    match args.command {
-        Commands::Server(args) => args.http_server.run(rx, args.clone()).await,
-        Commands::SetMetadata(args) => metadata::set_metadata(args).await,
-        Commands::DiscordBot(args) => args.discord_bot.run(rx, args.clone()).await,
-    };
+    let (serenity_client, clients) = utils::initialize_clients(&config).await?;
+
+    tokio::try_join!(
+        config.http.type_.run(rx.resubscribe(), config.clone(), &clients),
+        config.discord_bot.type_.run(rx, config.clone(), serenity_client, &clients)
+    )?;
     Ok(())
 }

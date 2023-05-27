@@ -1,279 +1,245 @@
-use clap::Args;
-use humantime::Duration;
+use std::{
+    fmt,
+    path::Path,
+    time::Duration,
+};
 
-use derive_more::Display;
+use anyhow::{
+    Context,
+    Result,
+};
+use derivative::Derivative;
+use figment::{
+    providers::{
+        Env,
+        Format,
+        Toml,
+    },
+    Figment,
+};
+
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use crate::{
     bot::DiscordBot,
     server::Server,
 };
 
-#[derive(Display, Clone)]
-#[display(fmt = "********")]
-pub struct Secret(String);
-
-impl Secret {
-    pub fn sensitive_string(&self) -> String {
-        String::from(&self.0)
-    }
+fn obfuscated_formatter(val: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{:?}", "*".repeat(val.len()))
 }
 
-impl From<String> for Secret {
-    fn from(value: String) -> Self {
-        Self(value)
-    }
-}
-
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
-    application_name: {application_name},
-    hostname: {hostname},
-    host: {host},
-    port: {port},
-    accept_valid_certs: {accept_invalid_certs},
-    session: {session},
-    database: {database},
-    discord: {discord},
-    plex: {plex},
-    tautulli: {tautulli},
-}}")]
-pub struct ServerArgs {
-    #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "DisPlex")]
+#[derive(Deserialize, Debug, Clone, Serialize)]
+pub struct DisplexConfig {
+    #[serde(default = "default_application_name")]
     pub application_name: String,
+    pub database: DatabaseConfig,
+    #[serde(default = "default_debug")]
+    pub debug: DebugConfig,
+    pub discord: DiscordConfig,
+    pub discord_bot: DiscordBotConfig,
+    #[serde(default = "default_http")]
+    pub http: HttpConfig,
+    pub plex: PlexConfig,
+    #[serde(default = "default_session")]
+    pub session: SessionConfig,
+    pub tautulli: TautulliConfig,
+}
 
-    #[arg(long, env = "DISPLEX_HOSTNAME", required = true)]
+fn default_application_name() -> String {
+    "displex".into()
+}
+
+fn default_debug() -> DebugConfig {
+    DebugConfig {
+        accept_invalid_certs: default_debug_accept_invalid_certs(),
+    }
+}
+
+fn default_http() -> HttpConfig {
+    HttpConfig {
+        type_: default_http_server(),
+        hostname: "localhost".into(),
+        host: default_http_host(),
+        port: default_http_port(),
+    }
+}
+
+fn default_session() -> SessionConfig {
+    SessionConfig {
+        secret_key: default_session_secret(),
+    }
+}
+
+#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derivative(Debug)]
+pub struct DatabaseConfig {
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    pub url: String,
+}
+
+#[derive(Deserialize, Debug, Clone, Serialize)]
+pub struct DebugConfig {
+    #[serde(default = "default_debug_accept_invalid_certs")]
+    pub accept_invalid_certs: bool,
+}
+
+fn default_debug_accept_invalid_certs() -> bool {
+    false
+}
+
+#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derivative(Debug)]
+pub struct DiscordConfig {
+    pub client_id: u64,
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    pub client_secret: String,
+    pub server_id: u64,
+}
+
+#[derive(Deserialize, Debug, Clone, Serialize)]
+pub struct HttpConfig {
+    #[serde(default = "default_http_server", rename = "type")]
+    pub type_: Server,
     pub hostname: String,
-
-    #[arg(long, env = "DISPLEX_HTTP_HOST", default_value = "127.0.0.1")]
+    #[serde(default = "default_http_host")]
     pub host: String,
-
-    #[arg(long, env = "DISPLEX_HTTP_PORT", default_value = "8080")]
+    #[serde(default = "default_http_port")]
     pub port: u16,
-
-    #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
-    pub accept_invalid_certs: bool,
-
-    #[arg(long, env = "DISPLEX_HTTP_SERVER", value_enum, default_value_t)]
-    pub http_server: Server,
-
-    #[command(flatten)]
-    pub session: SessionArgs,
-
-    #[clap(flatten)]
-    pub database: DatabaseArgs,
-
-    #[command(flatten)]
-    pub discord: DiscordArgs,
-
-    #[clap(flatten)]
-    pub plex: PlexArgs,
-
-    #[clap(flatten)]
-    pub tautulli: TautulliArgs,
 }
 
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
-        discord_client_id: {discord_client_id},
-        discord_client_secret: {discord_client_secret},
-        discord_bot_token: {discord_bot_token},
-        discord_server_id: {discord_server_id},
-    }}")]
-pub struct DiscordArgs {
-    #[arg(
-        long,
-        env = "DISPLEX_DISCORD_CLIENT_ID",
-        required = true,
-        hide_env_values = true
-    )]
-    pub discord_client_id: Secret,
-    #[arg(
-        long,
-        env = "DISPLEX_DISCORD_CLIENT_SECRET",
-        required = true,
-        hide_env_values = true
-    )]
-    pub discord_client_secret: Secret,
-    #[arg(
-        long,
-        env = "DISPLEX_DISCORD_BOT_TOKEN",
-        required = true,
-        hide_env_values = true
-    )]
-    pub discord_bot_token: Secret,
-    #[arg(long, env = "DISPLEX_DISCORD_SERVER_ID", required = true)]
-    pub discord_server_id: u64,
+fn default_http_server() -> Server {
+    Server::Axum
 }
 
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
-        plex_server_id: {plex_server_id},
-    }}")]
-pub struct PlexArgs {
-    #[arg(long, env = "DISPLEX_PLEX_SERVER_ID", required = true)]
-    pub plex_server_id: String,
+fn default_http_host() -> String {
+    "127.0.0.1".into()
 }
 
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
-        session_secret_key: {session_secret_key},
-    }}")]
-pub struct SessionArgs {
-    #[arg(
-        long,
-        env = "DISPLEX_SESSION_SECRET_KEY",
-        required = true,
-        hide_env_values = true
-    )]
-    pub session_secret_key: Secret,
+fn default_http_port() -> u16 {
+    8080
 }
 
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
-        database_url: {database_url},
-    }}")]
-pub struct DatabaseArgs {
-    #[arg(
-        long,
-        env = "DISPLEX_DATABASE_URL",
-        required = true,
-        hide_env_values = true
-    )]
-    pub database_url: Secret,
+#[derive(Deserialize, Debug, Clone, Serialize)]
+pub struct PlexConfig {
+    pub server_id: String,
 }
 
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
-        tautulli_url: {tautulli_url},
-        tautulli_api_key: {tautulli_api_key},
-    }}")]
-pub struct TautulliArgs {
-    #[arg(long, env = "DISPLEX_TAUTULLI_URL", required = true)]
-    pub tautulli_url: String,
-    #[arg(
-        long,
-        env = "DISPLEX_TAUTULLI_API_KEY",
-        required = true,
-        hide_env_values = true
-    )]
-    pub tautulli_api_key: Secret,
+#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derivative(Debug)]
+pub struct SessionConfig {
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    #[serde(default = "default_session_secret")]
+    pub secret_key: String,
 }
 
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
-        discord_bot_token: {discord_bot_token},
-        discord_client_id: {discord_client_id},
-    }}")]
-pub struct SetMetadataArgs {
-    #[arg(
-        long,
-        env = "DISPLEX_DISCORD_CLIENT_ID",
-        required = true,
-        hide_env_values = true
-    )]
-    pub discord_client_id: Secret,
-    #[arg(
-        long,
-        env = "DISPLEX_DISCORD_BOT_TOKEN",
-        required = true,
-        hide_env_values = true
-    )]
-    pub discord_bot_token: Secret,
-    #[arg(long, env = "DISPLEX_ACCEPT_INVALID_CERTS", default_value = "false")]
-    pub accept_invalid_certs: bool,
+fn default_session_secret() -> String {
+    "youshouldnotusethisinproductionandchangeme".into()
 }
 
-#[derive(Args, Clone, Display)]
-#[display(fmt = "{{
-    discord_bot: {discord_bot},
-    discord_bot_status: {discord_bot_status},
-    discord_update_interval: {discord_stat_update_interval},
-    discord_user_update_interval: {discord_user_update_interval},
-    discord: {discord},
-    tautulli: {tautulli},
-    channel_config: {channel_config:#?},
-    }}")]
-pub struct DiscordBotArgs {
-    #[arg(long, env = "DISPLEX_APPLICATION_NAME", default_value = "Displex")]
-    pub application_name: String,
-
-    #[arg(long, env = "DISPLEX_HOSTNAME", required = true)]
-    pub hostname: String,
-
-    #[arg(long, env = "DISPLEX_DISCORD_BOT", value_enum, default_value_t)]
-    pub discord_bot: DiscordBot,
-
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STATUS", default_value = "DisPlex")]
-    pub discord_bot_status: String,
-
-    #[arg(
-        long,
-        env = "DISPLEX_DISCORD_STAT_UPDATE_INTERVAL",
-        default_value = "60s"
-    )]
-    pub discord_stat_update_interval: Duration,
-
-    #[arg(
-        long,
-        env = "DISPLEX_DISCORD_USER_UPDATE_INTERVAL",
-        default_value = "3600s"
-    )]
-    pub discord_user_update_interval: Duration,
-
-    #[clap(flatten)]
-    pub discord: DiscordArgs,
-
-    #[clap(flatten)]
-    pub tautulli: TautulliArgs,
-
-    #[clap(flatten)]
-    pub channel_config: UpdateChannelConfig,
-
-    #[clap(flatten)]
-    pub database: DatabaseArgs,
+#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derivative(Debug)]
+pub struct TautulliConfig {
+    #[serde(default = "default_tautulli_url")]
+    pub url: String,
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    pub api_key: String,
 }
 
-#[derive(Args, Clone, Debug)]
-pub struct UpdateChannelConfig {
-    #[arg(long, default_value = "Bot", env = "DISPLEX_DISCORD_BOT_ROLE_NAME")]
+fn default_tautulli_url() -> String {
+    "http://localhost:8181".into()
+}
+
+#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derivative(Debug)]
+pub struct DiscordBotConfig {
+    #[serde(default = "default_discord_bot", rename = "type")]
+    pub type_: DiscordBot,
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    pub token: String,
+    #[serde(default = "default_discord_bot_status_text")]
+    pub status_text: String,
+    pub stat_update: Option<StatUpdateConfig>,
+    pub user_update: Option<UserUpdateConfig>,
+}
+
+fn default_discord_bot() -> DiscordBot {
+    DiscordBot::Serenity
+}
+
+fn default_discord_bot_status_text() -> String {
+    "DisPlex".into()
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct StatUpdateConfig {
+    #[serde(with = "humantime_serde", default = "default_stat_update_job_interval")]
+    pub interval: Duration,
+    #[serde(default = "default_update_channel_bot_role_name")]
     pub bot_role_name: String,
-    #[arg(
-        long,
-        default_value = "Subscriber",
-        env = "DISPLEX_DISCORD_SUBSCRIBER_ROLE_NAME"
-    )]
+    #[serde(default = "default_update_channel_subscriber_role_name")]
     pub subscriber_role_name: String,
-
-    #[clap(flatten)]
     pub stats_category: Option<StatCategoryConfig>,
-    #[clap(flatten)]
     pub library_category: Option<LibraryCategoryConfig>,
 }
 
-#[derive(Args, Clone, Debug)]
+fn default_stat_update_job_interval() -> Duration {
+    Duration::from_secs(60)
+}
+
+fn default_user_update_job_interval() -> Duration {
+    Duration::from_secs(3600)
+}
+
+fn default_update_channel_bot_role_name() -> String {
+    "Bot".into()
+}
+
+fn default_update_channel_subscriber_role_name() -> String {
+    "Subscriber".into()
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct UserUpdateConfig {
+    #[serde(with = "humantime_serde", default = "default_user_update_job_interval")]
+    pub interval: Duration,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct StatCategoryConfig {
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_CATEGORY_NAME")]
-    pub stat_category_name: String,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_STREAM_NAME")]
+    #[serde(default = "default_stat_category_name")]
+    pub name: String,
     pub stream_name: Option<String>,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_TRANSCODE_NAME")]
     pub transcode_name: Option<String>,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_TOTAL_BANDWIDTH_NAME")]
     pub bandwidth_total_name: Option<String>,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_LOCAL_BANDWIDTH_NAME")]
     pub bandwidth_local_name: Option<String>,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_STAT_REMOTE_BANDWIDTH_NAME")]
     pub bandwidth_remote_name: Option<String>,
 }
 
-#[derive(Args, Clone, Debug)]
+fn default_stat_category_name() -> String {
+    "Plex Stats".into()
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct LibraryCategoryConfig {
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_LIB_CATEGORY_NAME")]
-    pub lib_category_name: String,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_LIB_MOVIES_NAME")]
+    #[serde(default = "default_library_category_name")]
+    pub name: String,
     pub movies_name: Option<String>,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_LIB_TV_SHOWS_NAME")]
     pub tv_shows_name: Option<String>,
-    #[arg(long, env = "DISPLEX_DISCORD_BOT_LIB_TV_EPISODES_NAME")]
     pub tv_episodes_name: Option<String>,
+}
+
+fn default_library_category_name() -> String {
+    "Plex Library Stats".into()
+}
+
+pub fn load(config_file: &str) -> Result<DisplexConfig> {
+    Figment::new()
+        .merge(Toml::file(Path::new(config_file).join("config.toml")))
+        .merge(Env::prefixed("DISPLEX_").split("__"))
+        .extract()
+        .context("Unable to construct application configuration")
 }

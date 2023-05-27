@@ -48,11 +48,11 @@ pub struct DiscordOAuth2Client {
 impl DiscordOAuth2Client {
     pub fn new(
         client: reqwest::Client,
-        client_id: &str,
+        client_id: u64,
         client_secret: &str,
         redirect_url: Option<&str>,
     ) -> DiscordOAuth2Client {
-        let cid = ClientId::new(String::from(client_id));
+        let cid = ClientId::new(client_id.to_string());
         let cs = ClientSecret::new(String::from(client_secret));
 
         // Create an OAuth2 client
@@ -141,7 +141,7 @@ impl DiscordClient {
 
     pub async fn application_metadata(
         &self,
-        application_id: &str,
+        application_id: u64,
     ) -> Result<Vec<ApplicationMetadataDefinition>> {
         Ok(self
             .client
@@ -157,7 +157,7 @@ impl DiscordClient {
 
     pub async fn register_application_metadata(
         &self,
-        application_id: &str,
+        application_id: u64,
         metadata: Vec<ApplicationMetadataDefinition>,
     ) -> Result<Vec<ApplicationMetadataDefinition>> {
         Ok(self
@@ -175,7 +175,7 @@ impl DiscordClient {
 
     pub async fn link_application(
         &self,
-        application_id: &str,
+        application_id: u64,
         metadata: ApplicationMetadataUpdate,
         token: &str,
     ) -> Result<()> {

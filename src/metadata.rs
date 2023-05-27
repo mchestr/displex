@@ -4,14 +4,14 @@ use anyhow::Result;
 use axum::http::HeaderValue;
 
 use crate::{
-    config::SetMetadataArgs,
+    config::DisplexConfig,
     discord::{
         client::DiscordClient,
         models::ApplicationMetadataDefinition,
     },
 };
 
-pub async fn set_metadata(config: SetMetadataArgs) {
+pub async fn set_metadata(config: DisplexConfig) {
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.append("Accept", HeaderValue::from_static("application/json"));
 
@@ -20,24 +20,18 @@ pub async fn set_metadata(config: SetMetadataArgs) {
         .timeout(Duration::from_secs(30))
         .pool_idle_timeout(Duration::from_secs(90))
         .default_headers(default_headers)
-        .danger_accept_invalid_certs(config.accept_invalid_certs)
+        .danger_accept_invalid_certs(config.debug.accept_invalid_certs)
         .build()
         .unwrap();
 
-    let discord_client = DiscordClient::new(
-        reqwest_client.clone(),
-        &config.discord_bot_token.sensitive_string(),
-    );
+    let discord_client = DiscordClient::new(reqwest_client.clone(), &config.discord_bot.token);
 
-    register_metadata(
-        &config.discord_client_id.sensitive_string(),
-        &discord_client,
-    )
-    .await
-    .unwrap();
+    register_metadata(config.discord.client_id, &discord_client)
+        .await
+        .unwrap();
 }
 
-async fn register_metadata(application_id: &str, client: &DiscordClient) -> Result<()> {
+async fn register_metadata(application_id: u64, client: &DiscordClient) -> Result<()> {
     let metadata_spec = vec![
         ApplicationMetadataDefinition {
             key: "total_watches".into(),

@@ -21,14 +21,14 @@ use tower_http::trace::TraceLayer;
 use tracing::info_span;
 
 use crate::{
-    config::ServerArgs,
+    config::DisplexConfig,
     db::{self,},
     discord::client::{
         DiscordClient,
         DiscordOAuth2Client,
     },
     plex::client::PlexClient,
-    tautulli::client::TautulliClient,
+    tautulli::client::TautulliClient, utils::DisplexClients,
 };
 
 mod errors;
@@ -39,7 +39,7 @@ pub const DISCORD_STATE: &str = "state";
 
 #[derive(Clone)]
 pub struct DisplexState {
-    pub config: ServerArgs,
+    pub config: DisplexConfig,
     pub discord_client: DiscordClient,
     pub discord_oauth_client: DiscordOAuth2Client,
     pub plex_client: PlexClient,
@@ -47,43 +47,7 @@ pub struct DisplexState {
     pub db: Pool<Postgres>,
 }
 
-pub async fn run(mut kill: Receiver<()>, config: ServerArgs) {
-    let mut default_headers = reqwest::header::HeaderMap::new();
-    default_headers.append("Accept", HeaderValue::from_static("application/json"));
-
-    let reqwest_client = reqwest::ClientBuilder::new()
-        .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(30))
-        .pool_idle_timeout(Duration::from_secs(90))
-        .default_headers(default_headers)
-        .danger_accept_invalid_certs(config.accept_invalid_certs)
-        .build()
-        .unwrap();
-
-    let discord_client = DiscordClient::new(
-        reqwest_client.clone(),
-        &config.discord.discord_bot_token.sensitive_string(),
-    );
-
-    let discord_oauth_client = DiscordOAuth2Client::new(
-        reqwest_client.clone(),
-        &config.discord.discord_client_id.sensitive_string(),
-        &config.discord.discord_client_secret.sensitive_string(),
-        Some(&format!("https://{}/discord/callback", &config.hostname)),
-    );
-
-    let plex_client = PlexClient::new(
-        &reqwest_client,
-        &config.application_name,
-        &format!("https://{}/plex/callback", &config.hostname),
-    );
-
-    let tautulli_client = TautulliClient::new(
-        &reqwest_client,
-        &config.tautulli.tautulli_url,
-        &config.tautulli.tautulli_api_key.sensitive_string(),
-    );
-
+pub async fn run(mut kill: Receiver<()>, config: DisplexConfig, clients: &DisplexClients) {
     let trace_layer = TraceLayer::new_for_http().make_span_with(|request: &Request<_>| {
         let matched_path = request
             .extensions()
@@ -101,28 +65,25 @@ pub async fn run(mut kill: Receiver<()>, config: ServerArgs) {
     });
 
     let store = CookieStore::new();
-    let secret = config.session.session_secret_key.sensitive_string();
+    let secret = &config.session.secret_key;
     let session_layer = SessionLayer::new(store, secret.as_bytes())
         .with_secure(true)
         .with_same_site_policy(axum_sessions::SameSite::Lax)
-        .with_cookie_domain(&config.hostname);
+        .with_cookie_domain(&config.http.hostname);
 
-    let db = db::initialize_db_pool(&config.database.database_url.sensitive_string())
-        .await
-        .unwrap();
+    let db = db::initialize_db_pool(&config.database.url).await.unwrap();
 
     db::run_migrations(&db).await.unwrap();
 
-    let addr = format!("{}:{}", &config.host, &config.port);
-
+    let addr = format!("{}:{}", &config.http.host, &config.http.port);
     let app = Router::new()
         .merge(routes::configure())
         .with_state(DisplexState {
             config,
-            discord_client,
-            discord_oauth_client,
-            plex_client,
-            tautulli_client,
+            discord_client: clients.discord_client.clone(),
+            discord_oauth_client: clients.discord_oauth2_client.clone(),
+            plex_client: clients.plex_client.clone(),
+            tautulli_client: clients.tautulli_client.clone(),
             db,
         })
         .layer(session_layer)

@@ -7,3 +7,4 @@ pub mod metadata;
 pub mod plex;
 pub mod server;
 pub mod tautulli;
+pub mod utils;

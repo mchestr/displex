@@ -66,7 +66,7 @@ async fn callback(
         .get_devices(&resp.auth_token)
         .await?
         .iter()
-        .any(|d| d.client_identifier == state.config.plex.plex_server_id);
+        .any(|d| d.client_identifier == state.config.plex.server_id);
 
     let token = state.discord_oauth_client.token(&discord_token).await?;
 
@@ -163,15 +163,11 @@ async fn callback(
 
     state
         .discord_client
-        .link_application(
-            &state.config.discord.discord_client_id.sensitive_string(),
-            data,
-            &d_access_token,
-        )
+        .link_application(state.config.discord.client_id, data, &d_access_token)
         .await?;
     Ok(Redirect::to(&format!(
         "discord://-/channels/{}/@home",
-        state.config.discord.discord_server_id
+        state.config.discord.server_id
     )))
 }
 
