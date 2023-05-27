@@ -24,4 +24,4 @@ EXPOSE ${DISPLEX_HTTP_PORT}
 
 WORKDIR /app
 COPY --from=builder /app/target/release/displex /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/displex", "server"]
+ENTRYPOINT ["/usr/local/bin/displex"]
