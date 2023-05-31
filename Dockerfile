@@ -1,28 +1,30 @@
 FROM lukemathwalker/cargo-chef:0.1.61-rust-1.69.0 AS chef
+RUN apt-get update && apt-get install -y musl-tools musl-dev
+RUN update-ca-certificates
 WORKDIR /app
 
 FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM chef AS builder 
+FROM chef AS app-builder 
 COPY --from=planner /app/recipe.json recipe.json
-RUN apt-get update && apt-get install -y libpq-dev
-# Build dependencies - this is the caching Docker layer!
-RUN cargo chef cook --release --recipe-path recipe.json
-# Build application
+RUN cargo chef cook --profile dist --recipe-path recipe.json
 COPY . .
-RUN cargo build --release --bin displex
+RUN rustup target add x86_64-unknown-linux-musl
+RUN cargo build --profile dist --bin displex --target x86_64-unknown-linux-musl
 
-# We do not need the Rust toolchain to run the binary!
-FROM debian:buster-slim AS runtime
-RUN apt-get update && apt-get install -y libpq-dev ca-certificates
+# taken from https://medium.com/@lizrice/non-privileged-containers-based-on-the-scratch-image-a80105d6d341
+FROM ubuntu:latest as user-creator
+RUN useradd -u 1001 displex
 
-ENV DISPLEX_HTTP__HOST=0.0.0.0 \
-    DISPLEX_HTTP__PORT=8080 \
-    RUST_LOG="displex=info,tower_http=info,axum::rejection=debug,h2=warn,serenity=info,reqwest=info"
-EXPOSE ${DISPLEX_HTTP__PORT}
+FROM scratch
+COPY --from=user-creator /etc/passwd /etc/passwd
+USER displex
 
-WORKDIR /app
-COPY --from=builder /app/target/release/displex /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/displex"]
+WORKDIR /data
+ENV RUST_LOG="displex=info,sea_orm=info" \
+    DISPLEX_HTTP__HOST=0.0.0.0 \
+    DISPLEX_HTTP__PORT=8080
+COPY --from=app-builder --chown=displex:displex /app/target/x86_64-unknown-linux-musl/dist/displex /app
+ENTRYPOINT ["/app"]
