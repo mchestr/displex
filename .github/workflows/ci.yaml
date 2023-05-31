@@ -8,7 +8,6 @@ on:
       - main
 
 jobs:
-
   test_phaser:
     runs-on: ubuntu-latest
     steps:
@@ -25,21 +24,21 @@ jobs:
         run: |
           cargo --version --verbose
           rustc --version
-          cargo clippy --version          
+          cargo clippy --version
 
       - name: Lint
         run: |
           cd src
           cargo +nightly fmt -- --check
-          cargo clippy -- -D warnings          
+          cargo clippy -- -D warnings
 
       - name: Test
         run: |
           cd src
           cargo check
-          cargo test --all          
+          cargo test --all
 
       - name: Build
         run: |
           cd src
-          cargo build --release 
+          cargo build --release
