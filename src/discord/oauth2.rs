@@ -19,12 +19,6 @@ use oauth2::{
 };
 use reqwest::Url;
 
-use super::models::{
-    ApplicationMetadataDefinition,
-    ApplicationMetadataUpdate,
-    User,
-};
-
 type OAuth2Client = oauth2::Client<
     oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
     oauth2::StandardTokenResponse<oauth2::EmptyExtraTokenFields, oauth2::basic::BasicTokenType>,
@@ -123,85 +117,4 @@ impl DiscordOAuth2Client {
             body: chunks.to_vec(),
         })
     }
-}
-
-#[derive(Clone, Debug)]
-pub struct DiscordClient {
-    client: reqwest::Client,
-    bot_token: String,
-}
-
-impl DiscordClient {
-    pub fn new(client: reqwest::Client, bot_token: &str) -> DiscordClient {
-        DiscordClient {
-            client,
-            bot_token: String::from(bot_token),
-        }
-    }
-
-    pub async fn application_metadata(
-        &self,
-        application_id: u64,
-    ) -> Result<Vec<ApplicationMetadataDefinition>> {
-        Ok(self
-            .client
-            .get(format_url(&format!(
-                "/applications/{application_id}/role-connections/metadata"
-            )))
-            .header("Authorization", format!("Bot {}", self.bot_token))
-            .send()
-            .await?
-            .json()
-            .await?)
-    }
-
-    pub async fn register_application_metadata(
-        &self,
-        application_id: u64,
-        metadata: Vec<ApplicationMetadataDefinition>,
-    ) -> Result<Vec<ApplicationMetadataDefinition>> {
-        Ok(self
-            .client
-            .put(format_url(&format!(
-                "/applications/{application_id}/role-connections/metadata"
-            )))
-            .header("Authorization", format!("Bot {}", self.bot_token))
-            .json(&metadata)
-            .send()
-            .await?
-            .json()
-            .await?)
-    }
-
-    pub async fn link_application(
-        &self,
-        application_id: u64,
-        metadata: ApplicationMetadataUpdate,
-        token: &str,
-    ) -> Result<()> {
-        self.client
-            .put(format_url(&format!(
-                "/users/@me/applications/{application_id}/role-connection"
-            )))
-            .bearer_auth(token)
-            .json(&metadata)
-            .send()
-            .await?;
-        Ok(())
-    }
-
-    pub async fn user(&self, token: &str) -> Result<User> {
-        Ok(self
-            .client
-            .get(format_url("/users/@me"))
-            .bearer_auth(token)
-            .send()
-            .await?
-            .json()
-            .await?)
-    }
-}
-
-fn format_url(path: &str) -> String {
-    format!("https://discord.com/api/v10{path}")
 }

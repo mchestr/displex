@@ -19,7 +19,8 @@ FROM debian:buster-slim AS runtime
 RUN apt-get update && apt-get install -y libpq-dev ca-certificates
 
 ENV DISPLEX_HTTP__HOST=0.0.0.0 \
-    DISPLEX_HTTP__PORT=8080
+    DISPLEX_HTTP__PORT=8080 \
+    RUST_LOG="displex=info,tower_http=info,axum::rejection=debug,h2=warn,serenity=info,reqwest=info"
 EXPOSE ${DISPLEX_HTTP__PORT}
 
 WORKDIR /app

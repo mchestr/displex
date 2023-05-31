@@ -1,6 +1,9 @@
 use std::time::Duration;
 
-use anyhow::anyhow;
+use anyhow::{
+    anyhow,
+    Context,
+};
 use axum::{
     extract::{
         Query,
@@ -18,27 +21,20 @@ use oauth2::TokenResponse;
 use serde::Deserialize;
 
 use crate::{
-    db::{
-        self,
-        discord::{
-            NewDiscordToken,
-            NewDiscordUser,
-        },
-        plex::{
-            NewPlexToken,
-            NewPlexUser,
-        },
-    },
     discord::models::{
         ApplicationMetadata,
         ApplicationMetadataUpdate,
+    },
+    discord_user::resolver::{
+        CreateDiscordUserErrorVariant,
+        CreateDiscordUserResult,
     },
     errors::DisplexError,
     server::axum::{
         DisplexState,
         DISCORD_CODE,
     },
-    tautulli::models::QueryDays,
+    tautulli::models::QueryDays, discord_token::resolver::{CreateDiscordTokenResult, CreateDiscordTokenErrorVariant}, plex_user::resolver::{CreatePlexUserResult, CreatePlexUserErrorVariant}, plex_token::resolver::{CreatePlexTokenResult, CreatePlexTokenErrorVariant},
 };
 
 #[derive(Deserialize)]
@@ -52,8 +48,15 @@ async fn callback(
     State(state): State<DisplexState>,
     query_string: Query<CallbackQueryParams>,
 ) -> Result<impl IntoResponse, DisplexError> {
-    let resp = state
-        .plex_client
+    let plex_svc = state.services.plex_service;
+    let tautulli_svc = state.services.tautulli_service;
+    let discord_svc = state.services.discord_service;
+    let discord_users_svc = state.services.discord_users_service;
+    let discord_tokens_svc = state.services.discord_tokens_service;
+    let plex_users_svc = state.services.plex_users_service;
+    let plex_tokens_svc = state.services.plex_tokens_service;
+
+    let resp = plex_svc
         .pin_claim(query_string.id, &query_string.code)
         .await?;
 
@@ -61,19 +64,18 @@ async fn callback(
         .get::<String>(DISCORD_CODE)
         .ok_or_else(|| anyhow!("no code found for session"))?;
 
-    let is_subscriber = state
-        .plex_client
+    let is_subscriber = plex_svc
         .get_devices(&resp.auth_token)
         .await?
         .iter()
         .any(|d| d.client_identifier == state.config.plex.server_id);
 
-    let token = state.discord_oauth_client.token(&discord_token).await?;
+    let token = discord_svc.token(&discord_token).await?;
 
     let d_access_token = String::from(token.access_token().secret());
-    let discord_user = state.discord_client.user(&d_access_token).await?;
+    let discord_user = discord_svc.user(&d_access_token).await?;
 
-    let plex_user = state.plex_client.user(&resp.auth_token).await?;
+    let plex_user = plex_svc.user(&resp.auth_token).await?;
 
     tracing::info!(
         "{} is a subscriber: {}",
@@ -81,65 +83,109 @@ async fn callback(
         is_subscriber
     );
 
-    let mut transaction = state.db.begin().await?;
-    let discord_user = db::discord::insert_user(
-        &mut transaction,
-        NewDiscordUser {
-            id: discord_user.id,
-            username: discord_user.username,
+    match discord_users_svc
+        .create(&discord_user.id, &discord_user.username)
+        .await
+    {
+        Ok(result) => match result {
+            CreateDiscordUserResult::Ok(user) => (),
+            CreateDiscordUserResult::Error(err) => match err.error {
+                CreateDiscordUserErrorVariant::UserAlreadyExists => (),
+                CreateDiscordUserErrorVariant::InternalError => {
+                    return Err(DisplexError(anyhow::anyhow!(
+                        "failed to create discord_user: {:?}",
+                        err
+                    )))
+                }
+            },
         },
-    )
-    .await?;
-    tracing::debug!("inserted discord user: {:?}", discord_user);
-
-    let discord_token = db::discord::insert_token(
-        &mut transaction,
-        NewDiscordToken {
-            access_token: token.access_token().secret().into(),
-            refresh_token: token
-                .refresh_token()
-                .expect("expecting refresh token")
-                .secret()
-                .into(),
-            scopes: token.scopes().map_or("".into(), |d| {
-                d.iter().map(|i| i.to_string() + ",").collect()
-            }),
-            expires_at: chrono::Utc::now()
-                + chrono::Duration::seconds(
-                    token
-                        .expires_in()
-                        .unwrap_or(Duration::from_secs(1800))
-                        .as_secs() as i64,
-                ),
-            discord_user_id: String::from(&discord_user.id),
+        Err(err) => {
+            return Err(DisplexError(anyhow::anyhow!(
+                "failed to create discord_user: {:?}",
+                err
+            )))
+        }
+    };
+    let scopes: String = token.scopes().map_or("".into(), |d| {
+        d.iter().map(|i| i.to_string() + ",").collect()
+    });
+    match discord_tokens_svc.create(
+        token.access_token().secret(),
+        token
+            .refresh_token()
+            .expect("expecting refresh token")
+            .secret(),
+        &(chrono::Utc::now()
+            + chrono::Duration::seconds(
+                token
+                    .expires_in()
+                    .unwrap_or(Duration::from_secs(1800))
+                    .as_secs() as i64,
+            )),
+        &scopes,
+        &discord_user.id,
+    ).await {
+        Ok(result) => match result {
+            CreateDiscordTokenResult::Ok(_) => (),
+            CreateDiscordTokenResult::Error(err) => match err.error {
+                CreateDiscordTokenErrorVariant::TokenAlreadyExists => (),
+                CreateDiscordTokenErrorVariant::InternalError => {
+                    return Err(DisplexError(anyhow::anyhow!(
+                        "failed to create discord_token: {:?}",
+                        err
+                    )))
+                }
+            },
         },
-    )
-    .await?;
-    tracing::debug!("inserted discord token: {:?}", discord_token);
+        Err(err) => {
+            return Err(DisplexError(anyhow::anyhow!(
+                "failed to create discord_token: {:?}",
+                err
+            )))
+        }   
+    };
 
-    let plex_user = db::plex::insert_user(
-        &mut transaction,
-        NewPlexUser {
-            id: plex_user.id,
-            username: plex_user.username,
-            discord_user_id: String::from(&discord_user.id),
-            is_subscriber,
+    match plex_users_svc.create(plex_user.id, &plex_user.username, is_subscriber, &discord_user.id).await {
+        Ok(result) => match result {
+            CreatePlexUserResult::Ok(_) => (),
+            CreatePlexUserResult::Error(err) => match err.error {
+                CreatePlexUserErrorVariant::TokenAlreadyExists => (),
+                CreatePlexUserErrorVariant::InternalError => {
+                    return Err(DisplexError(anyhow::anyhow!(
+                        "failed to create plex_user: {:?}",
+                        err
+                    )))
+                },
+            },
         },
-    )
-    .await?;
-    tracing::debug!("inserted plex user: {:?}", plex_user);
+        Err(err) => {
+            return Err(DisplexError(anyhow::anyhow!(
+                "failed to create plex_user: {:?}",
+                err
+            )))
+        }
+    };
 
-    let plex_token = db::plex::insert_token(
-        &mut transaction,
-        NewPlexToken {
-            access_token: resp.auth_token,
-            plex_user_id: plex_user.id,
+    match plex_tokens_svc.create(&resp.auth_token, &plex_user.id).await {
+        Ok(result) => match result {
+            CreatePlexTokenResult::Ok(_) => (),
+            CreatePlexTokenResult::Error(err) => match err.error {
+                CreatePlexTokenErrorVariant::TokenAlreadyExists => (),
+                CreatePlexTokenErrorVariant::InternalError => {
+                    return Err(DisplexError(anyhow::anyhow!(
+                        "failed to create plex_token: {:?}",
+                        err
+                    )))
+                },
+            },
         },
-    )
-    .await?;
-    tracing::debug!("inserted plex token: {:?}", plex_token);
-
-    transaction.commit().await?;
+        Err(err) => {
+            return Err(DisplexError(anyhow::anyhow!(
+                "failed to create plex_token: {:?}",
+                err
+            )))
+        }
+    };
 
     let mut data = ApplicationMetadataUpdate {
         platform_name: String::from(&state.config.application_name),
@@ -150,8 +196,7 @@ async fn callback(
         ..Default::default()
     };
     if is_subscriber {
-        let watch_stats = state
-            .tautulli_client
+        let watch_stats = tautulli_svc
             .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
             .await?;
 
@@ -161,8 +206,7 @@ async fn callback(
         };
     };
 
-    state
-        .discord_client
+    discord_svc
         .link_application(state.config.discord.client_id, data, &d_access_token)
         .await?;
     Ok(Redirect::to(&format!(

@@ -1,33 +1,27 @@
-
-
 use axum::{
-    extract::MatchedPath,
-    http::{
-        Request,
-    },
+    Extension,
     Router,
 };
 use axum_sessions::{
     async_session::CookieStore,
     SessionLayer,
 };
-use sqlx::{
-    Pool,
-    Postgres,
+use reqwest::{
+    header,
+    Method,
 };
 use tokio::sync::broadcast::Receiver;
-use tower_http::trace::TraceLayer;
-use tracing::info_span;
+use tower_cookies::CookieManagerLayer;
+use tower_http::{
+    catch_panic::CatchPanicLayer,
+    cors::CorsLayer,
+    trace::TraceLayer,
+};
 
 use crate::{
-    config::DisplexConfig,
-    db::{self,},
-    discord::client::{
-        DiscordClient,
-        DiscordOAuth2Client,
-    },
-    plex::client::PlexClient,
-    tautulli::client::TautulliClient, utils::DisplexClients,
+    config::AppConfig,
+    graphql::GraphqlSchema,
+    services::AppServices,
 };
 
 mod errors;
@@ -38,31 +32,16 @@ pub const DISCORD_STATE: &str = "state";
 
 #[derive(Clone)]
 pub struct DisplexState {
-    pub config: DisplexConfig,
-    pub discord_client: DiscordClient,
-    pub discord_oauth_client: DiscordOAuth2Client,
-    pub plex_client: PlexClient,
-    pub tautulli_client: TautulliClient,
-    pub db: Pool<Postgres>,
+    pub config: AppConfig,
+    pub services: AppServices,
 }
 
-pub async fn run(mut kill: Receiver<()>, config: DisplexConfig, clients: &DisplexClients) {
-    let trace_layer = TraceLayer::new_for_http().make_span_with(|request: &Request<_>| {
-        let matched_path = request
-            .extensions()
-            .get::<MatchedPath>()
-            .map(MatchedPath::as_str);
-
-        let request_id = uuid::Uuid::new_v4().to_string();
-        info_span!(
-            "req",
-            id = request_id,
-            method = ?request.method(),
-            matched_path,
-            some_other_field = tracing::field::Empty,
-        )
-    });
-
+pub async fn run(
+    mut kill: Receiver<()>,
+    config: AppConfig,
+    services: &AppServices,
+    schema: &GraphqlSchema,
+) {
     let store = CookieStore::new();
     let secret = &config.session.secret_key;
     let session_layer = SessionLayer::new(store, secret.as_bytes())
@@ -70,23 +49,32 @@ pub async fn run(mut kill: Receiver<()>, config: DisplexConfig, clients: &Disple
         .with_same_site_policy(axum_sessions::SameSite::Lax)
         .with_cookie_domain(&config.http.hostname);
 
-    let db = db::initialize_db_pool(&config.database.url).await.unwrap();
-
-    db::run_migrations(&db).await.unwrap();
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers([header::ACCEPT, header::CONTENT_TYPE])
+        .allow_origin(
+            config
+                .web
+                .cors_origins
+                .iter()
+                .map(|f| f.parse().unwrap())
+                .collect::<Vec<_>>(),
+        )
+        .allow_credentials(true);
 
     let addr = format!("{}:{}", &config.http.host, &config.http.port);
     let app = Router::new()
         .merge(routes::configure())
         .with_state(DisplexState {
             config,
-            discord_client: clients.discord_client.clone(),
-            discord_oauth_client: clients.discord_oauth2_client.clone(),
-            plex_client: clients.plex_client.clone(),
-            tautulli_client: clients.tautulli_client.clone(),
-            db,
+            services: services.clone(),
         })
         .layer(session_layer)
-        .layer(trace_layer);
+        .layer(Extension(schema.clone()))
+        .layer(TraceLayer::new_for_http())
+        .layer(CatchPanicLayer::new())
+        .layer(CookieManagerLayer::new())
+        .layer(cors);
 
     tracing::info!("starting server on {}", &addr);
     axum::Server::bind(&addr.parse().unwrap())

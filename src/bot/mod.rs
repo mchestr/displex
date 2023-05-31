@@ -8,7 +8,10 @@ use serde::{
 };
 use tokio::sync::broadcast::Receiver;
 
-use crate::{config::DisplexConfig, utils::DisplexClients};
+use crate::{
+    config::AppConfig,
+    services::AppServices,
+};
 
 pub mod discord;
 
@@ -35,14 +38,26 @@ pub enum DiscordBot {
 
 #[async_trait]
 pub trait DisplexBot {
-    async fn run(&self, rx: Receiver<()>, config: DisplexConfig, serenity_client: serenity::Client, clients: &DisplexClients) -> Result<()>;
+    async fn run(
+        &self,
+        rx: Receiver<()>,
+        config: AppConfig,
+        serenity_client: serenity::Client,
+        services: &AppServices,
+    ) -> Result<()>;
 }
 
 #[async_trait]
 impl DisplexBot for DiscordBot {
-    async fn run(&self, rx: Receiver<()>, config: DisplexConfig, serenity_client: serenity::Client, clients: &DisplexClients) -> Result<()> {
+    async fn run(
+        &self,
+        rx: Receiver<()>,
+        config: AppConfig,
+        serenity_client: serenity::Client,
+        services: &AppServices,
+    ) -> Result<()> {
         match self {
-            DiscordBot::Serenity => discord::run(rx, config, serenity_client, clients).await,
+            DiscordBot::Serenity => discord::run(rx, config, serenity_client, services).await,
             DiscordBot::Disabled => tracing::info!("bot disabled"),
         }
         Ok(())

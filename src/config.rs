@@ -1,6 +1,9 @@
 use std::{
     fmt,
-    path::Path,
+    path::{
+        Path,
+        PathBuf,
+    },
     time::Duration,
 };
 
@@ -13,7 +16,10 @@ use figment::{
     providers::{
         Env,
         Format,
+        Json,
+        Serialized,
         Toml,
+        Yaml,
     },
     Figment,
 };
@@ -26,14 +32,15 @@ use serde::{
 use crate::{
     bot::DiscordBot,
     server::Server,
+    PROJECT_NAME,
 };
 
 fn obfuscated_formatter(val: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{:?}", "*".repeat(val.len()))
 }
 
-#[derive(Deserialize, Debug, Clone, Serialize)]
-pub struct DisplexConfig {
+#[derive(Deserialize, Debug, Clone, Serialize, Default)]
+pub struct AppConfig {
     #[serde(default = "default_application_name")]
     pub application_name: String,
     pub database: DatabaseConfig,
@@ -47,6 +54,7 @@ pub struct DisplexConfig {
     #[serde(default = "default_session")]
     pub session: SessionConfig,
     pub tautulli: TautulliConfig,
+    pub web: WebConfig,
 }
 
 fn default_application_name() -> String {
@@ -74,14 +82,14 @@ fn default_session() -> SessionConfig {
     }
 }
 
-#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct DatabaseConfig {
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
     pub url: String,
 }
 
-#[derive(Deserialize, Debug, Clone, Serialize)]
+#[derive(Deserialize, Debug, Default, Clone, Serialize)]
 pub struct DebugConfig {
     #[serde(default = "default_debug_accept_invalid_certs")]
     pub accept_invalid_certs: bool,
@@ -91,7 +99,7 @@ fn default_debug_accept_invalid_certs() -> bool {
     false
 }
 
-#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct DiscordConfig {
     pub client_id: u64,
@@ -100,7 +108,7 @@ pub struct DiscordConfig {
     pub server_id: u64,
 }
 
-#[derive(Deserialize, Debug, Clone, Serialize)]
+#[derive(Deserialize, Debug, Default, Clone, Serialize)]
 pub struct HttpConfig {
     #[serde(default = "default_http_server", rename = "type")]
     pub type_: Server,
@@ -123,12 +131,12 @@ fn default_http_port() -> u16 {
     8080
 }
 
-#[derive(Deserialize, Debug, Clone, Serialize)]
+#[derive(Deserialize, Debug, Default, Clone, Serialize)]
 pub struct PlexConfig {
     pub server_id: String,
 }
 
-#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct SessionConfig {
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
@@ -140,7 +148,7 @@ fn default_session_secret() -> String {
     "youshouldnotusethisinproductionandchangeme".into()
 }
 
-#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct TautulliConfig {
     #[serde(default = "default_tautulli_url")]
@@ -153,7 +161,7 @@ fn default_tautulli_url() -> String {
     "http://localhost:8181".into()
 }
 
-#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct DiscordBotConfig {
     #[serde(default = "default_discord_bot", rename = "type")]
@@ -174,7 +182,7 @@ fn default_discord_bot_status_text() -> String {
     "DisPlex".into()
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
+#[derive(Debug, Deserialize, Default, Clone, Serialize)]
 pub struct StatUpdateConfig {
     #[serde(with = "humantime_serde", default = "default_stat_update_job_interval")]
     pub interval: Duration,
@@ -202,13 +210,13 @@ fn default_update_channel_subscriber_role_name() -> String {
     "Subscriber".into()
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
+#[derive(Debug, Deserialize, Default, Clone, Serialize)]
 pub struct UserUpdateConfig {
     #[serde(with = "humantime_serde", default = "default_user_update_job_interval")]
     pub interval: Duration,
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
+#[derive(Debug, Deserialize, Default, Clone, Serialize)]
 pub struct StatCategoryConfig {
     #[serde(default = "default_stat_category_name")]
     pub name: String,
@@ -223,7 +231,7 @@ fn default_stat_category_name() -> String {
     "Plex Stats".into()
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
+#[derive(Debug, Deserialize, Default, Clone, Serialize)]
 pub struct LibraryCategoryConfig {
     #[serde(default = "default_library_category_name")]
     pub name: String,
@@ -236,10 +244,27 @@ fn default_library_category_name() -> String {
     "Plex Library Stats".into()
 }
 
-pub fn load(config_file: &str) -> Result<DisplexConfig> {
+#[derive(Deserialize, Debug, Clone, Serialize, Default)]
+pub struct WebConfig {
+    pub cors_origins: Vec<String>,
+    pub insecure_cookie: bool,
+}
+
+pub fn get_app_config() -> Result<AppConfig> {
+    let config = "config";
     Figment::new()
-        .merge(Toml::file(Path::new(config_file).join("config.toml")))
-        .merge(Env::prefixed("DISPLEX_").split("__"))
+        .merge(Serialized::defaults(AppConfig::default()))
+        .merge(Json::file(
+            PathBuf::from(config).join(format!("{PROJECT_NAME}.json")),
+        ))
+        .merge(Toml::file(
+            PathBuf::from(config).join(format!("{PROJECT_NAME}.toml")),
+        ))
+        .merge(Yaml::file(
+            PathBuf::from(config).join(format!("{PROJECT_NAME}.yaml")),
+        ))
+        .merge(Env::raw().split("_").only(&["database.url"]))
+        .merge(Env::raw().split("__").ignore(&["database.url"]))
         .extract()
         .context("Unable to construct application configuration")
 }

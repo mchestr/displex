@@ -1,5 +1,3 @@
-
-
 use anyhow::Result;
 
 use serenity::{
@@ -18,7 +16,8 @@ use serenity::{
 use tokio::sync::broadcast::Receiver;
 
 use crate::{
-    config::DisplexConfig, utils::DisplexClients,
+    config::AppConfig,
+    services::AppServices,
 };
 
 mod channel_statistics;
@@ -26,13 +25,13 @@ mod commands;
 mod usermeta_refresh;
 
 use self::{
-    channel_statistics::ChannelStatisticArgs,
+    // channel_statistics::ChannelStatisticArgs,
     commands::*,
-    usermeta_refresh::UserMetadataRefreshArgs,
+    // usermeta_refresh::UserMetadataRefreshArgs,
 };
 
 struct Handler {
-    config: DisplexConfig,
+    config: AppConfig,
 }
 
 #[group]
@@ -51,7 +50,7 @@ impl EventHandler for Handler {
     }
 }
 
-pub async fn init(config: DisplexConfig) -> Result<serenity::Client> {
+pub async fn init(config: AppConfig) -> Result<serenity::Client> {
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
@@ -66,8 +65,12 @@ pub async fn init(config: DisplexConfig) -> Result<serenity::Client> {
         .await?)
 }
 
-pub async fn run(mut kill: Receiver<()>, config: DisplexConfig, mut serenity_client: serenity::Client, clients: &DisplexClients) {
-
+pub async fn run(
+    mut kill: Receiver<()>,
+    config: AppConfig,
+    mut serenity_client: serenity::Client,
+    services: &AppServices,
+) {
     let manager = serenity_client.shard_manager.clone();
     let stat_kill = kill.resubscribe();
     let meta_kill = kill.resubscribe();
@@ -79,36 +82,36 @@ pub async fn run(mut kill: Receiver<()>, config: DisplexConfig, mut serenity_cli
         lock.shutdown_all().await;
     });
 
-    if let Some(job_config) = config.discord_bot.user_update {
-        usermeta_refresh::setup(
-            meta_kill,
-            UserMetadataRefreshArgs {
-                application_name: config.application_name,
-                client_id: config.discord.client_id,
-                update_interval: job_config.interval,
-                pool: clients.pool.clone(),
-                discord_client: clients.discord_client.clone(),
-                discord_oauth_client: clients.discord_oauth2_client.clone(),
-                tautulli_client: clients.tautulli_client.clone(),
-            },
-        )
-        .await;
-    }
+    // if let Some(job_config) = config.discord_bot.user_update {
+    //     usermeta_refresh::setup(
+    //         meta_kill,
+    //         UserMetadataRefreshArgs {
+    //             application_name: config.application_name,
+    //             client_id: config.discord.client_id,
+    //             update_interval: job_config.interval,
+    //             pool: clients.pool.clone(),
+    //             discord_client: clients.discord_client.clone(),
+    //             discord_oauth_client: clients.discord_oauth2_client.clone(),
+    //             tautulli_client: clients.tautulli_client.clone(),
+    //         },
+    //     )
+    //     .await;
+    // }
 
-    if let Some(job_config) = config.discord_bot.stat_update {
-        channel_statistics::setup(
-            stat_kill,
-            ChannelStatisticArgs {
-                tautulli_client: clients.tautulli_client.clone(),
-                interval_seconds: job_config.interval,
-                http_client: clients.serenity_client.clone(),
-                config: job_config,
-                server_id: config.discord.server_id,
-            },
-        )
-        .await
-        .unwrap();
-    }
+    // if let Some(job_config) = config.discord_bot.stat_update {
+    //     channel_statistics::setup(
+    //         stat_kill,
+    //         ChannelStatisticArgs {
+    //             tautulli_client: clients.tautulli_client.clone(),
+    //             interval_seconds: job_config.interval,
+    //             http_client: clients.serenity_client.clone(),
+    //             config: job_config,
+    //             server_id: config.discord.server_id,
+    //         },
+    //     )
+    //     .await
+    //     .unwrap();
+    // }
 
     serenity_client.start().await.unwrap();
 }

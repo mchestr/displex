@@ -1,40 +1,83 @@
+use async_graphql::http::{
+    playground_source,
+    GraphQLPlaygroundConfig,
+};
+use async_graphql_axum::{
+    GraphQLRequest,
+    GraphQLResponse,
+};
 use axum::{
-    response::IntoResponse,
+    http::HeaderMap,
+    response::{
+        Html,
+        IntoResponse,
+    },
     routing::get,
+    Extension,
     Router,
 };
 use axum_sessions::extractors::{
     ReadableSession,
     WritableSession,
 };
+use reqwest::{
+    header::{
+        self,
+        AUTHORIZATION,
+    },
+    Method,
+};
+use tower_cookies::{
+    CookieManagerLayer,
+    Cookies,
+};
+use tower_http::{
+    catch_panic::CatchPanicLayer,
+    cors::CorsLayer,
+    trace::TraceLayer,
+};
 
-use crate::server::axum::DISCORD_STATE;
+use crate::{
+    config::AppConfig,
+    discord_token::resolver::COOKIE_NAME,
+    graphql::GraphqlSchema,
+    server::axum::DISCORD_STATE,
+};
 
 use super::DisplexState;
 
 mod discord;
 mod plex;
 
-async fn display_handler(session: ReadableSession) -> impl IntoResponse {
-    let mut count: String = "test".into();
-    count = session.get(DISCORD_STATE).unwrap_or(count);
-    format!("Count is: {count}; visit /inc to increment and /reset to reset")
+#[derive(Debug)]
+pub struct GqlCtx {
+    auth_token: Option<String>,
 }
 
-async fn increment_handler(mut session: WritableSession) -> impl IntoResponse {
-    session.insert("count", String::from("testss")).unwrap();
+async fn graphql_handler(
+    schema: Extension<GraphqlSchema>,
+    cookies: Cookies,
+    headers: HeaderMap,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    let mut req = req.0;
+    let mut ctx = GqlCtx { auth_token: None };
+    if let Some(c) = cookies.get(COOKIE_NAME) {
+        ctx.auth_token = Some(c.value().to_owned());
+    } else if let Some(h) = headers.get(AUTHORIZATION) {
+        ctx.auth_token = h.to_str().map(|e| e.replace("Bearer ", "")).ok();
+    }
+    req = req.data(ctx);
+    schema.execute(req).await.into()
 }
 
-async fn reset_handler(mut session: WritableSession) -> impl IntoResponse {
-    session.destroy();
-    "Count reset"
+async fn graphql_playground() -> impl IntoResponse {
+    Html(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
 }
 
 pub fn configure() -> Router<DisplexState> {
     Router::new()
-        .route("/", get(display_handler))
-        .route("/inc", get(increment_handler))
-        .route("/reset", get(reset_handler))
+        .route("/graphql", get(graphql_playground).post(graphql_handler))
         .merge(discord::routes())
         .merge(plex::routes())
 }

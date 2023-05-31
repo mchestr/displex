@@ -7,7 +7,11 @@ use serde::{
     Serialize,
 };
 
-use crate::{config::DisplexConfig, utils::DisplexClients};
+use crate::{
+    config::AppConfig,
+    graphql::GraphqlSchema,
+    services::AppServices,
+};
 
 pub mod axum;
 
@@ -36,8 +40,9 @@ pub trait DisplexHttpServer {
     async fn run(
         &self,
         rx: tokio::sync::broadcast::Receiver<()>,
-        config: DisplexConfig,
-        clients: &DisplexClients,
+        config: AppConfig,
+        services: &AppServices,
+        schema: &GraphqlSchema,
     ) -> Result<()>;
 }
 
@@ -46,11 +51,12 @@ impl DisplexHttpServer for Server {
     async fn run(
         &self,
         rx: tokio::sync::broadcast::Receiver<()>,
-        config: DisplexConfig,
-        clients: &DisplexClients,
+        config: AppConfig,
+        services: &AppServices,
+        schema: &GraphqlSchema,
     ) -> Result<()> {
         match self {
-            Server::Axum => axum::run(rx, config, clients).await,
+            Server::Axum => axum::run(rx, config, services, schema).await,
             Server::Disabled => tracing::info!("server disabled"),
         }
         Ok(())
