@@ -41,7 +41,7 @@ pub trait DisplexBot {
     async fn run(
         &self,
         rx: Receiver<()>,
-        config: AppConfig,
+        config: &AppConfig,
         serenity_client: serenity::Client,
         services: &AppServices,
     ) -> Result<()>;
@@ -52,7 +52,7 @@ impl DisplexBot for DiscordBot {
     async fn run(
         &self,
         rx: Receiver<()>,
-        config: AppConfig,
+        config: &AppConfig,
         serenity_client: serenity::Client,
         services: &AppServices,
     ) -> Result<()> {

@@ -408,4 +408,13 @@ impl DiscordUsersService {
             },
         }))
     }
+
+    pub async fn list_users_for_refresh(
+        &self,
+    ) -> Result<Vec<(discord_user::Model, Option<plex_user::Model>)>> {
+        Ok(discord_user::Entity::find()
+            .find_also_related(plex_user::Entity)
+            .all(&self.db)
+            .await?)
+    }
 }

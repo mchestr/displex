@@ -1,8 +1,6 @@
 use std::{
     fmt,
-    path::{
-        PathBuf,
-    },
+    path::PathBuf,
     time::Duration,
 };
 
@@ -40,65 +38,47 @@ fn obfuscated_formatter(val: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 
 #[derive(Deserialize, Debug, Clone, Serialize, Default)]
 pub struct AppConfig {
-    #[serde(default = "default_application_name")]
     pub application_name: String,
     pub database: DatabaseConfig,
-    #[serde(default = "default_debug")]
     pub debug: DebugConfig,
     pub discord: DiscordConfig,
     pub discord_bot: DiscordBotConfig,
-    #[serde(default = "default_http")]
     pub http: HttpConfig,
     pub plex: PlexConfig,
-    #[serde(default = "default_session")]
     pub session: SessionConfig,
     pub tautulli: TautulliConfig,
     pub web: WebConfig,
 }
 
-fn default_application_name() -> String {
-    "displex".into()
-}
-
-fn default_debug() -> DebugConfig {
-    DebugConfig {
-        accept_invalid_certs: default_debug_accept_invalid_certs(),
-    }
-}
-
-fn default_http() -> HttpConfig {
-    HttpConfig {
-        type_: default_http_server(),
-        hostname: "localhost".into(),
-        host: default_http_host(),
-        port: default_http_port(),
-    }
-}
-
-fn default_session() -> SessionConfig {
-    SessionConfig {
-        secret_key: default_session_secret(),
-    }
-}
-
-#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct DatabaseConfig {
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
     pub url: String,
 }
 
-#[derive(Deserialize, Debug, Default, Clone, Serialize)]
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            url: format!("sqlite://{PROJECT_NAME}.db?mode=rwc"),
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, Clone, Serialize)]
 pub struct DebugConfig {
-    #[serde(default = "default_debug_accept_invalid_certs")]
     pub accept_invalid_certs: bool,
 }
 
-fn default_debug_accept_invalid_certs() -> bool {
-    false
+impl Default for DebugConfig {
+    fn default() -> Self {
+        Self {
+            accept_invalid_certs: false,
+        }
+    }
 }
 
-#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Clone, Serialize, Default)]
 #[derivative(Debug)]
 pub struct DiscordConfig {
     pub client_id: u64,
@@ -107,117 +87,129 @@ pub struct DiscordConfig {
     pub server_id: u64,
 }
 
-#[derive(Deserialize, Debug, Default, Clone, Serialize)]
+#[derive(Deserialize, Debug, Clone, Serialize)]
 pub struct HttpConfig {
-    #[serde(default = "default_http_server", rename = "type")]
+    #[serde(rename = "type")]
     pub type_: Server,
     pub hostname: String,
-    #[serde(default = "default_http_host")]
     pub host: String,
-    #[serde(default = "default_http_port")]
     pub port: u16,
 }
 
-fn default_http_server() -> Server {
-    Server::Axum
+impl Default for HttpConfig {
+    fn default() -> Self {
+        Self {
+            host: "127.0.0.1".into(),
+            port: 8080,
+            hostname: "localhost".into(),
+            type_: Default::default(),
+        }
+    }
 }
 
-fn default_http_host() -> String {
-    "127.0.0.1".into()
-}
-
-fn default_http_port() -> u16 {
-    8080
-}
-
-#[derive(Deserialize, Debug, Default, Clone, Serialize)]
+#[derive(Deserialize, Debug, Clone, Serialize, Default)]
 pub struct PlexConfig {
     pub server_id: String,
 }
 
-#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct SessionConfig {
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
-    #[serde(default = "default_session_secret")]
     pub secret_key: String,
 }
 
-fn default_session_secret() -> String {
-    "youshouldnotusethisinproductionandchangeme".into()
+impl Default for SessionConfig {
+    fn default() -> Self {
+        Self {
+            secret_key: "youshouldnotusethisinproductionandchangeme".into(),
+        }
+    }
 }
 
-#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct TautulliConfig {
-    #[serde(default = "default_tautulli_url")]
     pub url: String,
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
     pub api_key: String,
 }
 
-fn default_tautulli_url() -> String {
-    "http://localhost:8181".into()
+impl Default for TautulliConfig {
+    fn default() -> Self {
+        Self {
+            url: "http://localhost:8181".into(),
+            api_key: Default::default(),
+        }
+    }
 }
 
-#[derive(Derivative, Deserialize, Default, Clone, Serialize)]
+#[derive(Derivative, Deserialize, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct DiscordBotConfig {
-    #[serde(default = "default_discord_bot", rename = "type")]
+    #[serde(rename = "type")]
     pub type_: DiscordBot,
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
     pub token: String,
-    #[serde(default = "default_discord_bot_status_text")]
     pub status_text: String,
-    pub stat_update: Option<StatUpdateConfig>,
-    pub user_update: Option<UserUpdateConfig>,
+    pub stat_update: StatUpdateConfig,
+    pub user_update: UserUpdateConfig,
 }
 
-fn default_discord_bot() -> DiscordBot {
-    DiscordBot::Serenity
+impl Default for DiscordBotConfig {
+    fn default() -> Self {
+        Self {
+            status_text: "DisPlex".into(),
+            type_: Default::default(),
+            token: Default::default(),
+            stat_update: Default::default(),
+            user_update: Default::default(),
+        }
+    }
 }
 
-fn default_discord_bot_status_text() -> String {
-    "DisPlex".into()
-}
-
-#[derive(Debug, Deserialize, Default, Clone, Serialize)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct StatUpdateConfig {
-    #[serde(with = "humantime_serde", default = "default_stat_update_job_interval")]
+    pub enabled: bool,
+    #[serde(with = "humantime_serde")]
     pub interval: Duration,
-    #[serde(default = "default_update_channel_bot_role_name")]
     pub bot_role_name: String,
-    #[serde(default = "default_update_channel_subscriber_role_name")]
     pub subscriber_role_name: String,
     pub stats_category: Option<StatCategoryConfig>,
     pub library_category: Option<LibraryCategoryConfig>,
 }
 
-fn default_stat_update_job_interval() -> Duration {
-    Duration::from_secs(60)
+impl Default for StatUpdateConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            interval: Duration::from_secs(60),
+            bot_role_name: "Bot".into(),
+            subscriber_role_name: "Subscriber".into(),
+            stats_category: None,
+            library_category: None,
+        }
+    }
 }
 
-fn default_user_update_job_interval() -> Duration {
-    Duration::from_secs(3600)
-}
-
-fn default_update_channel_bot_role_name() -> String {
-    "Bot".into()
-}
-
-fn default_update_channel_subscriber_role_name() -> String {
-    "Subscriber".into()
-}
-
-#[derive(Debug, Deserialize, Default, Clone, Serialize)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct UserUpdateConfig {
-    #[serde(with = "humantime_serde", default = "default_user_update_job_interval")]
+    pub enabled: bool,
+    #[serde(with = "humantime_serde")]
     pub interval: Duration,
 }
 
-#[derive(Debug, Deserialize, Default, Clone, Serialize)]
+impl Default for UserUpdateConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            interval: Duration::from_secs(3600),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct StatCategoryConfig {
-    #[serde(default = "default_stat_category_name")]
     pub name: String,
     pub stream_name: Option<String>,
     pub transcode_name: Option<String>,
@@ -226,21 +218,36 @@ pub struct StatCategoryConfig {
     pub bandwidth_remote_name: Option<String>,
 }
 
-fn default_stat_category_name() -> String {
-    "Plex Stats".into()
+impl Default for StatCategoryConfig {
+    fn default() -> Self {
+        Self {
+            name: "Plex Stats".into(),
+            stream_name: None,
+            transcode_name: None,
+            bandwidth_local_name: None,
+            bandwidth_remote_name: None,
+            bandwidth_total_name: None,
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Default, Clone, Serialize)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct LibraryCategoryConfig {
-    #[serde(default = "default_library_category_name")]
     pub name: String,
     pub movies_name: Option<String>,
     pub tv_shows_name: Option<String>,
     pub tv_episodes_name: Option<String>,
 }
 
-fn default_library_category_name() -> String {
-    "Plex Library Stats".into()
+impl Default for LibraryCategoryConfig {
+    fn default() -> Self {
+        Self {
+            name: "Plex Library Stats".into(),
+            movies_name: None,
+            tv_episodes_name: None,
+            tv_shows_name: None,
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Clone, Serialize, Default)]
@@ -262,7 +269,11 @@ pub fn load(path: &str) -> Result<AppConfig> {
             PathBuf::from(path).join(format!("{PROJECT_NAME}.yaml")),
         ))
         .merge(Env::raw().split("_").only(&["database.url"]))
-        .merge(Env::raw().split("__").ignore(&["database.url"]))
+        .merge(
+            Env::prefixed(&format!("{}_", PROJECT_NAME))
+                .split("__")
+                .ignore(&["database.url"]),
+        )
         .extract()
         .context("Unable to construct application configuration")
 }

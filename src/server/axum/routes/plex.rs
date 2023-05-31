@@ -1,8 +1,6 @@
 use std::time::Duration;
 
-use anyhow::{
-    anyhow,
-};
+use anyhow::anyhow;
 use axum::{
     extract::{
         Query,
@@ -24,16 +22,28 @@ use crate::{
         ApplicationMetadata,
         ApplicationMetadataUpdate,
     },
+    discord_token::resolver::{
+        CreateDiscordTokenErrorVariant,
+        CreateDiscordTokenResult,
+    },
     discord_user::resolver::{
         CreateDiscordUserErrorVariant,
         CreateDiscordUserResult,
     },
     errors::DisplexError,
+    plex_token::resolver::{
+        CreatePlexTokenErrorVariant,
+        CreatePlexTokenResult,
+    },
+    plex_user::resolver::{
+        CreatePlexUserErrorVariant,
+        CreatePlexUserResult,
+    },
     server::axum::{
         DisplexState,
         DISCORD_CODE,
     },
-    tautulli::models::QueryDays, discord_token::resolver::{CreateDiscordTokenResult, CreateDiscordTokenErrorVariant}, plex_user::resolver::{CreatePlexUserResult, CreatePlexUserErrorVariant}, plex_token::resolver::{CreatePlexTokenResult, CreatePlexTokenErrorVariant},
+    tautulli::models::QueryDays,
 };
 
 #[derive(Deserialize)]
@@ -108,22 +118,25 @@ async fn callback(
     let scopes: String = token.scopes().map_or("".into(), |d| {
         d.iter().map(|i| i.to_string() + ",").collect()
     });
-    match discord_tokens_svc.create(
-        token.access_token().secret(),
-        token
-            .refresh_token()
-            .expect("expecting refresh token")
-            .secret(),
-        &(chrono::Utc::now()
-            + chrono::Duration::seconds(
-                token
-                    .expires_in()
-                    .unwrap_or(Duration::from_secs(1800))
-                    .as_secs() as i64,
-            )),
-        &scopes,
-        &discord_user.id,
-    ).await {
+    match discord_tokens_svc
+        .create(
+            token.access_token().secret(),
+            token
+                .refresh_token()
+                .expect("expecting refresh token")
+                .secret(),
+            &(chrono::Utc::now()
+                + chrono::Duration::seconds(
+                    token
+                        .expires_in()
+                        .unwrap_or(Duration::from_secs(1800))
+                        .as_secs() as i64,
+                )),
+            &scopes,
+            &discord_user.id,
+        )
+        .await
+    {
         Ok(result) => match result {
             CreateDiscordTokenResult::Ok(_) => (),
             CreateDiscordTokenResult::Error(err) => match err.error {
@@ -141,10 +154,18 @@ async fn callback(
                 "failed to create discord_token: {:?}",
                 err
             )))
-        }   
+        }
     };
 
-    match plex_users_svc.create(plex_user.id, &plex_user.username, is_subscriber, &discord_user.id).await {
+    match plex_users_svc
+        .create(
+            plex_user.id,
+            &plex_user.username,
+            is_subscriber,
+            &discord_user.id,
+        )
+        .await
+    {
         Ok(result) => match result {
             CreatePlexUserResult::Ok(_) => (),
             CreatePlexUserResult::Error(err) => match err.error {
@@ -154,7 +175,7 @@ async fn callback(
                         "failed to create plex_user: {:?}",
                         err
                     )))
-                },
+                }
             },
         },
         Err(err) => {
@@ -165,7 +186,10 @@ async fn callback(
         }
     };
 
-    match plex_tokens_svc.create(&resp.auth_token, &plex_user.id).await {
+    match plex_tokens_svc
+        .create(&resp.auth_token, &plex_user.id)
+        .await
+    {
         Ok(result) => match result {
             CreatePlexTokenResult::Ok(_) => (),
             CreatePlexTokenResult::Error(err) => match err.error {
@@ -175,7 +199,7 @@ async fn callback(
                         "failed to create plex_token: {:?}",
                         err
                     )))
-                },
+                }
             },
         },
         Err(err) => {

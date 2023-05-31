@@ -17,15 +17,8 @@ use axum::{
     Router,
 };
 
-use reqwest::{
-    header::{
-        AUTHORIZATION,
-    },
-};
-use tower_cookies::{
-    Cookies,
-};
-
+use reqwest::header::AUTHORIZATION;
+use tower_cookies::Cookies;
 
 use crate::{
     discord_token::resolver::COOKIE_NAME,

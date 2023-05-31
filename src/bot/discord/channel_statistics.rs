@@ -159,20 +159,20 @@
 //             _ = interval.tick() => {
 //                 match client.get_channels(server_id).await {
 //                     Ok(channels) => {
-//                         match generate_stats_categories(&client, &config, &channels, &permissions, server_id).await {
-//                             Ok(categories) => match update_stats(&client, &tautulli_client, &categories).await {
-//                                 Ok(_) => (),
-//                                 Err(why) => tracing::error!("failed to update stats: {why}"),
-//                             },
-//                             Err(why) => tracing::error!("failed to generate stat channels: {why}"),
-//                         };
-//                         match generate_library_categories(&client, &config, &channels, &permissions, server_id).await {
-//                             Ok(categories) => match update_library_stats(&client, &tautulli_client, &categories).await {
-//                                 Ok(_) => (),
-//                                 Err(why) => tracing::error!("failed to update library stats: {why}"),
-//                             },
-//                             Err(why) => tracing::error!("failed to generate library channels: {why}"),
-//                         };
+//                         match generate_stats_categories(&client, &config, &channels,
+// &permissions, server_id).await {                             Ok(categories) => match
+// update_stats(&client, &tautulli_client, &categories).await {
+// Ok(_) => (),                                 Err(why) => tracing::error!("failed to update stats:
+// {why}"),                             },
+//                             Err(why) => tracing::error!("failed to generate stat channels:
+// {why}"),                         };
+//                         match generate_library_categories(&client, &config, &channels,
+// &permissions, server_id).await {                             Ok(categories) => match
+// update_library_stats(&client, &tautulli_client, &categories).await {
+// Ok(_) => (),                                 Err(why) => tracing::error!("failed to update
+// library stats: {why}"),                             },
+//                             Err(why) => tracing::error!("failed to generate library channels:
+// {why}"),                         };
 //                     },
 //                     Err(why) => tracing::error!("failed to get Discord channels: {why}"),
 //                 }
@@ -210,8 +210,8 @@
 //     }
 // }
 
-// async fn create_category(client: &Arc<Http>, config: CreateChannelConfig) -> Result<GuildChannel> {
-//     let mut create_channel_map = JsonMap::new();
+// async fn create_category(client: &Arc<Http>, config: CreateChannelConfig) -> Result<GuildChannel>
+// {     let mut create_channel_map = JsonMap::new();
 //     create_channel_map.insert("name".into(), config.name_prefix.as_str().into());
 //     create_channel_map.insert("type".into(), config.type_.num().into());
 //     create_channel_map.insert("permission_overwrites".into(), config.permissions.into());
@@ -362,8 +362,8 @@
 //     Ok(())
 // }
 
-// async fn update_movies(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) -> Result<()> {
-//     let new_name = format!("{}: {}", channel.prefix, data.count);
+// async fn update_movies(client: &Arc<Http>, data: &GetLibrary, channel: &ChannelData) ->
+// Result<()> {     let new_name = format!("{}: {}", channel.prefix, data.count);
 //     update_channel_name(client, &channel.channel, &new_name).await?;
 //     Ok(())
 // }

@@ -24,11 +24,7 @@ mod channel_statistics;
 mod commands;
 mod usermeta_refresh;
 
-use self::{
-    // channel_statistics::ChannelStatisticArgs,
-    commands::*,
-    // usermeta_refresh::UserMetadataRefreshArgs,
-};
+use self::commands::*;
 
 struct Handler {
     config: AppConfig,
@@ -67,13 +63,13 @@ pub async fn init(config: AppConfig) -> Result<serenity::Client> {
 
 pub async fn run(
     mut kill: Receiver<()>,
-    _config: AppConfig,
+    config: &AppConfig,
     mut serenity_client: serenity::Client,
-    _services: &AppServices,
+    services: &AppServices,
 ) {
     let manager = serenity_client.shard_manager.clone();
     let _stat_kill = kill.resubscribe();
-    let _meta_kill = kill.resubscribe();
+    let meta_kill = kill.resubscribe();
     tokio::spawn(async move {
         tokio::select! {
             _ = kill.recv() => tracing::info!("shutting down bot..."),
@@ -82,21 +78,14 @@ pub async fn run(
         lock.shutdown_all().await;
     });
 
-    // if let Some(job_config) = config.discord_bot.user_update {
-    //     usermeta_refresh::setup(
-    //         meta_kill,
-    //         UserMetadataRefreshArgs {
-    //             application_name: config.application_name,
-    //             client_id: config.discord.client_id,
-    //             update_interval: job_config.interval,
-    //             pool: clients.pool.clone(),
-    //             discord_client: clients.discord_client.clone(),
-    //             discord_oauth_client: clients.discord_oauth2_client.clone(),
-    //             tautulli_client: clients.tautulli_client.clone(),
-    //         },
-    //     )
-    //     .await;
-    // }
+    if config.discord_bot.user_update.enabled {
+        usermeta_refresh::setup(
+            meta_kill,
+            &config,
+            &services,
+        )
+        .await;
+    }
 
     // if let Some(job_config) = config.discord_bot.stat_update {
     //     channel_statistics::setup(

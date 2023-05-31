@@ -1,16 +1,22 @@
-use anyhow::{
-    Result,
-};
+use anyhow::Result;
 
 use clap::Parser;
 
 use displex::{
-    bot::{DisplexBot, self},
+    bot::{
+        self,
+        DisplexBot,
+    },
     config::{self,},
+    graphql::get_schema,
+    migrations::Migrator,
     server::DisplexHttpServer,
-    services::create_app_services, graphql::get_schema, migrations::Migrator,
+    services::create_app_services,
 };
-use sea_orm::{DatabaseConnection, Database};
+use sea_orm::{
+    Database,
+    DatabaseConnection,
+};
 use sea_orm_migration::MigratorTrait;
 use tokio::signal::unix::{
     signal,
@@ -74,7 +80,7 @@ async fn main() -> Result<()> {
         config
             .discord_bot
             .type_
-            .run(rx, config.clone(), serenity_client, &app_services)
+            .run(rx, &config, serenity_client, &app_services)
     )?;
     Ok(())
 }

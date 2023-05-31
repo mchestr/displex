@@ -5,7 +5,9 @@ use serde::{
     Serialize,
 };
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, SimpleObject)]
+#[derive(
+    Clone, Debug, Default, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, SimpleObject,
+)]
 #[graphql(name = "DiscordToken")]
 #[sea_orm(table_name = "discord_token")]
 pub struct Model {

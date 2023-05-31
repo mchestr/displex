@@ -11,6 +11,7 @@ use async_graphql::{
 use sea_orm::{
     prelude::*,
     ActiveValue,
+    QueryOrder,
     QueryTrait,
 };
 
@@ -255,5 +256,16 @@ impl DiscordTokensService {
                 }),
             },
         )
+    }
+
+    pub async fn latest_token(
+        &self,
+        discord_user_id: &str,
+    ) -> Result<Option<discord_token::Model>> {
+        Ok(discord_token::Entity::find()
+            .filter(discord_token::Column::DiscordUserId.eq(discord_user_id))
+            .order_by_desc(discord_token::Column::ExpiresAt)
+            .one(&self.db)
+            .await?)
     }
 }
