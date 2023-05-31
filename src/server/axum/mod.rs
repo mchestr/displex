@@ -64,7 +64,7 @@ pub async fn run(
 
     let addr = format!("{}:{}", &config.http.host, &config.http.port);
     let app = Router::new()
-        .merge(routes::configure())
+        .merge(routes::configure(&config))
         .with_state(DisplexState {
             config,
             services: services.clone(),

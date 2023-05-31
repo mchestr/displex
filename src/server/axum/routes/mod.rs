@@ -21,6 +21,7 @@ use reqwest::header::AUTHORIZATION;
 use tower_cookies::Cookies;
 
 use crate::{
+    config::AppConfig,
     discord_token::resolver::COOKIE_NAME,
     graphql::GraphqlSchema,
 };
@@ -56,9 +57,11 @@ async fn graphql_playground() -> impl IntoResponse {
     Html(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
 }
 
-pub fn configure() -> Router<DisplexState> {
-    Router::new()
-        .route("/graphql", get(graphql_playground).post(graphql_handler))
-        .merge(discord::routes())
-        .merge(plex::routes())
+pub fn configure(config: &AppConfig) -> Router<DisplexState> {
+    let router = Router::new().merge(discord::routes()).merge(plex::routes());
+    if config.api.enabled {
+        router.route("/graphql", get(graphql_playground).post(graphql_handler))
+    } else {
+        router
+    }
 }

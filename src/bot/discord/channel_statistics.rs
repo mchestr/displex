@@ -1,5 +1,3 @@
-
-
 use anyhow::Result;
 use serde_json::{
     Map,
@@ -131,7 +129,13 @@ pub async fn setup(
     let config = config.clone();
     let tautulli_svc = services.tautulli_service.clone();
     let discord_svc = services.discord_service.clone();
-    tokio::spawn(periodic_refresh(kill, config, discord_svc, tautulli_svc, permissions));
+    tokio::spawn(periodic_refresh(
+        kill,
+        config,
+        discord_svc,
+        tautulli_svc,
+        permissions,
+    ));
     Ok(())
 }
 

@@ -39,6 +39,7 @@ fn obfuscated_formatter(val: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 #[derive(Deserialize, Debug, Clone, Serialize, Default)]
 pub struct AppConfig {
     pub application_name: String,
+    pub api: ApiConfig,
     pub database: DatabaseConfig,
     pub debug: DebugConfig,
     pub discord: DiscordConfig,
@@ -86,6 +87,21 @@ pub struct HttpConfig {
     pub hostname: String,
     pub host: String,
     pub port: u16,
+}
+
+#[derive(Deserialize, Debug, Clone, Serialize)]
+pub struct ApiConfig {
+    pub enabled: bool,
+    pub api_key: String,
+}
+
+impl Default for ApiConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            api_key: "notasecret".into(),
+        }
+    }
 }
 
 impl Default for HttpConfig {

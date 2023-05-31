@@ -83,13 +83,9 @@ pub async fn run(
     }
 
     if config.discord_bot.stat_update.enabled {
-        channel_statistics::setup(
-            stat_kill,
-            config,
-            services,
-        )
-        .await
-        .unwrap();
+        channel_statistics::setup(stat_kill, config, services)
+            .await
+            .unwrap();
     }
 
     serenity_client.start().await.unwrap();
