@@ -37,9 +37,8 @@ DisPlex uses the Tautulli API to pull information from Tautulli and display them
 ## Requirements
 
 - A Plex Media Server
-- Tautulli (formerly known as PlexPy)
+- Tautulli
 - A Discord server
-- Postgres
 - Valid SSL Cert
 - Docker
 - [A Discord bot token](https://www.digitaltrends.com/gaming/how-to-make-a-discord-bot/)
