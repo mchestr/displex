@@ -23,7 +23,7 @@ lto = "thin"
 
 [package]
 name = "displex"
-version = "0.11.4"
+version = "0.11.5"
 edition = "2021"
 authors = ["Mike Chester <mike@chester.dev>"]
 readme = "README.md"
@@ -52,7 +52,7 @@ figment = { version = "0.10.8", features = ["env", "json", "toml", "yaml"] }
 humantime = "2.1.0"
 humantime-serde = "1.1.1"
 oauth2 = "4"
-reqwest = { version = "0.11.18", features = ["json"] }
+reqwest = { version = "0.11.18", features = ["json", "rustls-tls-native-roots"], default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_qs = "0.12.0"
