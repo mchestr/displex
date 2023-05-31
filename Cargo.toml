@@ -12,7 +12,7 @@ ci = ["github"]
 # The installers to generate for each app
 installers = ["shell"]
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-pc-windows-msvc", "aarch64-apple-darwin"]
+targets = ["x86_64-unknown-linux-gnu"]
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
@@ -23,7 +23,7 @@ lto = "thin"
 
 [package]
 name = "displex"
-version = "0.11.3"
+version = "0.11.4"
 edition = "2021"
 authors = ["Mike Chester <mike@chester.dev>"]
 readme = "README.md"

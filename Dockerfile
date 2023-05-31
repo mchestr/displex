@@ -1,5 +1,5 @@
 FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
-RUN apt-get update && apt-get install -y musl-tools musl-dev libssl-dev
+RUN apt-get update && apt-get install -y musl-tools musl-dev libssl-dev pkg-config
 RUN update-ca-certificates
 WORKDIR /app
 
@@ -7,7 +7,7 @@ FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM chef AS app-builder 
+FROM chef AS app-builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --profile dist --recipe-path recipe.json
 COPY . .
