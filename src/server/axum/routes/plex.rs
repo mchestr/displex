@@ -239,5 +239,5 @@ async fn callback(
 }
 
 pub fn routes() -> Router<DisplexState> {
-    Router::new().route("/plex/callback", get(callback))
+    Router::new().route("/auth/plex/callback", get(callback))
 }

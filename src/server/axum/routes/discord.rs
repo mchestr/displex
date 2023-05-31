@@ -72,6 +72,6 @@ fn verify_state(session_state: &str, query_string_state: &str) -> Result<(), any
 
 pub fn routes() -> Router<DisplexState> {
     Router::new()
-        .route("/discord/linked-role", get(linked_role))
-        .route("/discord/callback", get(callback))
+        .route("/auth/discord/linked-role", get(linked_role))
+        .route("/auth/discord/callback", get(callback))
 }

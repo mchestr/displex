@@ -66,12 +66,12 @@ pub async fn create_app_services(
         &config.discord_bot.token,
         config.discord.client_id,
         &config.discord.client_secret,
-        &format!("https://{}/discord/callback", &config.http.hostname),
+        &format!("https://{}/auth/discord/callback", &config.http.hostname),
     );
     let plex_service = PlexService::new(
         &reqwest_client,
         &config.application_name,
-        &format!("https://{}/plex/callback", &config.http.hostname),
+        &format!("https://{}/auth/plex/callback", &config.http.hostname),
     );
     AppServices {
         discord_users_service,
