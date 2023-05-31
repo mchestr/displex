@@ -61,7 +61,7 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: format!("sqlite:{PROJECT_NAME}.db?mode=rwc"),
+            url: format!("sqlite://{PROJECT_NAME}.db?mode=rwc"),
         }
     }
 }
