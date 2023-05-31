@@ -53,5 +53,5 @@ sea-orm = { version = "0.11.1", features = [
     "debug-print",
 ] }
 sea-orm-migration = "0.11.1"
-sea-query = "0.28.4"
+sea-query = "0.28.5"
 tower-cookies = "0.9.0"
