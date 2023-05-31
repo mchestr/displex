@@ -1,7 +1,6 @@
 use std::{
     fmt,
     path::{
-        Path,
         PathBuf,
     },
     time::Duration,
@@ -250,18 +249,17 @@ pub struct WebConfig {
     pub insecure_cookie: bool,
 }
 
-pub fn get_app_config() -> Result<AppConfig> {
-    let config = "config";
+pub fn load(path: &str) -> Result<AppConfig> {
     Figment::new()
         .merge(Serialized::defaults(AppConfig::default()))
         .merge(Json::file(
-            PathBuf::from(config).join(format!("{PROJECT_NAME}.json")),
+            PathBuf::from(path).join(format!("{PROJECT_NAME}.json")),
         ))
         .merge(Toml::file(
-            PathBuf::from(config).join(format!("{PROJECT_NAME}.toml")),
+            PathBuf::from(path).join(format!("{PROJECT_NAME}.toml")),
         ))
         .merge(Yaml::file(
-            PathBuf::from(config).join(format!("{PROJECT_NAME}.yaml")),
+            PathBuf::from(path).join(format!("{PROJECT_NAME}.yaml")),
         ))
         .merge(Env::raw().split("_").only(&["database.url"]))
         .merge(Env::raw().split("__").ignore(&["database.url"]))

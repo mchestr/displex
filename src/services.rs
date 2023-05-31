@@ -62,7 +62,7 @@ pub async fn create_app_services(
     );
     let discord_service = DiscordService::new(
         &reqwest_client,
-        &discord_http_client,
+        discord_http_client,
         &config.discord_bot.token,
         config.discord.client_id,
         &config.discord.client_secret,

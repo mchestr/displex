@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use anyhow::{
     anyhow,
-    Context,
 };
 use axum::{
     extract::{
@@ -88,7 +87,7 @@ async fn callback(
         .await
     {
         Ok(result) => match result {
-            CreateDiscordUserResult::Ok(user) => (),
+            CreateDiscordUserResult::Ok(_user) => (),
             CreateDiscordUserResult::Error(err) => match err.error {
                 CreateDiscordUserErrorVariant::UserAlreadyExists => (),
                 CreateDiscordUserErrorVariant::InternalError => {

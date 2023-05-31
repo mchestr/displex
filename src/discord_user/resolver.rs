@@ -368,7 +368,7 @@ impl DiscordUsersService {
 
     pub async fn summary(&self, user_by: &UserSummaryBy) -> Result<SummaryDiscordUserResult> {
         let discord_user = match user_by {
-            UserSummaryBy::Username(username) => match self.get_by_username(&username).await? {
+            UserSummaryBy::Username(username) => match self.get_by_username(username).await? {
                 GetDiscordUserResult::Ok(result) => result,
                 GetDiscordUserResult::Err(_) => {
                     return Ok(SummaryDiscordUserResult::Err(SummaryDiscordUserError {
@@ -376,7 +376,7 @@ impl DiscordUsersService {
                     }))
                 }
             },
-            UserSummaryBy::Id(id) => match self.get(&id).await? {
+            UserSummaryBy::Id(id) => match self.get(id).await? {
                 GetDiscordUserResult::Ok(result) => result,
                 GetDiscordUserResult::Err(_) => {
                     return Ok(SummaryDiscordUserResult::Err(SummaryDiscordUserError {

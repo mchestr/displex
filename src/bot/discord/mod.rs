@@ -67,13 +67,13 @@ pub async fn init(config: AppConfig) -> Result<serenity::Client> {
 
 pub async fn run(
     mut kill: Receiver<()>,
-    config: AppConfig,
+    _config: AppConfig,
     mut serenity_client: serenity::Client,
-    services: &AppServices,
+    _services: &AppServices,
 ) {
     let manager = serenity_client.shard_manager.clone();
-    let stat_kill = kill.resubscribe();
-    let meta_kill = kill.resubscribe();
+    let _stat_kill = kill.resubscribe();
+    let _meta_kill = kill.resubscribe();
     tokio::spawn(async move {
         tokio::select! {
             _ = kill.recv() => tracing::info!("shutting down bot..."),

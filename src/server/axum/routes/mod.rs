@@ -16,32 +16,20 @@ use axum::{
     Extension,
     Router,
 };
-use axum_sessions::extractors::{
-    ReadableSession,
-    WritableSession,
-};
+
 use reqwest::{
     header::{
-        self,
         AUTHORIZATION,
     },
-    Method,
 };
 use tower_cookies::{
-    CookieManagerLayer,
     Cookies,
 };
-use tower_http::{
-    catch_panic::CatchPanicLayer,
-    cors::CorsLayer,
-    trace::TraceLayer,
-};
+
 
 use crate::{
-    config::AppConfig,
     discord_token::resolver::COOKIE_NAME,
     graphql::GraphqlSchema,
-    server::axum::DISCORD_STATE,
 };
 
 use super::DisplexState;

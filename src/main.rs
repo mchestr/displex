@@ -1,33 +1,28 @@
 use anyhow::{
-    Context,
     Result,
 };
 
 use clap::Parser;
 
 use displex::{
-    bot::DisplexBot,
+    bot::{DisplexBot, self},
     config::{self,},
     server::DisplexHttpServer,
-    utils,
+    services::create_app_services, graphql::get_schema, migrations::Migrator,
 };
+use sea_orm::{DatabaseConnection, Database};
+use sea_orm_migration::MigratorTrait;
 use tokio::signal::unix::{
     signal,
     SignalKind,
-};
-use tracing::metadata::LevelFilter;
-use tracing_subscriber::{
-    fmt,
-    prelude::*,
-    EnvFilter,
 };
 
 #[derive(Parser)]
 #[command(name = "displex")]
 #[command(about = "A Discord/Plex/Tautulli Application", long_about = None)]
 struct Cli {
-    #[clap(short, long, default_value = "config.toml")]
-    config_file: String,
+    #[clap(short, long, default_value = ".")]
+    config_dir: String,
 }
 
 #[tokio::main]
@@ -36,11 +31,9 @@ async fn main() -> Result<()> {
         println!("no .env found.");
     }
     tracing_subscriber::fmt::init();
-    let config = config::get_app_config()?;
-    tracing::info!("application config >\n{:#?}", config);
 
     let args = Cli::parse();
-    let config = config::load(&args.config_file)?;
+    let config = config::load(&args.config_dir)?;
     tracing::info!("{:#?}", config);
 
     let db = Database::connect(&config.database.url)
@@ -73,17 +66,15 @@ async fn main() -> Result<()> {
         tx.send(())
     });
 
-    let (serenity_client, clients) = utils::initialize_clients(&config).await?;
-
     tokio::try_join!(
         config
             .http
             .type_
-            .run(rx.resubscribe(), config.clone(), &clients, &schema),
+            .run(rx.resubscribe(), config.clone(), &app_services, &schema),
         config
             .discord_bot
             .type_
-            .run(rx, config.clone(), serenity_client, &clients)
+            .run(rx, config.clone(), serenity_client, &app_services)
     )?;
     Ok(())
 }
