@@ -68,7 +68,7 @@ pub async fn run(
     services: &AppServices,
 ) {
     let manager = serenity_client.shard_manager.clone();
-    let _stat_kill = kill.resubscribe();
+    let stat_kill = kill.resubscribe();
     let meta_kill = kill.resubscribe();
     tokio::spawn(async move {
         tokio::select! {
@@ -79,28 +79,18 @@ pub async fn run(
     });
 
     if config.discord_bot.user_update.enabled {
-        usermeta_refresh::setup(
-            meta_kill,
+        usermeta_refresh::setup(meta_kill, config, services).await;
+    }
+
+    if config.discord_bot.stat_update.enabled {
+        channel_statistics::setup(
+            stat_kill,
             config,
             services,
         )
-        .await;
+        .await
+        .unwrap();
     }
-
-    // if let Some(job_config) = config.discord_bot.stat_update {
-    //     channel_statistics::setup(
-    //         stat_kill,
-    //         ChannelStatisticArgs {
-    //             tautulli_client: clients.tautulli_client.clone(),
-    //             interval_seconds: job_config.interval,
-    //             http_client: clients.serenity_client.clone(),
-    //             config: job_config,
-    //             server_id: config.discord.server_id,
-    //         },
-    //     )
-    //     .await
-    //     .unwrap();
-    // }
 
     serenity_client.start().await.unwrap();
 }

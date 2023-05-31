@@ -65,13 +65,10 @@ impl Default for DatabaseConfig {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Serialize)]
-#[derive(Default)]
+#[derive(Deserialize, Debug, Clone, Serialize, Default)]
 pub struct DebugConfig {
     pub accept_invalid_certs: bool,
 }
-
-
 
 #[derive(Derivative, Deserialize, Clone, Serialize, Default)]
 #[derivative(Debug)]

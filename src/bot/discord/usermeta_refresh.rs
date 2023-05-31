@@ -153,16 +153,20 @@ async fn maybe_refresh_token(
             );
 
         let discord_user = discord_user.clone();
-        services.discord_tokens_service.create(
-            new_token.access_token().secret(),
-            new_token
-                .refresh_token()
-                .expect("no refresh token returned!")
-                .secret(),
-            &expires_at,
-            &discord_token.scopes,
-            &discord_user.id,
-        ).await.unwrap();
+        services
+            .discord_tokens_service
+            .create(
+                new_token.access_token().secret(),
+                new_token
+                    .refresh_token()
+                    .expect("no refresh token returned!")
+                    .secret(),
+                &expires_at,
+                &discord_token.scopes,
+                &discord_user.id,
+            )
+            .await
+            .unwrap();
         Ok(discord_token::Model {
             access_token: new_token.access_token().secret().to_owned(),
             ..Default::default()
