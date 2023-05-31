@@ -136,7 +136,7 @@ pub struct DeleteDiscordUserInput {
 }
 
 #[derive(OneofObject)]
-enum UserSummaryBy {
+pub enum UserSummaryBy {
     Username(String),
     Id(String),
 }
