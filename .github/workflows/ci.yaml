@@ -29,7 +29,7 @@ jobs:
       - name: Lint
         run: |
           cd src
-          cargo fmt -- --check
+          cargo +nightly fmt -- --check
           cargo clippy -- -D warnings          
 
       - name: Test
