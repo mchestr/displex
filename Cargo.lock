@@ -1183,7 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "displex"
-version = "0.9.9"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "async-graphql",
