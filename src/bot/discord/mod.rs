@@ -81,8 +81,8 @@ pub async fn run(
     if config.discord_bot.user_update.enabled {
         usermeta_refresh::setup(
             meta_kill,
-            &config,
-            &services,
+            config,
+            services,
         )
         .await;
     }

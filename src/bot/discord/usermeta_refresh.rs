@@ -162,7 +162,7 @@ async fn maybe_refresh_token(
             &expires_at,
             &discord_token.scopes,
             &discord_user.id,
-        );
+        ).await.unwrap();
         Ok(discord_token::Model {
             access_token: new_token.access_token().secret().to_owned(),
             ..Default::default()

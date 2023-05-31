@@ -66,17 +66,12 @@ impl Default for DatabaseConfig {
 }
 
 #[derive(Deserialize, Debug, Clone, Serialize)]
+#[derive(Default)]
 pub struct DebugConfig {
     pub accept_invalid_certs: bool,
 }
 
-impl Default for DebugConfig {
-    fn default() -> Self {
-        Self {
-            accept_invalid_certs: false,
-        }
-    }
-}
+
 
 #[derive(Derivative, Deserialize, Clone, Serialize, Default)]
 #[derivative(Debug)]
@@ -270,7 +265,7 @@ pub fn load(path: &str) -> Result<AppConfig> {
         ))
         .merge(Env::raw().split("_").only(&["database.url"]))
         .merge(
-            Env::prefixed(&format!("{}_", PROJECT_NAME))
+            Env::prefixed(&format!("{PROJECT_NAME}_"))
                 .split("__")
                 .ignore(&["database.url"]),
         )
