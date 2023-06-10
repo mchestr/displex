@@ -37,7 +37,7 @@ async-trait = "0.1.68"
 axum = { version = "0.6.18", features = ["tracing"] }
 axum-sessions = "0.5.0"
 async-graphql-axum = "5.0.9"
-async-graphql = { version = "5.0.9", features = [
+async-graphql = { version = "5.0.10", features = [
     "chrono",
     "decimal",
     "uuid",
