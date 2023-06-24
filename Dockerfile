@@ -22,8 +22,8 @@ RUN groupadd -g 1001 displex \
 FROM scratch AS runtime
 COPY --from=user-creator /etc/passwd /etc/passwd
 
+RUN mkdir /data && chown -R 1001:1001 /data
 WORKDIR /data
-RUN chown -R 1001:1001 /data
 
 USER displex
 ENV RUST_LOG="displex=info,sea_orm=info" \
