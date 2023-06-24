@@ -22,7 +22,7 @@ RUN groupadd -g 1001 displex \
 FROM scratch AS runtime
 COPY --from=user-creator /etc/passwd /etc/passwd
 
-RUN mkdir /data && chown -R 1001:1001 /data
+VOLUME [ "/data" ]
 WORKDIR /data
 
 USER displex
@@ -31,4 +31,5 @@ ENV RUST_LOG="displex=info,sea_orm=info" \
     DISPLEX_HTTP__PORT=8080 \
     DATABASE_URL=sqlite://displex.db?mode=rwc
 COPY --from=app-builder --chown=displex:displex /app/target/x86_64-unknown-linux-musl/dist/displex /app
+COPY --from=app-builder --chown=displex:displex /data /data
 ENTRYPOINT ["/app"]
