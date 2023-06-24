@@ -1,4 +1,7 @@
-name: "Test"
+name: CI
+
+permissions:
+  packages: write
 
 on:
   push: 
