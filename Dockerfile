@@ -21,10 +21,11 @@ RUN groupadd -g 1001 displex \
 
 FROM scratch AS runtime
 COPY --from=user-creator /etc/passwd /etc/passwd
-USER displex
 
 WORKDIR /data
-RUN chown -R displex:displex /data
+RUN chown -R 1001:1001 /data
+
+USER displex
 ENV RUST_LOG="displex=info,sea_orm=info" \
     DISPLEX_HTTP__HOST=0.0.0.0 \
     DISPLEX_HTTP__PORT=8080 \
