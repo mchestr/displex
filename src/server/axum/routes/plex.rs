@@ -99,12 +99,10 @@ async fn callback(
         Ok(result) => match result {
             CreateDiscordUserResult::Ok(user) => {
                 tracing::info!("Discord user created: {:?}", user);
-                ()
             }
             CreateDiscordUserResult::Error(err) => match err.error {
                 CreateDiscordUserErrorVariant::UserAlreadyExists => {
                     tracing::info!("Discord user already exists: {:?}", err);
-                    ()
                 }
                 CreateDiscordUserErrorVariant::InternalError => {
                     return Err(DisplexError(anyhow::anyhow!(
@@ -146,12 +144,10 @@ async fn callback(
         Ok(result) => match result {
             CreateDiscordTokenResult::Ok(token) => {
                 tracing::info!("Discord token created: {:?}", token);
-                ()
             }
             CreateDiscordTokenResult::Error(err) => match err.error {
                 CreateDiscordTokenErrorVariant::TokenAlreadyExists => {
                     tracing::info!("Discord token already exists: {:?}", err);
-                    ()
                 }
                 CreateDiscordTokenErrorVariant::InternalError => {
                     return Err(DisplexError(anyhow::anyhow!(
@@ -181,12 +177,10 @@ async fn callback(
         Ok(result) => match result {
             CreatePlexUserResult::Ok(user) => {
                 tracing::info!("Plex user created: {:?}", user);
-                ()
             }
             CreatePlexUserResult::Error(err) => match err.error {
                 CreatePlexUserErrorVariant::TokenAlreadyExists => {
                     tracing::info!("Plex user already exists: {:?}", err);
-                    ()
                 }
                 CreatePlexUserErrorVariant::InternalError => {
                     return Err(DisplexError(anyhow::anyhow!(
@@ -211,12 +205,10 @@ async fn callback(
         Ok(result) => match result {
             CreatePlexTokenResult::Ok(token) => {
                 tracing::info!("Plex token created: {:?}", token);
-                ()
             }
             CreatePlexTokenResult::Error(err) => match err.error {
                 CreatePlexTokenErrorVariant::TokenAlreadyExists => {
                     tracing::info!("Plex token already exists: {:?}", token);
-                    ()
                 }
                 CreatePlexTokenErrorVariant::InternalError => {
                     return Err(DisplexError(anyhow::anyhow!(
