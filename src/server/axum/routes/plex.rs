@@ -97,9 +97,15 @@ async fn callback(
         .await
     {
         Ok(result) => match result {
-            CreateDiscordUserResult::Ok(_user) => (),
+            CreateDiscordUserResult::Ok(user) => {
+                tracing::info!("Discord user created: {:?}", user);
+                ()
+            }
             CreateDiscordUserResult::Error(err) => match err.error {
-                CreateDiscordUserErrorVariant::UserAlreadyExists => (),
+                CreateDiscordUserErrorVariant::UserAlreadyExists => {
+                    tracing::info!("Discord user already exists: {:?}", err);
+                    ()
+                }
                 CreateDiscordUserErrorVariant::InternalError => {
                     return Err(DisplexError(anyhow::anyhow!(
                         "failed to create discord_user: {:?}",
@@ -138,9 +144,15 @@ async fn callback(
         .await
     {
         Ok(result) => match result {
-            CreateDiscordTokenResult::Ok(_) => (),
+            CreateDiscordTokenResult::Ok(token) => {
+                tracing::info!("Discord token created: {:?}", token);
+                ()
+            }
             CreateDiscordTokenResult::Error(err) => match err.error {
-                CreateDiscordTokenErrorVariant::TokenAlreadyExists => (),
+                CreateDiscordTokenErrorVariant::TokenAlreadyExists => {
+                    tracing::info!("Discord token already exists: {:?}", err);
+                    ()
+                }
                 CreateDiscordTokenErrorVariant::InternalError => {
                     return Err(DisplexError(anyhow::anyhow!(
                         "failed to create discord_token: {:?}",
@@ -167,9 +179,15 @@ async fn callback(
         .await
     {
         Ok(result) => match result {
-            CreatePlexUserResult::Ok(_) => (),
+            CreatePlexUserResult::Ok(user) => {
+                tracing::info!("Plex user created: {:?}", user);
+                ()
+            }
             CreatePlexUserResult::Error(err) => match err.error {
-                CreatePlexUserErrorVariant::TokenAlreadyExists => (),
+                CreatePlexUserErrorVariant::TokenAlreadyExists => {
+                    tracing::info!("Plex user already exists: {:?}", err);
+                    ()
+                }
                 CreatePlexUserErrorVariant::InternalError => {
                     return Err(DisplexError(anyhow::anyhow!(
                         "failed to create plex_user: {:?}",
@@ -191,9 +209,15 @@ async fn callback(
         .await
     {
         Ok(result) => match result {
-            CreatePlexTokenResult::Ok(_) => (),
+            CreatePlexTokenResult::Ok(token) => {
+                tracing::info!("Plex token created: {:?}", token);
+                ()
+            }
             CreatePlexTokenResult::Error(err) => match err.error {
-                CreatePlexTokenErrorVariant::TokenAlreadyExists => (),
+                CreatePlexTokenErrorVariant::TokenAlreadyExists => {
+                    tracing::info!("Plex token already exists: {:?}", token);
+                    ()
+                }
                 CreatePlexTokenErrorVariant::InternalError => {
                     return Err(DisplexError(anyhow::anyhow!(
                         "failed to create plex_token: {:?}",
