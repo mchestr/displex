@@ -259,8 +259,9 @@ impl DiscordTokensService {
                 Err(err) => {
                     tracing::warn!("got db error: {:?}", err);
                     DeleteDiscordTokenResult::Err(DeleteDiscordTokenError {
-                    error: DeleteDiscordTokenErrorVariant::InternalError,
-                })},
+                        error: DeleteDiscordTokenErrorVariant::InternalError,
+                    })
+                }
             },
         )
     }
