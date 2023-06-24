@@ -194,15 +194,17 @@ impl DiscordTokensService {
 
         let result = match discord_token::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
-            Err(DbErr::Exec(_)) => {
+            Err(DbErr::Exec(err)) => {
+                tracing::warn!("create db error: {:?}", err);
                 return Ok(CreateDiscordTokenResult::Error(CreateDiscordTokenError {
                     error: CreateDiscordTokenErrorVariant::TokenAlreadyExists,
-                }))
+                }));
             }
-            Err(_) => {
+            Err(err) => {
+                tracing::warn!("create unknown error: {:?}", err);
                 return Ok(CreateDiscordTokenResult::Error(CreateDiscordTokenError {
                     error: CreateDiscordTokenErrorVariant::InternalError,
-                }))
+                }));
             }
         };
 
@@ -221,9 +223,12 @@ impl DiscordTokensService {
                 Ok(None) => GetDiscordTokenResult::Err(GetDiscordTokenError {
                     error: GetDiscordTokenVariant::TokenDoesNotExist,
                 }),
-                Err(_) => GetDiscordTokenResult::Err(GetDiscordTokenError {
-                    error: GetDiscordTokenVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("get db error: {:?}", err);
+                    GetDiscordTokenResult::Err(GetDiscordTokenError {
+                        error: GetDiscordTokenVariant::InternalError,
+                    })
+                }
             },
         )
     }
@@ -251,9 +256,12 @@ impl DiscordTokensService {
                         message: "ok".into(),
                     }),
                 },
-                Err(_) => DeleteDiscordTokenResult::Err(DeleteDiscordTokenError {
-                    error: DeleteDiscordTokenErrorVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("delete db error: {:?}", err);
+                    DeleteDiscordTokenResult::Err(DeleteDiscordTokenError {
+                        error: DeleteDiscordTokenErrorVariant::InternalError,
+                    })
+                }
             },
         )
     }

@@ -223,15 +223,17 @@ impl PlexUsersService {
 
         let result = match plex_user::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
-            Err(DbErr::Exec(_)) => {
+            Err(DbErr::Exec(err)) => {
+                tracing::warn!("create db error: {:?}", err);
                 return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
                     error: CreatePlexUserErrorVariant::TokenAlreadyExists,
-                }))
+                }));
             }
-            Err(_) => {
+            Err(err) => {
+                tracing::warn!("create unknown error: {:?}", err);
                 return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
                     error: CreatePlexUserErrorVariant::InternalError,
-                }))
+                }));
             }
         };
 
@@ -247,9 +249,12 @@ impl PlexUsersService {
                 Ok(None) => GetPlexUserResult::Err(GetPlexUserError {
                     error: GetPlexUserVariant::UserDoesNotExist,
                 }),
-                Err(_) => GetPlexUserResult::Err(GetPlexUserError {
-                    error: GetPlexUserVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("get db error: {:?}", err);
+                    GetPlexUserResult::Err(GetPlexUserError {
+                        error: GetPlexUserVariant::InternalError,
+                    })
+                }
             },
         )
     }
@@ -281,9 +286,12 @@ impl PlexUsersService {
             Err(DbErr::RecordNotUpdated) => UpdatePlexUserResult::Err(UpdatePlexUserError {
                 error: UpdatePlexUserErrorVariant::UserDoesNotExist,
             }),
-            Err(_) => UpdatePlexUserResult::Err(UpdatePlexUserError {
-                error: UpdatePlexUserErrorVariant::InternalError,
-            }),
+            Err(err) => {
+                tracing::warn!("update db error: {:?}", err);
+                UpdatePlexUserResult::Err(UpdatePlexUserError {
+                    error: UpdatePlexUserErrorVariant::InternalError,
+                })
+            }
         })
     }
 
@@ -298,9 +306,12 @@ impl PlexUsersService {
                         message: "ok".into(),
                     }),
                 },
-                Err(_) => DeletePlexUserResult::Err(DeletePlexUserError {
-                    error: DeletePlexUserErrorVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("delete db error: {:?}", err);
+                    DeletePlexUserResult::Err(DeletePlexUserError {
+                        error: DeletePlexUserErrorVariant::InternalError,
+                    })
+                }
             },
         )
     }

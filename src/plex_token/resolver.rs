@@ -177,15 +177,17 @@ impl PlexTokensService {
 
         let result = match plex_token::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
-            Err(DbErr::Exec(_)) => {
+            Err(DbErr::Exec(err)) => {
+                tracing::warn!("create db error: {:?}", err);
                 return Ok(CreatePlexTokenResult::Error(CreatePlexTokenError {
                     error: CreatePlexTokenErrorVariant::TokenAlreadyExists,
-                }))
+                }));
             }
-            Err(_) => {
+            Err(err) => {
+                tracing::warn!("create unknown error: {:?}", err);
                 return Ok(CreatePlexTokenResult::Error(CreatePlexTokenError {
                     error: CreatePlexTokenErrorVariant::InternalError,
-                }))
+                }));
             }
         };
 
@@ -204,9 +206,12 @@ impl PlexTokensService {
                 Ok(None) => GetPlexTokenResult::Err(GetPlexTokenError {
                     error: GetPlexTokenVariant::TokenDoesNotExist,
                 }),
-                Err(_) => GetPlexTokenResult::Err(GetPlexTokenError {
-                    error: GetPlexTokenVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("get db error: {:?}", err);
+                    GetPlexTokenResult::Err(GetPlexTokenError {
+                        error: GetPlexTokenVariant::InternalError,
+                    })
+                }
             },
         )
     }
@@ -241,9 +246,12 @@ impl PlexTokensService {
                         message: "ok".into(),
                     }),
                 },
-                Err(_) => DeletePlexTokenResult::Err(DeletePlexTokenError {
-                    error: DeletePlexTokenErrorVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("delete db error: {:?}", err);
+                    DeletePlexTokenResult::Err(DeletePlexTokenError {
+                        error: DeletePlexTokenErrorVariant::InternalError,
+                    })
+                }
             },
         )
     }

@@ -309,9 +309,12 @@ impl DiscordUsersService {
                         error: UpdateDiscordUserErrorVariant::UserDoesNotExist,
                     })
                 }
-                Err(_) => UpdateDiscordUserResult::Err(UpdateDiscordUserError {
-                    error: UpdateDiscordUserErrorVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("update db error: {:?}", err);
+                    UpdateDiscordUserResult::Err(UpdateDiscordUserError {
+                        error: UpdateDiscordUserErrorVariant::InternalError,
+                    })
+                }
             },
         )
     }
@@ -323,9 +326,12 @@ impl DiscordUsersService {
                 Ok(None) => GetDiscordUserResult::Err(GetDiscordUserError {
                     error: GetDiscordUserVariant::UserDoesNotExist,
                 }),
-                Err(_) => GetDiscordUserResult::Err(GetDiscordUserError {
-                    error: GetDiscordUserVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("get db error: {:?}", err);
+                    GetDiscordUserResult::Err(GetDiscordUserError {
+                        error: GetDiscordUserVariant::InternalError,
+                    })
+                }
             },
         )
     }
@@ -341,9 +347,12 @@ impl DiscordUsersService {
                 Ok(None) => GetDiscordUserResult::Err(GetDiscordUserError {
                     error: GetDiscordUserVariant::UserDoesNotExist,
                 }),
-                Err(_) => GetDiscordUserResult::Err(GetDiscordUserError {
-                    error: GetDiscordUserVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("get_by_username db error: {:?}", err);
+                    GetDiscordUserResult::Err(GetDiscordUserError {
+                        error: GetDiscordUserVariant::InternalError,
+                    })
+                }
             },
         )
     }
@@ -359,9 +368,12 @@ impl DiscordUsersService {
                         message: "ok".into(),
                     }),
                 },
-                Err(_) => DeleteDiscordUserResult::Err(DeleteDiscordUserError {
-                    error: DeleteDiscordUserErrorVariant::InternalError,
-                }),
+                Err(err) => {
+                    tracing::warn!("delete db error: {:?}", err);
+                    DeleteDiscordUserResult::Err(DeleteDiscordUserError {
+                        error: DeleteDiscordUserErrorVariant::InternalError,
+                    })
+                }
             },
         )
     }
