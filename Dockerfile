@@ -16,8 +16,8 @@ RUN cargo build --profile dist --bin displex --target x86_64-unknown-linux-musl
 
 # taken from https://medium.com/@lizrice/non-privileged-containers-based-on-the-scratch-image-a80105d6d341
 FROM ubuntu:latest as user-creator
-RUN addgroup -S displex --gid 1001 \
-        && adduser -S displex -G displex --uid 1001
+RUN groupadd -g 1001 displex \
+        && useradd -u 1001 -G displex displex
 
 FROM scratch AS runtime
 COPY --from=user-creator /etc/passwd /etc/passwd

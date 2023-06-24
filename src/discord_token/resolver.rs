@@ -257,11 +257,10 @@ impl DiscordTokensService {
                     }),
                 },
                 Err(err) => {
-                    tracing::warn!("delete db error: {:?}", err);
+                    tracing::warn!("got db error: {:?}", err);
                     DeleteDiscordTokenResult::Err(DeleteDiscordTokenError {
-                        error: DeleteDiscordTokenErrorVariant::InternalError,
-                    })
-                }
+                    error: DeleteDiscordTokenErrorVariant::InternalError,
+                })},
             },
         )
     }
