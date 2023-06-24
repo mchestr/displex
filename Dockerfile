@@ -18,7 +18,7 @@ RUN cargo build --profile dist --bin displex --target x86_64-unknown-linux-musl
 FROM ubuntu:latest as user-creator
 RUN useradd -u 1001 displex
 
-FROM scratch
+FROM scratch AS runtime
 COPY --from=user-creator /etc/passwd /etc/passwd
 USER displex
 
