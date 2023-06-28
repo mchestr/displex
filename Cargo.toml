@@ -44,7 +44,7 @@ async-graphql = { version = "5.0.10", features = [
     "dataloader",
 ] }
 chrono = { version = "0.4.26", features = ["serde"] }
-clap = { version = "4.3.8", features = ["derive", "env"] }
+clap = { version = "4.3.9", features = ["derive", "env"] }
 derivative = "2.2.0"
 derive_more = "0.99.17"
 dotenvy = "0.15.7"
