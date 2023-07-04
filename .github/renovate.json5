@@ -1,6 +1,6 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
     "config:base",
     "docker:enableMajor",
     ":disableRateLimiting",
@@ -9,65 +9,67 @@
     ":enablePreCommit",
     ":automergeDigest",
     ":automergeBranch",
-    "helpers:pinGitHubActionDigests"
+    "helpers:pinGitHubActionDigests",
   ],
-  "platform": "github",
-  "onboarding": false,
-  "requireConfig": "optional",
-  "dependencyDashboardTitle": "Renovate Dashboard",
-  "suppressNotifications": ["prIgnoreNotification"],
-  "rebaseWhen": "conflicted",
-  "commitBodyTable": true,
-  "packageRules": [
+  platform: "github",
+  onboarding: false,
+  requireConfig: "optional",
+  username: "mchesterbot[bot]",
+  gitAuthor: "mchesterbot <202745+mchesterbot[bot]@users.noreply.github.com>",
+  repositories: ["mchestr/displex"],
+  dependencyDashboardTitle: "Renovate Dashboard",
+  suppressNotifications: ["prIgnoreNotification"],
+  rebaseWhen: "conflicted",
+  commitBodyTable: true,
+  packageRules: [
     {
-      "matchDatasources": ["docker"],
-      "enabled": true,
-      "matchUpdateTypes": ["major", "minor", "patch", "digest"]
+      matchDatasources: ["docker"],
+      enabled: true,
+      matchUpdateTypes: ["major", "minor", "patch", "digest"],
     },
     {
-      "matchDatasources": ["docker"],
-      "semanticCommitScope": "container",
-      "separateMinorPatch": true
+      matchDatasources: ["docker"],
+      semanticCommitScope: "container",
+      separateMinorPatch: true,
     },
     {
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["major"],
-      "commitMessagePrefix": "feat(container)!: "
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["major"],
+      commitMessagePrefix: "feat(container)!: ",
     },
     {
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["minor"],
-      "semanticCommitType": "feat"
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["minor"],
+      semanticCommitType: "feat",
     },
     {
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["patch"],
-      "semanticCommitType": "fix"
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["patch"],
+      semanticCommitType: "fix",
     },
     {
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["digest"],
-      "semanticCommitType": "chore"
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["digest"],
+      semanticCommitType: "chore",
     },
     {
-      "description": "Auto merge GitHub Actions",
-      "matchManagers": ["github-actions"],
-      "matchDatasources": ["github-tags"],
-      "automerge": true,
-      "ignoreTests": true,
-      "automergeType": "branch",
-      "matchUpdateTypes": ["minor", "patch"]
+      description: "Auto merge GitHub Actions",
+      matchManagers: ["github-actions"],
+      matchDatasources: ["github-tags"],
+      automerge: true,
+      ignoreTests: true,
+      automergeType: "branch",
+      matchUpdateTypes: ["minor", "patch"],
     },
     {
-      "description": "Dockerfile Group",
-      "groupName": "Dockerfile",
-      "matchPackagePatterns": ["alpine", "rust", "lukemathwalker/cargo-chef"],
-      "matchDatasources": ["dockerfile"],
-      "group": {
-        "commitMessageTopic": "{{{groupName}}} group"
+      description: "Dockerfile Group",
+      groupName: "Dockerfile",
+      matchPackagePatterns: ["alpine", "rust", "lukemathwalker/cargo-chef"],
+      matchDatasources: ["dockerfile"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
       },
-      "separateMinorPatch": false
+      separateMinorPatch: false,
     },
-  ]
+  ],
 }
-
