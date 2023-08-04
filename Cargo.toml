@@ -64,7 +64,7 @@ tracing = "0.1"
 tracing-actix-web = "0.7.5"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.4.1", features = ["fast-rng"] }
-sea-orm = { version = "0.11.3", features = [
+sea-orm = { version = "0.12.2", features = [
     "sqlx-mysql",
     "sqlx-postgres",
     "sqlx-sqlite",
