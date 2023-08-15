@@ -309,9 +309,9 @@ version = "5.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b35ef8f9be23ee30fe1eb1cf175c689bc33517c6c6d0fd0669dade611e5ced7f"
 dependencies = [
- "async-graphql-derive",
- "async-graphql-parser",
- "async-graphql-value",
+ "async-graphql-derive 5.0.10",
+ "async-graphql-parser 5.0.10",
+ "async-graphql-value 5.0.10",
  "async-stream",
  "async-trait",
  "base64 0.13.1",
@@ -324,7 +324,7 @@ dependencies = [
  "futures-util",
  "handlebars",
  "http",
- "indexmap",
+ "indexmap 1.9.3",
  "lru",
  "mime",
  "multer",
@@ -343,12 +343,42 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-graphql-axum"
-version = "5.0.10"
+name = "async-graphql"
+version = "6.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "777d02b4b35c1eb15bb63391f45b4622206fe1199940fa8b4b6136904fae035c"
+checksum = "2c0001725fb68abb74d3965a42f90435201217900e2c08c3c0a6f9e05f8988a4"
 dependencies = [
- "async-graphql",
+ "async-graphql-derive 6.0.3",
+ "async-graphql-parser 6.0.3",
+ "async-graphql-value 6.0.3",
+ "async-stream",
+ "async-trait",
+ "base64 0.13.1",
+ "bytes",
+ "fnv",
+ "futures-util",
+ "http",
+ "indexmap 2.0.0",
+ "mime",
+ "multer",
+ "num-traits",
+ "once_cell",
+ "pin-project-lite",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "static_assertions",
+ "thiserror",
+]
+
+[[package]]
+name = "async-graphql-axum"
+version = "6.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "896869e4f1ce40a1f18d751fa014eb48cf271fd22783fcf1aeb4f1537c827724"
+dependencies = [
+ "async-graphql 6.0.3",
  "async-trait",
  "axum",
  "bytes",
@@ -366,12 +396,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a0f6ceed3640b4825424da70a5107e79d48d9b2bc6318dfc666b2fc4777f8c4"
 dependencies = [
  "Inflector",
- "async-graphql-parser",
- "darling",
+ "async-graphql-parser 5.0.10",
+ "darling 0.14.4",
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+ "thiserror",
+]
+
+[[package]]
+name = "async-graphql-derive"
+version = "6.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a292088b96a99e0303fe24ff4807ff8f4f4ee062111f07e2523ec0284a6338f"
+dependencies = [
+ "Inflector",
+ "async-graphql-parser 6.0.3",
+ "darling 0.20.3",
+ "proc-macro-crate 1.3.1",
+ "proc-macro2",
+ "quote",
+ "strum",
+ "syn 2.0.16",
  "thiserror",
 ]
 
@@ -381,7 +428,19 @@ version = "5.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ecc308cd3bc611ee86c9cf19182d2b5ee583da40761970e41207f088be3db18f"
 dependencies = [
- "async-graphql-value",
+ "async-graphql-value 5.0.10",
+ "pest",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "async-graphql-parser"
+version = "6.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b10d2f8ae7842d43771f09f9a82886832c6728e395e6779fa463fdec1aba5bd2"
+dependencies = [
+ "async-graphql-value 6.0.3",
  "pest",
  "serde",
  "serde_json",
@@ -394,7 +453,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d461325bfb04058070712296601dfe5e5bd6cdff84780a0a8c569ffb15c87eb3"
 dependencies = [
  "bytes",
- "indexmap",
+ "indexmap 1.9.3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "async-graphql-value"
+version = "6.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "588e75bef4e9fea22450961fb3a9281cb28c134e22b6da8416b170cf32143a06"
+dependencies = [
+ "bytes",
+ "indexmap 2.0.0",
  "serde",
  "serde_json",
 ]
@@ -841,7 +912,7 @@ dependencies = [
  "bitflags 1.3.2",
  "clap_derive 3.2.25",
  "clap_lex 0.2.4",
- "indexmap",
+ "indexmap 1.9.3",
  "once_cell",
  "textwrap",
 ]
@@ -1074,8 +1145,18 @@ version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b750cb3417fd1b327431a470f388520309479ab0bf5e323505daf0290cd3850"
 dependencies = [
- "darling_core",
- "darling_macro",
+ "darling_core 0.14.4",
+ "darling_macro 0.14.4",
+]
+
+[[package]]
+name = "darling"
+version = "0.20.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0209d94da627ab5605dcccf08bb18afa5009cfbef48d8a8b7d7bdbc79be25c5e"
+dependencies = [
+ "darling_core 0.20.3",
+ "darling_macro 0.20.3",
 ]
 
 [[package]]
@@ -1093,14 +1174,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling_core"
+version = "0.20.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "177e3443818124b357d8e76f53be906d60937f0d3a90773a664fa63fa253e621"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "syn 2.0.16",
+]
+
+[[package]]
 name = "darling_macro"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4aab4dbc9f7611d8b55048a3a16d2d010c2c8334e46304b40ac1cc14bf3b48e"
 dependencies = [
- "darling_core",
+ "darling_core 0.14.4",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.20.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "836a9bbc7ad63342d6d6e7b815ccab164bc77a2d95d84bc3117a8c0d5c98e2d5"
+dependencies = [
+ "darling_core 0.20.3",
+ "quote",
+ "syn 2.0.16",
 ]
 
 [[package]]
@@ -1197,7 +1303,7 @@ name = "displex"
 version = "0.11.11"
 dependencies = [
  "anyhow",
- "async-graphql",
+ "async-graphql 5.0.10",
  "async-graphql-axum",
  "async-trait",
  "axum",
@@ -1252,6 +1358,12 @@ checksum = "071a31f4ee85403370b58aca746f01041ede6f0da2730960ad001edc2b71b394"
 dependencies = [
  "cfg-if 1.0.0",
 ]
+
+[[package]]
+name = "equivalent"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "errno"
@@ -1498,7 +1610,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http",
- "indexmap",
+ "indexmap 1.9.3",
  "slab",
  "tokio",
  "tokio-util",
@@ -1536,6 +1648,12 @@ checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
  "ahash 0.8.3",
 ]
+
+[[package]]
+name = "hashbrown"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
 
 [[package]]
 name = "hashlink"
@@ -1778,6 +1896,17 @@ checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
  "hashbrown 0.12.3",
+ "serde",
+]
+
+[[package]]
+name = "indexmap"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5477fe2230a79769d8dc68e0eabf5437907c0457a5614a9e8dddb67f65eb65d"
+dependencies = [
+ "equivalent",
+ "hashbrown 0.14.0",
  "serde",
 ]
 
@@ -3168,7 +3297,7 @@ version = "0.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9d684e3ec7de3bf5466b32bd75303ac16f0736426e5a4e0d6e489559ce1249c"
 dependencies = [
- "indexmap",
+ "indexmap 1.9.3",
  "itoa",
  "ryu",
  "serde",
@@ -3383,7 +3512,7 @@ dependencies = [
  "hex",
  "hkdf",
  "hmac 0.12.1",
- "indexmap",
+ "indexmap 1.9.3",
  "itoa",
  "libc",
  "libsqlite3-sys",
@@ -3470,6 +3599,28 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
+name = "strum"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
+dependencies = [
+ "strum_macros",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad8d03b598d3d0fff69bf533ee3ef19b8eeb342729596df84bcc7e1f96ec4059"
+dependencies = [
+ "heck 0.4.1",
+ "proc-macro2",
+ "quote",
+ "rustversion",
+ "syn 2.0.16",
+]
 
 [[package]]
 name = "subtle"
@@ -3739,7 +3890,7 @@ version = "0.19.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2380d56e8670370eee6566b0bfd4265f65b3f432e8c6d85623f728d4fa31f739"
 dependencies = [
- "indexmap",
+ "indexmap 1.9.3",
  "serde",
  "serde_spanned",
  "toml_datetime",
