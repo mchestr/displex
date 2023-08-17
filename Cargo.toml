@@ -37,7 +37,7 @@ async-trait = "0.1.69"
 axum = { version = "0.6.20", features = ["tracing"] }
 axum-sessions = "0.5.0"
 async-graphql-axum = "6.0.3"
-async-graphql = { version = "5.0.10", features = [
+async-graphql = { version = "6.0.3", features = [
     "chrono",
     "decimal",
     "uuid",
@@ -64,7 +64,7 @@ tracing = "0.1"
 tracing-actix-web = "0.7.6"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.4.1", features = ["fast-rng"] }
-sea-orm = { version = "0.11.3", features = [
+sea-orm = { version = "0.12.2", features = [
     "sqlx-mysql",
     "sqlx-postgres",
     "sqlx-sqlite",
@@ -75,6 +75,6 @@ sea-orm = { version = "0.11.3", features = [
     "with-rust_decimal",
     "debug-print",
 ] }
-sea-orm-migration = "0.11.3"
+sea-orm-migration = "0.12.2"
 sea-query = "0.30.0"
 tower-cookies = "0.9.0"

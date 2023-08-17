@@ -6,7 +6,8 @@ use tracing::info;
 use self::models::{
     ApiResponse,
     UpdateUserSettingsRequest,
-    User, UpdateUserSettingsResponse,
+    UpdateUserSettingsResponse,
+    User,
 };
 
 #[derive(Clone, Debug)]
@@ -43,7 +44,8 @@ impl OverseerrService {
         user_id: i64,
         discord_user_id: i64,
     ) -> Result<UpdateUserSettingsResponse> {
-        Ok(self.client
+        Ok(self
+            .client
             .post(format!(
                 "{}/api/v1/user/{}/settings/main",
                 self.url, user_id
@@ -72,7 +74,8 @@ impl OverseerrService {
             .find(|u| u.plex_id == plex_user_id);
         if let Some(user) = overseerr_user {
             info!("Found Overseerr user: {:#?}", user);
-            let response = self.set_discord_user_settings(user.id, discord_user_id)
+            let response = self
+                .set_discord_user_settings(user.id, discord_user_id)
                 .await?;
             info!("Successfully updated Overseerr User: {:#?}", response);
         } else {

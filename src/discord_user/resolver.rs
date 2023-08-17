@@ -12,6 +12,7 @@ use chrono::Utc;
 use sea_orm::{
     prelude::*,
     ActiveValue,
+    FromJsonQueryResult,
 };
 use serde::{
     Deserialize,
