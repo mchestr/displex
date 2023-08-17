@@ -20,7 +20,6 @@ use axum::{
 use reqwest::header::AUTHORIZATION;
 use tower_cookies::Cookies;
 
-
 use crate::{
     config::AppConfig,
     discord_token::resolver::COOKIE_NAME,
