@@ -1320,7 +1320,7 @@ dependencies = [
  "reqwest",
  "sea-orm",
  "sea-orm-migration",
- "sea-query 0.29.1",
+ "sea-query 0.30.0",
  "serde",
  "serde_json",
  "serde_qs",
@@ -3079,9 +3079,9 @@ dependencies = [
 
 [[package]]
 name = "sea-query"
-version = "0.29.1"
+version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "332375aa0c555318544beec038b285c75f2dbeecaecb844383419ccf2663868e"
+checksum = "6aeb899964df7038e7274306b742951b82a04f835bca8a4683a4c254a6bf35fa"
 dependencies = [
  "inherent",
  "sea-query-derive 0.4.0",
