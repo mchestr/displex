@@ -3,10 +3,7 @@ use anyhow::Result;
 use clap::Parser;
 
 use displex::{
-    bot::{
-        self,
-        DisplexBot,
-    },
+    bot::DisplexBot,
     config::{self,},
     graphql::get_schema,
     migrations::Migrator,
@@ -18,6 +15,7 @@ use sea_orm::{
     DatabaseConnection,
 };
 use sea_orm_migration::MigratorTrait;
+
 use tokio::signal::unix::{
     signal,
     SignalKind,
@@ -55,9 +53,7 @@ async fn main() -> Result<()> {
     };
     tracing::info!("Using database backend: {selected_database:?}");
 
-    let serenity_client = bot::discord::init(config.clone()).await?;
-    let discord_http_client = serenity_client.cache_and_http.http.clone();
-    let app_services = create_app_services(db.clone(), &config, &discord_http_client).await;
+    let (serenity_client, app_services) = create_app_services(db.clone(), &config).await;
     let schema = get_schema(&app_services, db.clone(), &config).await;
 
     let (tx, rx) = tokio::sync::broadcast::channel::<()>(1);

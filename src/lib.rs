@@ -6,6 +6,7 @@ pub mod errors;
 pub mod graphql;
 pub mod metadata;
 pub mod migrations;
+pub mod overseerr;
 pub mod plex;
 pub mod server;
 pub mod services;

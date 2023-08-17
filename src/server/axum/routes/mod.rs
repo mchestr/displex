@@ -7,6 +7,7 @@ use async_graphql_axum::{
     GraphQLResponse,
 };
 use axum::{
+    extract::State,
     http::HeaderMap,
     response::{
         Html,
@@ -19,10 +20,12 @@ use axum::{
 
 use reqwest::header::AUTHORIZATION;
 use tower_cookies::Cookies;
+use tracing::info;
 
 use crate::{
     config::AppConfig,
     discord_token::resolver::COOKIE_NAME,
+    errors::DisplexError,
     graphql::GraphqlSchema,
 };
 
@@ -60,8 +63,17 @@ async fn graphql_playground() -> impl IntoResponse {
 pub fn configure(config: &AppConfig) -> Router<DisplexState> {
     let router = Router::new().merge(discord::routes()).merge(plex::routes());
     if config.api.enabled {
-        router.route("/graphql", get(graphql_playground).post(graphql_handler))
+        router
+            .route("/graphql", get(graphql_playground).post(graphql_handler))
+            .route("/overseerr", get(overseerr))
     } else {
         router
     }
+}
+
+async fn overseerr(State(state): State<DisplexState>) -> Result<impl IntoResponse, DisplexError> {
+    let users = state.services.overseerr_service.get_users().await?;
+    info!("{:#?}", users);
+
+    Ok(())
 }

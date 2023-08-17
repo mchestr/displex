@@ -2,10 +2,12 @@ use anyhow::Result;
 
 use serenity::{
     async_trait,
+    client::ClientBuilder,
     framework::{
         standard::macros::group,
         StandardFramework,
     },
+    http::Http,
     json::Value,
     model::{
         gateway::Ready,
@@ -46,14 +48,14 @@ impl EventHandler for Handler {
     }
 }
 
-pub async fn init(config: AppConfig) -> Result<serenity::Client> {
+pub async fn init(config: AppConfig, client: Http) -> Result<serenity::Client> {
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
     let framework = StandardFramework::new().group(&GENERAL_GROUP);
 
-    Ok(Client::builder(&config.discord_bot.token, intents)
+    Ok(ClientBuilder::new_with_http(client, intents)
         .event_handler(Handler {
             config: config.clone(),
         })

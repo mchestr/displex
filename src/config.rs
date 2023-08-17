@@ -46,6 +46,7 @@ pub struct AppConfig {
     pub discord_bot: DiscordBotConfig,
     pub http: HttpConfig,
     pub plex: PlexConfig,
+    pub overseerr: OverseerrConfig,
     pub session: SessionConfig,
     pub tautulli: TautulliConfig,
     pub web: WebConfig,
@@ -118,6 +119,23 @@ impl Default for HttpConfig {
 #[derive(Deserialize, Debug, Clone, Serialize, Default)]
 pub struct PlexConfig {
     pub server_id: String,
+}
+
+#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derivative(Debug)]
+pub struct OverseerrConfig {
+    pub url: String,
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    pub api_key: String,
+}
+
+impl Default for OverseerrConfig {
+    fn default() -> Self {
+        Self {
+            url: "http://localhost:5055".into(),
+            api_key: Default::default(),
+        }
+    }
 }
 
 #[derive(Derivative, Deserialize, Clone, Serialize)]

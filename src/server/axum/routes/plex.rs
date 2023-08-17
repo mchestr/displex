@@ -64,6 +64,7 @@ async fn callback(
     let discord_tokens_svc = state.services.discord_tokens_service;
     let plex_users_svc = state.services.plex_users_service;
     let plex_tokens_svc = state.services.plex_tokens_service;
+    let overseerr_svc = state.services.overseerr_service;
 
     let resp = plex_svc
         .pin_claim(query_string.id, &query_string.code)
@@ -247,6 +248,9 @@ async fn callback(
 
     discord_svc
         .link_application(state.config.discord.client_id, data, &d_access_token)
+        .await?;
+    overseerr_svc
+        .verified_user(discord_user.id.parse::<i64>().unwrap(), plex_user.id)
         .await?;
     Ok(Redirect::to(&format!(
         "discord://-/channels/{}/@home",
