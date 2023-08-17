@@ -7,7 +7,6 @@ use async_graphql_axum::{
     GraphQLResponse,
 };
 use axum::{
-    extract::State,
     http::HeaderMap,
     response::{
         Html,
@@ -20,12 +19,11 @@ use axum::{
 
 use reqwest::header::AUTHORIZATION;
 use tower_cookies::Cookies;
-use tracing::info;
+
 
 use crate::{
     config::AppConfig,
     discord_token::resolver::COOKIE_NAME,
-    errors::DisplexError,
     graphql::GraphqlSchema,
 };
 
