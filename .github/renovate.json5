@@ -71,5 +71,25 @@
       },
       separateMinorPatch: false,
     },
+    {
+      description: "sea-orm Group",
+      groupName: "sea-orm",
+      matchPackagePrefixes: ["sea-orm"],
+      matchDatasources: ["crate"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: false,
+    },
+    {
+      description: "async-graphql Group",
+      groupName: "async-graphql",
+      matchPackagePrefixes: ["async-graphql"],
+      matchDatasources: ["crate"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      separateMinorPatch: false,
+    },
   ],
 }
