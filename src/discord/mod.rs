@@ -107,6 +107,23 @@ impl DiscordService {
         Ok(())
     }
 
+    pub async fn unlink_application(
+        &self,
+        application_id: u64,
+        metadata: ApplicationMetadataUpdate,
+        token: &str,
+    ) -> Result<()> {
+        self.client
+            .put(format_url(&format!(
+                "/users/@me/applications/{application_id}/role-connection"
+            )))
+            .bearer_auth(token)
+            .json(&metadata)
+            .send()
+            .await?;
+        Ok(())
+    }
+
     pub async fn user(&self, token: &str) -> Result<User> {
         Ok(self
             .client

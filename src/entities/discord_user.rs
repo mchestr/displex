@@ -14,6 +14,7 @@ pub struct Model {
     pub username: String,
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
+    pub is_active: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -97,7 +97,15 @@ async fn refresh_user_stats(
     }
     let discord_token = discord_token.unwrap();
 
-    let discord_token = maybe_refresh_token(services, discord_user, discord_token).await?;
+    let discord_token = match maybe_refresh_token(services, discord_user, discord_token).await {
+        Ok(token) => token,
+        Err(err) => {
+            tracing::error!("Failed to refresh users token: {}", err);
+            services.discord_users_service.deactivate(&discord_user_id).await.unwrap();
+            tracing::warn!("Deactivated user: {}", discord_user.username);
+            return Err(err);
+        }
+    };
 
     let watch_stats = services
         .tautulli_service

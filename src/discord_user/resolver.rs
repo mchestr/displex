@@ -306,6 +306,31 @@ impl DiscordUsersService {
         Ok(discord_user::Entity::find().all(&self.db).await?)
     }
 
+    pub async fn deactivate(&self, id: &str) -> Result<UpdateDiscordUserResult> {
+        let user = discord_user::ActiveModel {
+            id: ActiveValue::Set(id.to_owned()),
+            is_active: ActiveValue::Set(false),
+            updated_at: ActiveValue::Set(Utc::now()),
+            ..Default::default()
+        };
+        Ok(
+            match discord_user::Entity::update(user).exec(&self.db).await {
+                Ok(user) => UpdateDiscordUserResult::Ok(user),
+                Err(DbErr::RecordNotUpdated) => {
+                    UpdateDiscordUserResult::Err(UpdateDiscordUserError {
+                        error: UpdateDiscordUserErrorVariant::UserDoesNotExist,
+                    })
+                }
+                Err(err) => {
+                    tracing::warn!("update db error: {:?}", err);
+                    UpdateDiscordUserResult::Err(UpdateDiscordUserError {
+                        error: UpdateDiscordUserErrorVariant::InternalError,
+                    })
+                }
+            },
+        )
+    }
+
     pub async fn update(&self, id: &str, username: &str) -> Result<UpdateDiscordUserResult> {
         let user = discord_user::ActiveModel {
             id: ActiveValue::Set(id.to_owned()),
@@ -438,6 +463,7 @@ impl DiscordUsersService {
     ) -> Result<Vec<(discord_user::Model, Option<plex_user::Model>)>> {
         Ok(discord_user::Entity::find()
             .find_also_related(plex_user::Entity)
+            .filter(discord_user::Column::IsActive.eq(true))
             .all(&self.db)
             .await?)
     }
