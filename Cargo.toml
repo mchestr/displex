@@ -23,13 +23,13 @@ lto = "thin"
 
 [package]
 name = "displex"
-version = "0.11.12"
+version = "0.11.13"
 edition = "2021"
 authors = ["Mike Chester <mike@chestr.dev>"]
 readme = "README.md"
 repository = "https://github.com/mchestr/displex"
 license-file = "LICENSE"
-keywords = ["discord", "plex", "tautulli", "discord-linked-role"]
+keywords = ["discord", "plex", "tautulli", "discord-linked-role", "overseerr"]
 
 [dependencies]
 anyhow = "1.0.75"
