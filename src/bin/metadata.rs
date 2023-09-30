@@ -38,18 +38,19 @@ pub async fn set_metadata(config: AppConfig) {
 async fn register_metadata(config: AppConfig, client: &reqwest::Client) -> Result<()> {
     let metadata_spec = vec![
         ApplicationMetadataDefinition {
+            key: "is_subscribed".into(),
+            name: "⭐".into(),
+            description: "Access to Plex Server".into(),
+            type_: 7,
+        },
+        ApplicationMetadataDefinition {
             key: "watched_hours".into(),
             name: "Hours Streamed".into(),
             description: "Hours spent streaming".into(),
             type_: 2,
         },
-        ApplicationMetadataDefinition {
-            key: "is_subscribed".into(),
-            name: "✅".into(),
-            description: "Access to Plex Server".into(),
-            type_: 7,
-        },
     ];
+    // let metadata_spec = vec![];
 
     let current_metadata: Vec<ApplicationMetadataDefinition> = client
         .get(format!(
@@ -65,17 +66,20 @@ async fn register_metadata(config: AppConfig, client: &reqwest::Client) -> Resul
     tracing::info!("Discord Metadata: {:#?}", current_metadata);
     if current_metadata != metadata_spec {
         tracing::info!("Registering Discord application metadata");
-        client
-            .put(format!(
-                "https://discord.com/api/v10/applications/{}/role-connections/metadata",
-                config.discord.client_id
-            ))
-            .header("Authorization", format!("Bot {}", config.discord_bot.token))
-            .json(&metadata_spec)
-            .send()
-            .await?
-            .text()
-            .await?;
+        tracing::info!(
+            "{:#?}",
+            client
+                .put(format!(
+                    "https://discord.com/api/v10/applications/{}/role-connections/metadata",
+                    config.discord.client_id
+                ))
+                .header("Authorization", format!("Bot {}", config.discord_bot.token))
+                .json(&metadata_spec)
+                .send()
+                .await?
+                .json()
+                .await?
+        );
     } else {
         tracing::info!("Discord application metadata is up to date")
     }
