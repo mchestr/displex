@@ -278,19 +278,19 @@ impl DiscordUsersService {
                 tracing::warn!("create DbErr::Query: {:?}", err);
                 return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {
                     error: CreateDiscordUserErrorVariant::UserAlreadyExists,
-                }))
+                }));
             }
             Err(DbErr::Exec(err)) => {
                 tracing::warn!("create DbErr::Exec: {:?}", err);
                 return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {
                     error: CreateDiscordUserErrorVariant::UserAlreadyExists,
-                }))
+                }));
             }
             Err(err) => {
                 tracing::warn!("create Unknown: {:?}", err);
                 return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {
                     error: CreateDiscordUserErrorVariant::InternalError,
-                }))
+                }));
             }
         };
 
