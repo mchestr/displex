@@ -443,7 +443,7 @@ impl DiscordUsersService {
             .plex_users_service
             .list(Some(discord_user.id.clone()))
             .await?;
-        let plex_user_ids: Vec<i64> = plex_users.iter().map(|u| u.id).collect();
+        let plex_user_ids: Vec<String> = plex_users.iter().map(|u| String::from(&u.id)).collect();
         let plex_tokens = self
             .plex_tokens_service
             .list(None, Some(plex_user_ids))
@@ -461,9 +461,20 @@ impl DiscordUsersService {
     pub async fn list_users_for_refresh(
         &self,
     ) -> Result<Vec<(discord_user::Model, Option<plex_user::Model>)>> {
-        Ok(discord_user::Entity::find()
-            .find_also_related(plex_user::Entity)
+        let users = discord_user::Entity::find()
             .filter(discord_user::Column::IsActive.eq(true))
+            .all(&self.db)
+            .await?;
+        for user in users {
+            tracing::info!(
+                "{:?}",
+                user.find_related(plex_user::Entity).all(&self.db).await?
+            );
+        }
+
+        Ok(discord_user::Entity::find()
+            .filter(discord_user::Column::IsActive.eq(true))
+            .find_also_related(plex_user::Entity)
             .all(&self.db)
             .await?)
     }

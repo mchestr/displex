@@ -15,7 +15,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(PlexUser::Id)
-                            .integer()
+                            .string()
                             .not_null()
                             .primary_key(),
                     )

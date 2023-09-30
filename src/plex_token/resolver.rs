@@ -74,7 +74,7 @@ impl PlexTokensMutation {
 #[derive(Debug, InputObject)]
 pub struct CreatePlexTokenInput {
     pub access_token: String,
-    pub plex_user_id: i64,
+    pub plex_user_id: String,
 }
 
 #[derive(Debug, InputObject)]
@@ -89,8 +89,8 @@ pub struct DeletePlexTokenInput {
 
 #[derive(Debug, InputObject)]
 pub struct ListPlexTokenInput {
-    pub plex_user_id: Option<i64>,
-    pub plex_user_ids: Option<Vec<i64>>,
+    pub plex_user_id: Option<String>,
+    pub plex_user_ids: Option<Vec<String>>,
 }
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
@@ -167,7 +167,7 @@ impl PlexTokensService {
     pub async fn create(
         &self,
         access_token: &str,
-        plex_user_id: &i64,
+        plex_user_id: &str,
     ) -> Result<CreatePlexTokenResult> {
         let data = plex_token::ActiveModel {
             access_token: ActiveValue::Set(access_token.to_owned()),
@@ -229,8 +229,8 @@ impl PlexTokensService {
 
     pub async fn list(
         &self,
-        plex_user_id: Option<i64>,
-        plex_user_ids: Option<Vec<i64>>,
+        plex_user_id: Option<String>,
+        plex_user_ids: Option<Vec<String>>,
     ) -> Result<Vec<plex_token::Model>> {
         Ok(plex_token::Entity::find()
             .apply_if(plex_user_id, |query, value| {

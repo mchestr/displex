@@ -31,7 +31,7 @@ impl MigrationTrait for Migration {
                             .default(Expr::current_timestamp())
                             .not_null(),
                     )
-                    .col(ColumnDef::new(PlexToken::PlexUserId).integer().not_null())
+                    .col(ColumnDef::new(PlexToken::PlexUserId).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-plex-token-plex_user_id")

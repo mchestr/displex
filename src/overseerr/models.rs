@@ -18,14 +18,14 @@ pub struct ApiResponse<T> {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct VerifiedUserRequest {
-    pub plex_user_id: i64,
-    pub discord_user_id: i64,
+    pub plex_user_id: String,
+    pub discord_user_id: String,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateUserSettingsRequest {
-    pub discord_id: Option<i64>,
+    pub discord_id: Option<String>,
     pub movie_quota_limit: Option<i64>,
     pub tv_quota_limit: Option<i64>,
 }
@@ -33,7 +33,7 @@ pub struct UpdateUserSettingsRequest {
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateUserSettingsResponse {
-    pub discord_id: Option<i64>,
+    pub discord_id: Option<String>,
     pub original_language: Option<String>,
     pub region: Option<String>,
     pub watchlist_sync_movies: Option<String>,

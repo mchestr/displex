@@ -63,8 +63,10 @@ async fn refresh_all_active_subscribers(config: &AppConfig, services: &AppServic
         .await
         .unwrap();
     tracing::info!("Refreshing {} users", users.len());
+    tracing::debug!("Users: {:#?}", users);
     for (discord_user, plex_user) in users {
         if plex_user.is_none() {
+            tracing::error!("No plex user found! {:?}", discord_user);
             continue;
         }
         let plex_user = plex_user.unwrap();
@@ -113,7 +115,7 @@ async fn refresh_user_stats(
 
     let watch_stats = services
         .tautulli_service
-        .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
+        .get_user_watch_time_stats(&plex_user.id, Some(true), Some(QueryDays::Total))
         .await?;
 
     let latest_stat = watch_stats

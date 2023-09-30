@@ -30,7 +30,7 @@ impl TautulliService {
 
     pub async fn get_user_watch_time_stats(
         &self,
-        user_id: i64,
+        user_id: &str,
         grouping: Option<bool>,
         query_days: Option<QueryDays>,
     ) -> Result<Vec<UserWatchStat>> {

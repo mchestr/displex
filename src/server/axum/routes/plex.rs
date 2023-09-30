@@ -168,7 +168,7 @@ async fn callback(
 
     match plex_users_svc
         .create(
-            plex_user.id,
+            &plex_user.id.to_string(),
             &plex_user.username,
             is_subscribed,
             &discord_user.id,
@@ -200,7 +200,7 @@ async fn callback(
     };
 
     match plex_tokens_svc
-        .create(&resp.auth_token, &plex_user.id)
+        .create(&resp.auth_token, &plex_user.id.to_string())
         .await
     {
         Ok(result) => match result {
@@ -237,7 +237,11 @@ async fn callback(
     };
     if is_subscribed {
         let watch_stats = tautulli_svc
-            .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
+            .get_user_watch_time_stats(
+                &plex_user.id.to_string(),
+                Some(true),
+                Some(QueryDays::Total),
+            )
             .await?;
 
         if let Some(latest) = watch_stats.get(0) {
@@ -249,7 +253,7 @@ async fn callback(
         .link_application(state.config.discord.client_id, data, &d_access_token)
         .await?;
     overseerr_svc
-        .verified_user(discord_user.id.parse::<i64>().unwrap(), plex_user.id)
+        .verified_user(&discord_user.id, &plex_user.id.to_string())
         .await?;
     Ok(Redirect::to(&format!(
         "discord://-/channels/{}/@home",

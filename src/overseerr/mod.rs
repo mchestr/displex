@@ -41,8 +41,8 @@ impl OverseerrService {
 
     pub async fn set_discord_user_settings(
         &self,
-        user_id: i64,
-        discord_user_id: i64,
+        user_id: &str,
+        discord_user_id: &str,
     ) -> Result<UpdateUserSettingsResponse> {
         Ok(self
             .client
@@ -52,7 +52,7 @@ impl OverseerrService {
             ))
             .header("X-Api-Key", &self.api_key)
             .json(&UpdateUserSettingsRequest {
-                discord_id: Some(discord_user_id),
+                discord_id: Some(discord_user_id.to_owned()),
                 tv_quota_limit: Some(0),
                 movie_quota_limit: Some(0),
             })
@@ -62,7 +62,7 @@ impl OverseerrService {
             .await?)
     }
 
-    pub async fn verified_user(&self, discord_user_id: i64, plex_user_id: i64) -> Result<()> {
+    pub async fn verified_user(&self, discord_user_id: &str, plex_user_id: &str) -> Result<()> {
         info!(
             "Setting Overseerr settings... discord: {}, plex: {}",
             discord_user_id, plex_user_id
@@ -71,11 +71,11 @@ impl OverseerrService {
             .get_users()
             .await?
             .into_iter()
-            .find(|u| u.plex_id == plex_user_id);
+            .find(|u| u.plex_id.to_string() == plex_user_id);
         if let Some(user) = overseerr_user {
             info!("Found Overseerr user: {:#?}", user);
             let response = self
-                .set_discord_user_settings(user.id, discord_user_id)
+                .set_discord_user_settings(&user.id.to_string(), discord_user_id)
                 .await?;
             info!("Successfully updated Overseerr User: {:#?}", response);
         } else {

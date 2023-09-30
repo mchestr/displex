@@ -11,7 +11,7 @@ use serde::{
 pub struct Model {
     #[sea_orm(primary_key)]
     pub access_token: String,
-    pub plex_user_id: i64,
+    pub plex_user_id: String,
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
 }

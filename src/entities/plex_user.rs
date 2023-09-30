@@ -10,7 +10,7 @@ use serde::{
 #[sea_orm(table_name = "plex_user")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i64,
+    pub id: String,
     pub username: String,
     pub discord_user_id: String,
     pub is_subscriber: bool,

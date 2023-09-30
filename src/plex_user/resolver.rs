@@ -29,7 +29,7 @@ impl PlexUsersQuery {
     ) -> Result<GetPlexUserResult> {
         gql_ctx
             .data_unchecked::<PlexUsersService>()
-            .get(input.id)
+            .get(&input.id)
             .await
     }
     async fn list_plex_users(
@@ -57,7 +57,7 @@ impl PlexUsersMutation {
         gql_ctx
             .data_unchecked::<PlexUsersService>()
             .create(
-                input.id,
+                &input.id,
                 &input.username,
                 input.is_subscriber,
                 &input.discord_user_id,
@@ -72,7 +72,7 @@ impl PlexUsersMutation {
     ) -> Result<UpdatePlexUserResult> {
         gql_ctx
             .data_unchecked::<PlexUsersService>()
-            .update(input.id, &input.username, input.is_subscriber)
+            .update(&input.id, &input.username, input.is_subscriber)
             .await
     }
 
@@ -83,14 +83,14 @@ impl PlexUsersMutation {
     ) -> Result<DeletePlexUserResult> {
         gql_ctx
             .data_unchecked::<PlexUsersService>()
-            .delete(input.id)
+            .delete(&input.id)
             .await
     }
 }
 
 #[derive(Debug, InputObject)]
 pub struct CreatePlexUserInput {
-    pub id: i64,
+    pub id: String,
     pub username: String,
     pub discord_user_id: String,
     pub is_subscriber: bool,
@@ -98,19 +98,19 @@ pub struct CreatePlexUserInput {
 
 #[derive(Debug, InputObject)]
 pub struct UpdatePlexUserInput {
-    pub id: i64,
+    pub id: String,
     pub username: String,
     pub is_subscriber: bool,
 }
 
 #[derive(Debug, InputObject)]
 pub struct GetPlexUserInput {
-    pub id: i64,
+    pub id: String,
 }
 
 #[derive(Debug, InputObject)]
 struct DeletePlexUserInput {
-    id: i64,
+    id: String,
 }
 
 #[derive(Debug, InputObject)]
@@ -193,7 +193,7 @@ pub enum DeletePlexUserResult {
 
 #[derive(Debug, SimpleObject)]
 pub struct PlexUserId {
-    pub id: i64,
+    pub id: String,
 }
 
 #[derive(Debug, Clone)]
@@ -208,13 +208,13 @@ impl PlexUsersService {
 
     pub async fn create(
         &self,
-        id: i64,
+        id: &str,
         username: &str,
         is_subscriber: bool,
         discord_user_id: &str,
     ) -> Result<CreatePlexUserResult> {
         let data = plex_user::ActiveModel {
-            id: ActiveValue::Set(id),
+            id: ActiveValue::Set(id.to_owned()),
             username: ActiveValue::Set(username.to_owned()),
             is_subscriber: ActiveValue::Set(is_subscriber),
             discord_user_id: ActiveValue::Set(discord_user_id.to_owned()),
@@ -223,7 +223,9 @@ impl PlexUsersService {
 
         let result = match plex_user::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
-            Err(DbErr::UnpackInsertId) => return Ok(CreatePlexUserResult::Ok(PlexUserId { id })),
+            Err(DbErr::UnpackInsertId) => {
+                return Ok(CreatePlexUserResult::Ok(PlexUserId { id: id.to_owned() }))
+            }
             Err(DbErr::Query(err)) => {
                 tracing::warn!("create DbErr::Query: {:?}", err);
                 return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
@@ -249,7 +251,7 @@ impl PlexUsersService {
         }))
     }
 
-    pub async fn get(&self, id: i64) -> Result<GetPlexUserResult> {
+    pub async fn get(&self, id: &str) -> Result<GetPlexUserResult> {
         Ok(
             match plex_user::Entity::find_by_id(id).one(&self.db).await {
                 Ok(Some(result)) => GetPlexUserResult::Ok(result),
@@ -277,7 +279,7 @@ impl PlexUsersService {
 
     pub async fn update(
         &self,
-        id: i64,
+        id: &str,
         username: &str,
         is_subscriber: bool,
     ) -> Result<UpdatePlexUserResult> {
@@ -302,7 +304,7 @@ impl PlexUsersService {
         })
     }
 
-    pub async fn delete(&self, id: i64) -> Result<DeletePlexUserResult> {
+    pub async fn delete(&self, id: &str) -> Result<DeletePlexUserResult> {
         Ok(
             match plex_user::Entity::delete_by_id(id).exec(&self.db).await {
                 Ok(res) => match res.rows_affected {
