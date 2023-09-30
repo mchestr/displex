@@ -57,7 +57,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_qs = "0.12.0"
 serenity = "0.11"
-sqlx = { version = "0.6.3", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "offline"] }
+sqlx = { version = "0.7.2", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono"] }
 tokio = { version = "1", features = ["full", "tracing"] }
 tower-http = { version = "0.4.4", features = ["catch-panic", "cors", "trace"] }
 tracing = "0.1"
