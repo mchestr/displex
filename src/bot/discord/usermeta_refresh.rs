@@ -101,7 +101,11 @@ async fn refresh_user_stats(
         Ok(token) => token,
         Err(err) => {
             tracing::error!("Failed to refresh users token: {}", err);
-            services.discord_users_service.deactivate(&discord_user_id).await.unwrap();
+            services
+                .discord_users_service
+                .deactivate(&discord_user_id)
+                .await
+                .unwrap();
             tracing::warn!("Deactivated user: {}", discord_user.username);
             return Err(err);
         }
