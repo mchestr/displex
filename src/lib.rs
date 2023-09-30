@@ -4,7 +4,6 @@ pub mod discord;
 pub mod entities;
 pub mod errors;
 pub mod graphql;
-pub mod metadata;
 pub mod migrations;
 pub mod overseerr;
 pub mod plex;

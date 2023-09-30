@@ -47,7 +47,7 @@ DisPlex uses the Tautulli API to pull information from Tautulli and display them
     - View Channels
     - Send Messages
   - **Shortcut**: Use the following link to invite your bot to your server with the above permissions:
-    https://discord.com/oauth2/authorize?client_id=YOUR_APPLICATION_ID&scope=bot&permissions=2064
+    https://discord.com/oauth2/authorize?client_id=YOUR_APPLICATION_ID&scope=bot&permissions=268437520
 
 DisPlex runs as a Docker container. The Dockerfile is included in this repository, or can be pulled
 from [GitHub Packages](https://github.com/mchestr/displex/pkgs/container/displex).

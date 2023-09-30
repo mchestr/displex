@@ -127,9 +127,8 @@ async fn refresh_user_stats(
             ApplicationMetadataUpdate {
                 platform_name: String::from(&config.application_name),
                 metadata: ApplicationMetadata {
-                    total_watches: latest_stat.total_plays,
-                    hours_watched: latest_stat.total_time / 3600,
-                    is_subscriber: true,
+                    watched_hours: latest_stat.total_time / 3600,
+                    is_subscribed: true,
                 },
                 ..Default::default()
             },

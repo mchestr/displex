@@ -13,7 +13,6 @@ use std::sync::Arc;
 
 use self::{
     models::{
-        ApplicationMetadataDefinition,
         ApplicationMetadataUpdate,
         User,
     },
@@ -31,14 +30,12 @@ pub struct DiscordService {
     client: reqwest::Client,
     oauth2_client: DiscordOAuth2Client,
     discord_http_client: Arc<Http>,
-    bot_token: String,
 }
 
 impl DiscordService {
     pub fn new(
         client: &reqwest::Client,
         discord_http_client: &Arc<Http>,
-        bot_token: &str,
         client_id: u64,
         client_secret: &str,
         redirect_url: &str,
@@ -52,42 +49,7 @@ impl DiscordService {
                 client_secret,
                 Some(redirect_url),
             ),
-            bot_token: bot_token.to_owned(),
         }
-    }
-
-    pub async fn application_metadata(
-        &self,
-        application_id: u64,
-    ) -> Result<Vec<ApplicationMetadataDefinition>> {
-        Ok(self
-            .client
-            .get(format_url(&format!(
-                "/applications/{application_id}/role-connections/metadata"
-            )))
-            .header("Authorization", format!("Bot {}", self.bot_token))
-            .send()
-            .await?
-            .json()
-            .await?)
-    }
-
-    pub async fn register_application_metadata(
-        &self,
-        application_id: u64,
-        metadata: Vec<ApplicationMetadataDefinition>,
-    ) -> Result<Vec<ApplicationMetadataDefinition>> {
-        Ok(self
-            .client
-            .put(format_url(&format!(
-                "/applications/{application_id}/role-connections/metadata"
-            )))
-            .header("Authorization", format!("Bot {}", self.bot_token))
-            .json(&metadata)
-            .send()
-            .await?
-            .json()
-            .await?)
     }
 
     pub async fn link_application(

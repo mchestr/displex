@@ -30,6 +30,7 @@ readme = "README.md"
 repository = "https://github.com/mchestr/displex"
 license-file = "LICENSE"
 keywords = ["discord", "plex", "tautulli", "discord-linked-role", "overseerr"]
+default-run = "displex"
 
 [dependencies]
 anyhow = "1.0.75"
@@ -78,3 +79,12 @@ sea-orm = { version = "0.12.3", features = [
 sea-orm-migration = "0.12.3"
 sea-query = "0.30.2"
 tower-cookies = "0.9.0"
+
+
+[[bin]]
+name = "displex"
+path = "src/main.rs"
+
+[[bin]]
+name = "metadata"
+path = "src/bin/metadata.rs"

@@ -74,7 +74,7 @@ async fn callback(
         .get::<String>(DISCORD_CODE)
         .ok_or_else(|| anyhow!("no code found for session"))?;
 
-    let is_subscriber = plex_svc
+    let is_subscribed = plex_svc
         .get_devices(&resp.auth_token)
         .await?
         .iter()
@@ -90,7 +90,7 @@ async fn callback(
     tracing::info!(
         "{} is a subscriber: {}",
         discord_user.username,
-        is_subscriber
+        is_subscribed
     );
 
     match discord_users_svc
@@ -170,7 +170,7 @@ async fn callback(
         .create(
             plex_user.id,
             &plex_user.username,
-            is_subscriber,
+            is_subscribed,
             &discord_user.id,
         )
         .await
@@ -230,19 +230,18 @@ async fn callback(
     let mut data = ApplicationMetadataUpdate {
         platform_name: String::from(&state.config.application_name),
         metadata: ApplicationMetadata {
-            is_subscriber,
+            is_subscribed,
             ..Default::default()
         },
         ..Default::default()
     };
-    if is_subscriber {
+    if is_subscribed {
         let watch_stats = tautulli_svc
             .get_user_watch_time_stats(plex_user.id, Some(true), Some(QueryDays::Total))
             .await?;
 
         if let Some(latest) = watch_stats.get(0) {
-            data.metadata.total_watches = latest.total_plays;
-            data.metadata.hours_watched = latest.total_time / 3600;
+            data.metadata.watched_hours = latest.total_time / 3600;
         };
     };
 
