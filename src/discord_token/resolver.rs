@@ -192,16 +192,22 @@ impl DiscordTokensService {
             ..Default::default()
         };
 
-        let result = match discord_token::Entity::insert(data).exec(&self.db).await {
+        match discord_token::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
+            Err(DbErr::Query(err)) => {
+                tracing::warn!("create DbErr::Query: {:?}", err);
+                return Ok(CreateDiscordTokenResult::Error(CreateDiscordTokenError {
+                    error: CreateDiscordTokenErrorVariant::TokenAlreadyExists,
+                }));
+            }
             Err(DbErr::Exec(err)) => {
-                tracing::warn!("create db error: {:?}", err);
+                tracing::warn!("create DbErr::Exec: {:?}", err);
                 return Ok(CreateDiscordTokenResult::Error(CreateDiscordTokenError {
                     error: CreateDiscordTokenErrorVariant::TokenAlreadyExists,
                 }));
             }
             Err(err) => {
-                tracing::warn!("create unknown error: {:?}", err);
+                tracing::warn!("create Unknown: {:?}", err);
                 return Ok(CreateDiscordTokenResult::Error(CreateDiscordTokenError {
                     error: CreateDiscordTokenErrorVariant::InternalError,
                 }));
@@ -209,7 +215,7 @@ impl DiscordTokensService {
         };
 
         Ok(CreateDiscordTokenResult::Ok(DiscordTokenId {
-            access_token: result.last_insert_id,
+            access_token: access_token.to_owned(),
         }))
     }
 

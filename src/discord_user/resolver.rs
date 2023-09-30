@@ -274,12 +274,20 @@ impl DiscordUsersService {
 
         let user = match discord_user::Entity::insert(user).exec(&self.db).await {
             Ok(user) => user,
-            Err(DbErr::Exec(_)) => {
+            Err(DbErr::Query(err)) => {
+                tracing::warn!("create DbErr::Query: {:?}", err);
                 return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {
                     error: CreateDiscordUserErrorVariant::UserAlreadyExists,
                 }))
             }
-            Err(_) => {
+            Err(DbErr::Exec(err)) => {
+                tracing::warn!("create DbErr::Exec: {:?}", err);
+                return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {
+                    error: CreateDiscordUserErrorVariant::UserAlreadyExists,
+                }))
+            }
+            Err(err) => {
+                tracing::warn!("create Unknown: {:?}", err);
                 return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {
                     error: CreateDiscordUserErrorVariant::InternalError,
                 }))

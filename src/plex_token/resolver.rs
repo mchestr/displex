@@ -177,14 +177,20 @@ impl PlexTokensService {
 
         let result = match plex_token::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
+            Err(DbErr::Query(err)) => {
+                tracing::warn!("create DbErr::Query: {:?}", err);
+                return Ok(CreatePlexTokenResult::Error(CreatePlexTokenError {
+                    error: CreatePlexTokenErrorVariant::TokenAlreadyExists,
+                }));
+            }
             Err(DbErr::Exec(err)) => {
-                tracing::warn!("create db error: {:?}", err);
+                tracing::warn!("create DbErr::Exec: {:?}", err);
                 return Ok(CreatePlexTokenResult::Error(CreatePlexTokenError {
                     error: CreatePlexTokenErrorVariant::TokenAlreadyExists,
                 }));
             }
             Err(err) => {
-                tracing::warn!("create unknown error: {:?}", err);
+                tracing::warn!("create Unknown: {:?}", err);
                 return Ok(CreatePlexTokenResult::Error(CreatePlexTokenError {
                     error: CreatePlexTokenErrorVariant::InternalError,
                 }));

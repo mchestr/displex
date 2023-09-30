@@ -223,14 +223,20 @@ impl PlexUsersService {
 
         let result = match plex_user::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
+            Err(DbErr::Query(err)) => {
+                tracing::warn!("create DbErr::Query: {:?}", err);
+                return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
+                    error: CreatePlexUserErrorVariant::TokenAlreadyExists,
+                }));
+            }
             Err(DbErr::Exec(err)) => {
-                tracing::warn!("create db error: {:?}", err);
+                tracing::warn!("create DbErr::Exec: {:?}", err);
                 return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
                     error: CreatePlexUserErrorVariant::TokenAlreadyExists,
                 }));
             }
             Err(err) => {
-                tracing::warn!("create unknown error: {:?}", err);
+                tracing::warn!("create Unknown: {:?}", err);
                 return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
                     error: CreatePlexUserErrorVariant::InternalError,
                 }));

@@ -56,3 +56,13 @@ from [GitHub Packages](https://github.com/mchestr/displex/pkgs/container/displex
 
 This bot is still a work in progress. If you have any ideas for improving or adding to Displex, please open an issue
 or a pull request.
+
+### Testing OAuth Flow Locally
+
+You can use CloudFlare tunnels or similar to test the OAuth2 flow as it requires valid certs.
+
+```
+cloudflared tunnel --name displex.example.com --hostname displex.example.com --url 'http://localhost:8080' -f
+```
+
+Then visit `https://displex.example.com/auth/discord/linked-role`.
