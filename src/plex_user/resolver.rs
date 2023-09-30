@@ -223,6 +223,7 @@ impl PlexUsersService {
 
         let result = match plex_user::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
+            Err(DbErr::UnpackInsertId) => return Ok(CreatePlexUserResult::Ok(PlexUserId { id })),
             Err(DbErr::Query(err)) => {
                 tracing::warn!("create DbErr::Query: {:?}", err);
                 return Ok(CreatePlexUserResult::Error(CreatePlexUserError {

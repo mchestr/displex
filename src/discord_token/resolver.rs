@@ -194,10 +194,15 @@ impl DiscordTokensService {
 
         match discord_token::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
+            Err(DbErr::UnpackInsertId) => {
+                return Ok(CreateDiscordTokenResult::Ok(DiscordTokenId {
+                    access_token: access_token.into(),
+                }))
+            }
             Err(DbErr::Query(err)) => {
                 tracing::warn!("create DbErr::Query: {:?}", err);
-                return Ok(CreateDiscordTokenResult::Error(CreateDiscordTokenError {
-                    error: CreateDiscordTokenErrorVariant::TokenAlreadyExists,
+                return Ok(CreateDiscordTokenResult::Ok(DiscordTokenId {
+                    access_token: access_token.to_owned(),
                 }));
             }
             Err(DbErr::Exec(err)) => {

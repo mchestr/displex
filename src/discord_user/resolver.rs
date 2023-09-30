@@ -274,6 +274,9 @@ impl DiscordUsersService {
 
         let user = match discord_user::Entity::insert(user).exec(&self.db).await {
             Ok(user) => user,
+            Err(DbErr::UnpackInsertId) => {
+                return Ok(CreateDiscordUserResult::Ok(DiscordUserId { id: id.into() }))
+            }
             Err(DbErr::Query(err)) => {
                 tracing::warn!("create DbErr::Query: {:?}", err);
                 return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {

@@ -177,6 +177,11 @@ impl PlexTokensService {
 
         let result = match plex_token::Entity::insert(data).exec(&self.db).await {
             Ok(result) => result,
+            Err(DbErr::UnpackInsertId) => {
+                return Ok(CreatePlexTokenResult::Ok(PlexTokenId {
+                    access_token: access_token.into(),
+                }))
+            }
             Err(DbErr::Query(err)) => {
                 tracing::warn!("create DbErr::Query: {:?}", err);
                 return Ok(CreatePlexTokenResult::Error(CreatePlexTokenError {
