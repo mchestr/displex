@@ -23,6 +23,7 @@ DisPlex uses the Tautulli API to pull information from Tautulli and display them
 - Total bandwidth
 - Library item counts
 - [Discord Linked Roles](https://support.discord.com/hc/en-us/articles/8063233404823-Connections-Linked-Roles-Community-Members)
+- Automatically set user request limits on Overseerr (currently set to unlimited, TODO: make configurable)
 
 #### Channel Stats
 
@@ -38,6 +39,7 @@ DisPlex uses the Tautulli API to pull information from Tautulli and display them
 
 - A Plex Media Server
 - Tautulli
+- Overseerr
 - A Discord server
 - Valid SSL Cert
 - Docker
@@ -47,7 +49,7 @@ DisPlex uses the Tautulli API to pull information from Tautulli and display them
     - View Channels
     - Send Messages
   - **Shortcut**: Use the following link to invite your bot to your server with the above permissions:
-    https://discord.com/oauth2/authorize?client_id=YOUR_APPLICATION_ID&scope=bot&permissions=268437520
+    https://discord.com/oauth2/authorize?client_id=YOUR_APPLICATION_ID&scope=bot&permissions=2064
 
 DisPlex runs as a Docker container. The Dockerfile is included in this repository, or can be pulled
 from [GitHub Packages](https://github.com/mchestr/displex/pkgs/container/displex).
