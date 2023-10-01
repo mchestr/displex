@@ -50,11 +50,11 @@ enum Commands {
 }
 
 fn generate_database_url(config: &AppConfig) -> String {
-    if !config.database.url.is_empty() {
-        String::from(&config.database.url)
-    } else {
-        match config.database.type_ {
-            DatabaseType::PostgreSQL => {
+    match config.database.type_ {
+        DatabaseType::PostgreSQL => {
+            if config.database.host.is_empty() {
+                String::from(&config.database.url)
+            } else {
                 format!(
                     "postgres://{}:{}@{}:{}/{}",
                     config.database.username,
@@ -64,8 +64,8 @@ fn generate_database_url(config: &AppConfig) -> String {
                     config.database.database
                 )
             }
-            _ => todo!("Unsupported Database Type, please specify the full database url."),
         }
+        DatabaseType::SQLite => String::from(&config.database.url),
     }
 }
 
