@@ -66,7 +66,7 @@ struct LibraryStatCategoryChannels {
     tv_episodes: Option<ChannelData>,
 }
 
-pub async fn refresh_channel_statistics(config: &AppConfig, services: &AppServices) -> Result<()> {
+pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {
     let client = &services.discord_service;
 
     let roles = client

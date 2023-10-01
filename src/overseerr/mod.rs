@@ -3,11 +3,21 @@ pub mod models;
 use anyhow::Result;
 use tracing::info;
 
+use crate::{
+    config::{
+        AppConfig,
+        RequestLimitTier,
+    },
+    tautulli::{
+        models::QueryDays,
+        TautulliService,
+    },
+};
+
 use self::models::{
     ApiResponse,
-    UpdateUserSettingsRequest,
-    UpdateUserSettingsResponse,
     User,
+    UserRequestSettings,
 };
 
 #[derive(Clone, Debug)]
@@ -15,14 +25,24 @@ pub struct OverseerrService {
     client: reqwest::Client,
     url: String,
     api_key: String,
+    config: AppConfig,
+    tautulli_service: TautulliService,
 }
 
 impl OverseerrService {
-    pub fn new(client: &reqwest::Client, url: &str, api_key: &str) -> OverseerrService {
+    pub fn new(
+        config: &AppConfig,
+        client: &reqwest::Client,
+        url: &str,
+        api_key: &str,
+        tautulli_service: &TautulliService,
+    ) -> OverseerrService {
         OverseerrService {
             client: client.clone(),
             url: String::from(url),
             api_key: String::from(api_key),
+            config: config.clone(),
+            tautulli_service: tautulli_service.clone(),
         }
     }
 
@@ -34,32 +54,84 @@ impl OverseerrService {
             .query(&[("take", "100")])
             .send()
             .await?
+            .error_for_status()?
             .json()
             .await?;
         Ok(result.results)
     }
 
-    pub async fn set_discord_user_settings(
+    pub async fn set_request_tier(&self, user: &User, plex_user_id: &str) -> Result<()> {
+        let watch_stats = self
+            .tautulli_service
+            .get_user_watch_time_stats(plex_user_id, Some(true), Some(QueryDays::Total))
+            .await?;
+
+        let latest_stat = watch_stats
+            .get(0)
+            .ok_or_else(|| anyhow::anyhow!("failed to fetch stats"))?;
+
+        let watch_hours = latest_stat.total_time / 3600;
+        let mut request_tier: Option<RequestLimitTier> = None;
+        for tier in &self.config.requests_config.tiers {
+            if tier.watch_hours < watch_hours.into() {
+                request_tier = Some(tier.clone());
+            }
+        }
+
+        if let Some(tier) = request_tier {
+            tracing::info!(
+                "Setting user ({}:{}) to tier {}",
+                user.display_name,
+                watch_hours,
+                tier.name
+            );
+            self.set_user_request_settings(
+                &user.id.to_string(),
+                &UserRequestSettings {
+                    movie_quota_limit: Some(tier.movie.quota_days),
+                    movie_quota_days: Some(tier.movie.quota_limit),
+                    tv_quota_limit: Some(tier.tv.quota_days),
+                    tv_quota_days: Some(tier.tv.quota_limit),
+                },
+            )
+            .await?;
+        } else {
+            tracing::info!("Setting user {} to default tier", user.display_name);
+            self.set_default_request_settings(user).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn set_user_request_settings(
         &self,
         user_id: &str,
-        discord_user_id: &str,
-    ) -> Result<UpdateUserSettingsResponse> {
-        Ok(self
-            .client
+        request_settings: &UserRequestSettings,
+    ) -> Result<()> {
+        self.client
             .post(format!(
                 "{}/api/v1/user/{}/settings/main",
                 self.url, user_id
             ))
             .header("X-Api-Key", &self.api_key)
-            .json(&UpdateUserSettingsRequest {
-                discord_id: Some(discord_user_id.to_owned()),
-                tv_quota_limit: Some(0),
-                movie_quota_limit: Some(0),
-            })
+            .json(&request_settings)
             .send()
             .await?
-            .json()
-            .await?)
+            .error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn set_default_request_settings(&self, user: &User) -> Result<()> {
+        self.set_user_request_settings(
+            &user.id.to_string(),
+            &UserRequestSettings {
+                movie_quota_limit: None,
+                movie_quota_days: None,
+                tv_quota_limit: None,
+                tv_quota_days: None,
+            },
+        )
+        .await?;
+        Ok(())
     }
 
     pub async fn verified_user(&self, discord_user_id: &str, plex_user_id: &str) -> Result<()> {
@@ -74,10 +146,7 @@ impl OverseerrService {
             .find(|u| u.plex_id.to_string() == plex_user_id);
         if let Some(user) = overseerr_user {
             info!("Found Overseerr user: {:#?}", user);
-            let response = self
-                .set_discord_user_settings(&user.id.to_string(), discord_user_id)
-                .await?;
-            info!("Successfully updated Overseerr User: {:#?}", response);
+            self.set_request_tier(&user, plex_user_id).await?;
         } else {
             info!("No Overseerr user found!");
         }

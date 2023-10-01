@@ -81,9 +81,11 @@ pub async fn create_app_services(
         &format!("https://{}/auth/plex/callback", &config.http.hostname),
     );
     let overseerr_service = OverseerrService::new(
+        config,
         &reqwest_client,
         &config.overseerr.url,
         &config.overseerr.api_key,
+        &tautulli_service,
     );
     (
         serenity_client,

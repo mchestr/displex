@@ -18,10 +18,7 @@ use crate::{
     tautulli::models::QueryDays,
 };
 
-pub async fn refresh_all_active_subscribers(
-    config: &AppConfig,
-    services: &AppServices,
-) -> Result<()> {
+pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {
     let users = services
         .discord_users_service
         .list_users_for_refresh()

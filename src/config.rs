@@ -49,11 +49,13 @@ pub struct AppConfig {
     pub session: SessionConfig,
     pub tautulli: TautulliConfig,
     pub web: WebConfig,
+    pub requests_config: RequestsUpgradeConfig,
 }
 
 #[derive(Derivative, Deserialize, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct DatabaseConfig {
+    pub read_only: bool,
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
     pub url: String,
 }
@@ -61,6 +63,7 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
+            read_only: false,
             url: format!("sqlite://{PROJECT_NAME}.db?mode=rwc"),
         }
     }
@@ -122,10 +125,28 @@ pub struct PlexConfig {
 
 #[derive(Derivative, Deserialize, Clone, Serialize)]
 #[derivative(Debug)]
+pub struct RequestLimit {
+    pub quota_limit: i64,
+    pub quota_days: i64,
+}
+
+impl Default for RequestLimit {
+    fn default() -> Self {
+        Self {
+            quota_limit: 0,
+            quota_days: 7,
+        }
+    }
+}
+
+#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derivative(Debug)]
 pub struct OverseerrConfig {
     pub url: String,
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
     pub api_key: String,
+    pub tv_request_limits: RequestLimit,
+    pub movie_request_limits: RequestLimit,
 }
 
 impl Default for OverseerrConfig {
@@ -133,6 +154,8 @@ impl Default for OverseerrConfig {
         Self {
             url: "http://localhost:5055".into(),
             api_key: Default::default(),
+            tv_request_limits: Default::default(),
+            movie_request_limits: Default::default(),
         }
     }
 }
@@ -214,6 +237,89 @@ impl Default for StatUpdateConfig {
 
 #[derive(Debug, Deserialize, Clone, Serialize, Default)]
 pub struct UserUpdateConfig {}
+
+#[derive(Derivative, Deserialize, Clone, Serialize)]
+#[derivative(Debug)]
+pub struct RequestLimitTier {
+    pub name: String,
+    pub watch_hours: i64,
+    pub tv: RequestLimit,
+    pub movie: RequestLimit,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct RequestsUpgradeConfig {
+    pub tiers: Vec<RequestLimitTier>,
+}
+
+impl Default for RequestsUpgradeConfig {
+    fn default() -> Self {
+        Self {
+            tiers: vec![
+                RequestLimitTier {
+                    name: String::from("Bronze"),
+                    watch_hours: 10,
+                    tv: RequestLimit {
+                        quota_limit: 2,
+                        quota_days: 7,
+                    },
+                    movie: RequestLimit {
+                        quota_limit: 3,
+                        quota_days: 7,
+                    },
+                },
+                RequestLimitTier {
+                    name: String::from("Silver"),
+                    watch_hours: 25,
+                    tv: RequestLimit {
+                        quota_limit: 2,
+                        quota_days: 7,
+                    },
+                    movie: RequestLimit {
+                        quota_limit: 3,
+                        quota_days: 7,
+                    },
+                },
+                RequestLimitTier {
+                    name: String::from("Gold"),
+                    watch_hours: 50,
+                    tv: RequestLimit {
+                        quota_limit: 2,
+                        quota_days: 3,
+                    },
+                    movie: RequestLimit {
+                        quota_limit: 3,
+                        quota_days: 3,
+                    },
+                },
+                RequestLimitTier {
+                    name: String::from("Platinum"),
+                    watch_hours: 100,
+                    tv: RequestLimit {
+                        quota_limit: 4,
+                        quota_days: 3,
+                    },
+                    movie: RequestLimit {
+                        quota_limit: 6,
+                        quota_days: 3,
+                    },
+                },
+                RequestLimitTier {
+                    name: String::from("Diamond"),
+                    watch_hours: 240,
+                    tv: RequestLimit {
+                        quota_limit: 0,
+                        quota_days: 7,
+                    },
+                    movie: RequestLimit {
+                        quota_limit: 0,
+                        quota_days: 7,
+                    },
+                },
+            ],
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct StatCategoryConfig {

@@ -40,6 +40,7 @@ enum Commands {
     Bot,
     ChannelRefresh,
     Metadata,
+    RequestsUpgrade,
     Server,
     UserRefresh,
 }
@@ -58,7 +59,9 @@ async fn main() -> Result<()> {
     let db = Database::connect(&config.database.url)
         .await
         .expect("Database connection failed");
-    Migrator::up(&db, None).await?;
+    if !config.database.read_only {
+        Migrator::up(&db, None).await?;
+    }
 
     let selected_database = match db {
         DatabaseConnection::SqlxSqlitePoolConnection(_) => "SQLite",
@@ -88,10 +91,13 @@ async fn main() -> Result<()> {
             config.discord_bot.type_.run(rx, serenity_client).await?;
         }
         Commands::ChannelRefresh => {
-            displex::tasks::refresh_channel_statistics(&config, &app_services).await?;
+            displex::tasks::channel_statistics::run(&config, &app_services).await?;
         }
         Commands::Metadata => {
-            displex::tasks::set_metadata(&config).await?;
+            displex::tasks::metadata::run(&config).await?;
+        }
+        Commands::RequestsUpgrade => {
+            displex::tasks::requests_upgrade::run(&app_services).await?;
         }
         Commands::Server => {
             config
@@ -101,7 +107,7 @@ async fn main() -> Result<()> {
                 .await?;
         }
         Commands::UserRefresh => {
-            displex::tasks::refresh_all_active_subscribers(&config, &app_services).await?;
+            displex::tasks::user_refresh::run(&config, &app_services).await?;
         }
     }
     Ok(())

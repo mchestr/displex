@@ -16,7 +16,7 @@ struct Cli {
     config_dir: String,
 }
 
-pub async fn set_metadata(config: &AppConfig) -> Result<()> {
+pub async fn run(config: &AppConfig) -> Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.append("Accept", HeaderValue::from_static("application/json"));
 
