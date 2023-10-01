@@ -88,10 +88,10 @@ impl OverseerrService {
             self.set_user_request_settings(
                 &user.id.to_string(),
                 &UserRequestSettings {
-                    movie_quota_limit: Some(tier.movie.quota_days),
-                    movie_quota_days: Some(tier.movie.quota_limit),
-                    tv_quota_limit: Some(tier.tv.quota_days),
-                    tv_quota_days: Some(tier.tv.quota_limit),
+                    movie_quota_limit: Some(tier.movie.quota_limit),
+                    movie_quota_days: Some(tier.movie.quota_days),
+                    tv_quota_limit: Some(tier.tv.quota_limit),
+                    tv_quota_days: Some(tier.tv.quota_days),
                 },
             )
             .await?;
