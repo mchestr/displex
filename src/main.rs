@@ -6,10 +6,7 @@ use clap::{
 };
 
 use displex::{
-    bot::{
-        self,
-        DisplexBot,
-    },
+    bot::DisplexBot,
     config::{self,},
     graphql::get_schema,
     migrations::Migrator,
@@ -42,6 +39,7 @@ struct Cli {
 enum Commands {
     Bot,
     ChannelRefresh,
+    Metadata,
     Server,
     UserRefresh,
 }
@@ -90,8 +88,10 @@ async fn main() -> Result<()> {
             config.discord_bot.type_.run(rx, serenity_client).await?;
         }
         Commands::ChannelRefresh => {
-            bot::discord::channel_statistics::refresh_channel_statistics(&config, &app_services)
-                .await?;
+            displex::tasks::refresh_channel_statistics(&config, &app_services).await?;
+        }
+        Commands::Metadata => {
+            displex::tasks::set_metadata(&config).await?;
         }
         Commands::Server => {
             config
@@ -101,8 +101,7 @@ async fn main() -> Result<()> {
                 .await?;
         }
         Commands::UserRefresh => {
-            bot::discord::usermeta_refresh::refresh_all_active_subscribers(&config, &app_services)
-                .await?;
+            displex::tasks::refresh_all_active_subscribers(&config, &app_services).await?;
         }
     }
     Ok(())

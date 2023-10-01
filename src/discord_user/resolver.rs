@@ -461,17 +461,6 @@ impl DiscordUsersService {
     pub async fn list_users_for_refresh(
         &self,
     ) -> Result<Vec<(discord_user::Model, Option<plex_user::Model>)>> {
-        let users = discord_user::Entity::find()
-            .filter(discord_user::Column::IsActive.eq(true))
-            .all(&self.db)
-            .await?;
-        for user in users {
-            tracing::info!(
-                "{:?}",
-                user.find_related(plex_user::Entity).all(&self.db).await?
-            );
-        }
-
         Ok(discord_user::Entity::find()
             .filter(discord_user::Column::IsActive.eq(true))
             .find_also_related(plex_user::Entity)

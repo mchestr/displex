@@ -67,10 +67,6 @@ struct LibraryStatCategoryChannels {
 }
 
 pub async fn refresh_channel_statistics(config: &AppConfig, services: &AppServices) -> Result<()> {
-    tracing::info!(
-        "refreshing channel statistics every {}s",
-        config.discord_bot.stat_update.interval.as_secs()
-    );
     let client = &services.discord_service;
 
     let roles = client

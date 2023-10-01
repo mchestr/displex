@@ -34,6 +34,7 @@ pub async fn refresh_all_active_subscribers(
         }
         let plex_user = plex_user.unwrap();
         refresh_user_stats(config, services, &discord_user, &plex_user).await?;
+        tracing::info!("successfully refreshed {}", discord_user.username);
     }
     Ok(())
 }

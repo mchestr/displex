@@ -9,6 +9,7 @@ pub mod overseerr;
 pub mod plex;
 pub mod server;
 pub mod services;
+pub mod tasks;
 pub mod tautulli;
 
 pub mod discord_token;

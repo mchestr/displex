@@ -1,7 +1,6 @@
 use std::{
     fmt,
     path::PathBuf,
-    time::Duration,
 };
 
 use anyhow::{
@@ -196,9 +195,6 @@ impl Default for DiscordBotConfig {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct StatUpdateConfig {
-    pub enabled: bool,
-    #[serde(with = "humantime_serde")]
-    pub interval: Duration,
     pub bot_role_name: String,
     pub subscriber_role_name: String,
     pub stats_category: Option<StatCategoryConfig>,
@@ -208,8 +204,6 @@ pub struct StatUpdateConfig {
 impl Default for StatUpdateConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            interval: Duration::from_secs(60),
             bot_role_name: "Bot".into(),
             subscriber_role_name: "Subscriber".into(),
             stats_category: None,
@@ -218,21 +212,8 @@ impl Default for StatUpdateConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct UserUpdateConfig {
-    pub enabled: bool,
-    #[serde(with = "humantime_serde")]
-    pub interval: Duration,
-}
-
-impl Default for UserUpdateConfig {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            interval: Duration::from_secs(3600),
-        }
-    }
-}
+#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+pub struct UserUpdateConfig {}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct StatCategoryConfig {

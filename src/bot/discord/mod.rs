@@ -19,9 +19,7 @@ use tokio::sync::broadcast::Receiver;
 
 use crate::config::AppConfig;
 
-pub mod channel_statistics;
 mod commands;
-pub mod usermeta_refresh;
 
 use self::commands::*;
 
