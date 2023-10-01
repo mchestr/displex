@@ -7,7 +7,11 @@ use clap::{
 
 use displex::{
     bot::DisplexBot,
-    config::{self,},
+    config::{
+        self,
+        AppConfig,
+        DatabaseType,
+    },
     graphql::get_schema,
     migrations::Migrator,
     server::DisplexHttpServer,
@@ -45,6 +49,26 @@ enum Commands {
     UserRefresh,
 }
 
+fn generate_database_url(config: &AppConfig) -> String {
+    if !config.database.url.is_empty() {
+        String::from(&config.database.url)
+    } else {
+        match config.database.type_ {
+            DatabaseType::PostgreSQL => {
+                format!(
+                    "postgres://{}:{}@{}:{}/{}",
+                    config.database.username,
+                    config.database.password,
+                    config.database.host,
+                    config.database.port,
+                    config.database.database
+                )
+            }
+            _ => todo!("Unsupported Database Type, please specify the full database url."),
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     if dotenvy::dotenv().is_err() {
@@ -56,7 +80,8 @@ async fn main() -> Result<()> {
     let config = config::load(&args.config_dir)?;
     tracing::info!("{:#?}", config);
 
-    let db = Database::connect(&config.database.url)
+    let database_url = generate_database_url(&config);
+    let db = Database::connect(&database_url)
         .await
         .expect("Database connection failed");
     if !config.database.read_only {

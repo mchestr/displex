@@ -52,10 +52,26 @@ pub struct AppConfig {
     pub requests_config: RequestsUpgradeConfig,
 }
 
+#[derive(Deserialize, Debug, Clone, Serialize)]
+pub enum DatabaseType {
+    SQLite,
+    PostgreSQL,
+}
+
 #[derive(Derivative, Deserialize, Clone, Serialize)]
 #[derivative(Debug)]
 pub struct DatabaseConfig {
     pub read_only: bool,
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    pub username: String,
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    pub password: String,
+    #[derivative(Debug(format_with = "obfuscated_formatter"))]
+    pub database: String,
+    #[serde(rename = "type")]
+    pub type_: DatabaseType,
+    pub host: String,
+    pub port: i16,
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
     pub url: String,
 }
@@ -65,6 +81,12 @@ impl Default for DatabaseConfig {
         Self {
             read_only: false,
             url: format!("sqlite://{PROJECT_NAME}.db?mode=rwc"),
+            username: String::new(),
+            password: String::new(),
+            database: String::new(),
+            host: String::new(),
+            type_: DatabaseType::SQLite,
+            port: 0,
         }
     }
 }
