@@ -60,10 +60,14 @@ impl OverseerrService {
         Ok(result.results)
     }
 
-    pub async fn set_request_tier(&self, user: &User, plex_user_id: &str) -> Result<()> {
+    pub async fn set_request_tier(&self, user: &User) -> Result<()> {
         let watch_stats = self
             .tautulli_service
-            .get_user_watch_time_stats(plex_user_id, Some(true), Some(QueryDays::Total))
+            .get_user_watch_time_stats(
+                &user.plex_id.to_string(),
+                Some(true),
+                Some(QueryDays::Total),
+            )
             .await?;
 
         let latest_stat = watch_stats
@@ -146,7 +150,7 @@ impl OverseerrService {
             .find(|u| u.plex_id.to_string() == plex_user_id);
         if let Some(user) = overseerr_user {
             info!("Found Overseerr user: {:#?}", user);
-            self.set_request_tier(&user, plex_user_id).await?;
+            self.set_request_tier(&user).await?;
         } else {
             info!("No Overseerr user found!");
         }
