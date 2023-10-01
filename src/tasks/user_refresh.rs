@@ -81,18 +81,20 @@ async fn refresh_user_stats(
         .get(0)
         .ok_or_else(|| anyhow::anyhow!("failed to fetch stats"))?;
 
+    let metadata = ApplicationMetadataUpdate {
+        platform_name: String::from(&config.application_name),
+        metadata: ApplicationMetadata {
+            watched_hours: latest_stat.total_time / 3600,
+            is_subscribed: true,
+        },
+        ..Default::default()
+    };
+    tracing::info!("setting {} metadata: {:?}", discord_user.username, metadata);
     services
         .discord_service
         .link_application(
             config.discord.client_id,
-            ApplicationMetadataUpdate {
-                platform_name: String::from(&config.application_name),
-                metadata: ApplicationMetadata {
-                    watched_hours: latest_stat.total_time / 3600,
-                    is_subscribed: true,
-                },
-                ..Default::default()
-            },
+            metadata,
             &discord_token.access_token,
         )
         .await?;
