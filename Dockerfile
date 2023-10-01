@@ -35,4 +35,4 @@ ENV RUST_LOG="displex=info,sea_orm=info" \
     DATABASE_URL=sqlite://displex.db?mode=rwc
 COPY --from=app-builder --chown=displex:displex /app/target/x86_64-unknown-linux-musl/dist/displex /app
 
-ENTRYPOINT ["/app"]
+ENTRYPOINT ["/app", "server"]
