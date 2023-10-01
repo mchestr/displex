@@ -17,14 +17,11 @@ use serenity::{
 };
 use tokio::sync::broadcast::Receiver;
 
-use crate::{
-    config::AppConfig,
-    services::AppServices,
-};
+use crate::config::AppConfig;
 
-mod channel_statistics;
+pub mod channel_statistics;
 mod commands;
-mod usermeta_refresh;
+pub mod usermeta_refresh;
 
 use self::commands::*;
 
@@ -63,15 +60,8 @@ pub async fn init(config: AppConfig, client: Http) -> Result<serenity::Client> {
         .await?)
 }
 
-pub async fn run(
-    mut kill: Receiver<()>,
-    config: &AppConfig,
-    mut serenity_client: serenity::Client,
-    services: &AppServices,
-) {
+pub async fn run(mut kill: Receiver<()>, mut serenity_client: serenity::Client) {
     let manager = serenity_client.shard_manager.clone();
-    let stat_kill = kill.resubscribe();
-    let meta_kill = kill.resubscribe();
     tokio::spawn(async move {
         tokio::select! {
             _ = kill.recv() => tracing::info!("shutting down bot..."),
@@ -79,16 +69,5 @@ pub async fn run(
         let mut lock = manager.lock().await;
         lock.shutdown_all().await;
     });
-
-    if config.discord_bot.user_update.enabled {
-        usermeta_refresh::setup(meta_kill, config, services).await;
-    }
-
-    if config.discord_bot.stat_update.enabled {
-        channel_statistics::setup(stat_kill, config, services)
-            .await
-            .unwrap();
-    }
-
     serenity_client.start().await.unwrap();
 }

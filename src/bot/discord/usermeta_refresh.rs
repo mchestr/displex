@@ -2,10 +2,6 @@ use std::time::Duration;
 
 use anyhow::Result;
 use oauth2::TokenResponse;
-use tokio::{
-    select,
-    time,
-};
 
 use crate::{
     config::AppConfig,
@@ -22,60 +18,22 @@ use crate::{
     tautulli::models::QueryDays,
 };
 
-pub async fn setup(
-    kill: tokio::sync::broadcast::Receiver<()>,
+pub async fn refresh_all_active_subscribers(
     config: &AppConfig,
     services: &AppServices,
-) {
-    tracing::info!(
-        "refreshing user metadata every {}s",
-        config.discord_bot.user_update.interval.as_secs()
-    );
-    tokio::spawn(periodic_refresh(kill, config.clone(), services.clone()));
-}
-
-async fn periodic_refresh(
-    mut kill: tokio::sync::broadcast::Receiver<()>,
-    config: AppConfig,
-    services: AppServices,
-) {
-    let mut interval = time::interval(config.discord_bot.user_update.interval);
-    loop {
-        select! {
-            _ = interval.tick() => {
-                match refresh_all_active_subscribers(&config, &services).await {
-                    Ok(_) => (),
-                    Err(why) => tracing::error!("failed to refresh user metadata: {why}"),
-                };
-            },
-            _ = kill.recv() => {
-                tracing::info!("shutting down periodic job...");
-                return;
-            },
-        }
-    }
-}
-
-async fn refresh_all_active_subscribers(config: &AppConfig, services: &AppServices) -> Result<()> {
+) -> Result<()> {
     let users = services
         .discord_users_service
         .list_users_for_refresh()
         .await
         .unwrap();
     tracing::info!("Refreshing {} users", users.len());
-    tracing::debug!("Users: {:#?}", users);
     for (discord_user, plex_user) in users {
         if plex_user.is_none() {
-            tracing::error!("No plex user found! {:?}", discord_user);
-            continue;
+            anyhow::bail!("No plex user found! {:?}", discord_user);
         }
         let plex_user = plex_user.unwrap();
-        match refresh_user_stats(config, services, &discord_user, &plex_user).await {
-            Ok(_) => tracing::info!("Successfully refreshed {}", &discord_user.username),
-            Err(err) => {
-                tracing::error!("Failed to refresh user {}: {}", &discord_user.username, err)
-            }
-        }
+        refresh_user_stats(config, services, &discord_user, &plex_user).await?;
     }
     Ok(())
 }

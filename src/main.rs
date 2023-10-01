@@ -1,9 +1,15 @@
 use anyhow::Result;
 
-use clap::Parser;
+use clap::{
+    Parser,
+    Subcommand,
+};
 
 use displex::{
-    bot::DisplexBot,
+    bot::{
+        self,
+        DisplexBot,
+    },
     config::{self,},
     graphql::get_schema,
     migrations::Migrator,
@@ -27,6 +33,17 @@ use tokio::signal::unix::{
 struct Cli {
     #[clap(short, long, default_value = ".")]
     config_dir: String,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Bot,
+    ChannelRefresh,
+    Server,
+    UserRefresh,
 }
 
 #[tokio::main]
@@ -68,15 +85,25 @@ async fn main() -> Result<()> {
         tx.send(())
     });
 
-    tokio::try_join!(
-        config
-            .http
-            .type_
-            .run(rx.resubscribe(), config.clone(), &app_services, &schema),
-        config
-            .discord_bot
-            .type_
-            .run(rx, &config, serenity_client, &app_services)
-    )?;
+    match args.command {
+        Commands::Bot => {
+            config.discord_bot.type_.run(rx, serenity_client).await?;
+        }
+        Commands::ChannelRefresh => {
+            bot::discord::channel_statistics::refresh_channel_statistics(&config, &app_services)
+                .await?;
+        }
+        Commands::Server => {
+            config
+                .http
+                .type_
+                .run(rx, config.clone(), &app_services, &schema)
+                .await?;
+        }
+        Commands::UserRefresh => {
+            bot::discord::usermeta_refresh::refresh_all_active_subscribers(&config, &app_services)
+                .await?;
+        }
+    }
     Ok(())
 }

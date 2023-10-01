@@ -13,10 +13,6 @@ use serenity::{
         Permissions,
     },
 };
-use tokio::{
-    select,
-    time,
-};
 
 use crate::{
     config::{
@@ -70,11 +66,7 @@ struct LibraryStatCategoryChannels {
     tv_episodes: Option<ChannelData>,
 }
 
-pub async fn setup(
-    kill: tokio::sync::broadcast::Receiver<()>,
-    config: &AppConfig,
-    services: &AppServices,
-) -> Result<()> {
+pub async fn refresh_channel_statistics(config: &AppConfig, services: &AppServices) -> Result<()> {
     tracing::info!(
         "refreshing channel statistics every {}s",
         config.discord_bot.stat_update.interval.as_secs()
@@ -129,55 +121,28 @@ pub async fn setup(
     let config = config.clone();
     let tautulli_svc = services.tautulli_service.clone();
     let discord_svc = services.discord_service.clone();
-    tokio::spawn(periodic_refresh(
-        kill,
-        config,
-        discord_svc,
-        tautulli_svc,
-        permissions,
-    ));
+    refresh(config, discord_svc, tautulli_svc, permissions).await?;
     Ok(())
 }
 
-async fn periodic_refresh(
-    mut kill: tokio::sync::broadcast::Receiver<()>,
+async fn refresh(
     config: AppConfig,
     discord_svc: DiscordService,
     tautulli_svc: TautulliService,
     permissions: Vec<Map<String, Value>>,
-) {
-    let mut interval = time::interval(config.discord_bot.stat_update.interval);
+) -> Result<()> {
     let server_id = config.discord.server_id;
     let config = &config.discord_bot.stat_update;
-    loop {
-        select! {
-            _ = interval.tick() => {
-                match discord_svc.get_channels(server_id).await {
-                    Ok(channels) => {
-                        match generate_stats_categories(&discord_svc, config, &channels, &permissions, server_id).await {
-                            Ok(categories) => match update_stats(&discord_svc, &tautulli_svc, &categories).await {
-                                Ok(_) => (),
-                                Err(why) => tracing::error!("failed to update stats: {why}"),
-                            },
-                            Err(why) => tracing::error!("failed to generate stat channels: {why}"),
-                        };
-                        match generate_library_categories(&discord_svc, config, &channels, &permissions, server_id).await {
-                            Ok(categories) => match update_library_stats(&discord_svc, &tautulli_svc, &categories).await {
-                                Ok(_) => (),
-                                Err(why) => tracing::error!("failed to update library stats: {why}"),
-                            },
-                            Err(why) => tracing::error!("failed to generate library channels: {why}"),
-                        };
-                    },
-                    Err(why) => tracing::error!("failed to get Discord channels: {why}"),
-                }
-            }
-            _ = kill.recv() => {
-                tracing::info!("shutting down periodic job...");
-                return;
-            },
-        }
-    }
+    let channels = discord_svc.get_channels(server_id).await?;
+    let categories =
+        generate_stats_categories(&discord_svc, config, &channels, &permissions, server_id).await?;
+    update_stats(&discord_svc, &tautulli_svc, &categories).await?;
+
+    let categories =
+        generate_library_categories(&discord_svc, config, &channels, &permissions, server_id)
+            .await?;
+    update_library_stats(&discord_svc, &tautulli_svc, &categories).await?;
+    Ok(())
 }
 
 async fn get_or_create_stat_category(
