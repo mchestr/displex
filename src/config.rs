@@ -331,11 +331,11 @@ impl Default for RequestsUpgradeConfig {
                     watch_hours: 240,
                     tv: RequestLimit {
                         quota_limit: 0,
-                        quota_days: 7,
+                        quota_days: 0,
                     },
                     movie: RequestLimit {
                         quota_limit: 0,
-                        quota_days: 7,
+                        quota_days: 0,
                     },
                 },
             ],
