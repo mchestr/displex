@@ -272,11 +272,11 @@ impl Default for RequestsUpgradeConfig {
                     name: String::from("Silver"),
                     watch_hours: 25,
                     tv: RequestLimit {
-                        quota_limit: 2,
+                        quota_limit: 3,
                         quota_days: 7,
                     },
                     movie: RequestLimit {
-                        quota_limit: 3,
+                        quota_limit: 7,
                         quota_days: 7,
                     },
                 },
@@ -284,11 +284,11 @@ impl Default for RequestsUpgradeConfig {
                     name: String::from("Gold"),
                     watch_hours: 50,
                     tv: RequestLimit {
-                        quota_limit: 2,
+                        quota_limit: 3,
                         quota_days: 3,
                     },
                     movie: RequestLimit {
-                        quota_limit: 3,
+                        quota_limit: 10,
                         quota_days: 3,
                     },
                 },
@@ -300,7 +300,7 @@ impl Default for RequestsUpgradeConfig {
                         quota_days: 3,
                     },
                     movie: RequestLimit {
-                        quota_limit: 6,
+                        quota_limit: 15,
                         quota_days: 3,
                     },
                 },
