@@ -2,7 +2,7 @@
 
 # DisPlex
 
-A Discord, Plex, & Tautulli Bot that displays live data in Discord + allows users to verify their identity with your Plex server.
+A Discord, Tautulli, and Overseerr program backed by Rust.
 
 [![Release](https://img.shields.io/github/v/release/mchestr/displex?color=blue&include_prereleases&label=version&style=flat-square)](https://github.com/mchestr/displex/releases)
 [![Licence](https://img.shields.io/github/license/mchestr/displex?style=flat-square&color=blue)](https://opensource.org/licenses/MIT)
@@ -13,25 +13,57 @@ A Discord, Plex, & Tautulli Bot that displays live data in Discord + allows user
 
 # Features
 
-DisPlex uses the Tautulli API to pull information from Tautulli and display them in a Discord channel, including:
+DisPlex contains a few components, all packaged within a single Dockerfile. 
 
-### Overview:
+```
+Usage: displex [OPTIONS] <COMMAND>
 
-- Status of Plex server
-- Number of current streams
-- Number of transcoding streams
-- Total bandwidth
-- Library item counts
-- [Discord Linked Roles](https://support.discord.com/hc/en-us/articles/8063233404823-Connections-Linked-Roles-Community-Members)
-- Automatically set user request limits on Overseerr (currently set to unlimited, TODO: make configurable)
+Commands:
+  bot               
+  channel-refresh   
+  clean-tokens      
+  metadata          
+  requests-upgrade  
+  server            
+  user-refresh      
+  help              Print this message or the help of the given subcommand(s)
+```
 
-#### Channel Stats
+## Subcommand: bot
+
+Runs a Discord bot which sits in your Discord server and responds to `~ping` commands.
+
+## Subcommand: channel-refresh  
+
+Script which will update your Discord server channels with the realtime stats of current streams.
 
 <img src="https://raw.githubusercontent.com/mchestr/displex/assets/images/stats.png" width="25%" height="25%" alt="logo">
 
-#### User Metadata
+## Subcommand: clean-tokens
+
+Script which will clean up any expired Discord tokens.
+
+## Subcommand: metadata
+
+Script to set the Application metadata on Discord. Only needs to be called once.
 
 <img src="https://raw.githubusercontent.com/mchestr/displex/assets/images/meta.png" width="25%" height="25%" alt="logo">
+
+## Subcommand: requests-upgrade
+
+Script which will set user request limits in Overseerr based on user watch hours. Tiers can be configured via the Config file.
+
+## Subcommand: server
+
+Runs a webserver which will guide users through the Discord Linked Role OAuth2 flow.
+
+1. Redirect user to sign in on Discord and authorize the Application.
+2. Redirect user to Plex and have user sign in.
+3. Validate Plex user has access to your Plex instance, and grant user Linked Role in Discord.
+
+## Subcommand: user-refresh
+
+Script to set users metadata on Discord and how many hours they have streamed. Uses Tautulli for the data.
 
 # Installation and setup
 
