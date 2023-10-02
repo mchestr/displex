@@ -79,7 +79,7 @@ async fn main() -> Result<()> {
 
     let args = Cli::parse();
     let config = config::load(&args.config_dir)?;
-    tracing::info!("{:#?}", config);
+    tracing::debug!("{:#?}", config);
 
     let database_url = generate_database_url(&config);
     let db = Database::connect(&database_url)
