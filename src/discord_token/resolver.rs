@@ -8,6 +8,7 @@ use async_graphql::{
     Union,
 };
 
+use chrono::Utc;
 use sea_orm::{
     prelude::*,
     ActiveValue,
@@ -42,7 +43,7 @@ impl DiscordTokensQuery {
     ) -> Result<Vec<discord_token::Model>> {
         gql_ctx
             .data_unchecked::<DiscordTokensService>()
-            .list(input.discord_user_id)
+            .list(input.discord_user_id, input.before_expires_at)
             .await
     }
 }
@@ -103,6 +104,7 @@ pub struct DeleteDiscordTokenInput {
 #[derive(Debug, InputObject)]
 pub struct ListDiscordTokenInput {
     pub discord_user_id: Option<String>,
+    pub before_expires_at: Option<chrono::DateTime<Utc>>,
 }
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
@@ -262,10 +264,17 @@ impl DiscordTokensService {
         )
     }
 
-    pub async fn list(&self, discord_user_id: Option<String>) -> Result<Vec<discord_token::Model>> {
+    pub async fn list(
+        &self,
+        discord_user_id: Option<String>,
+        before_expires: Option<chrono::DateTime<Utc>>,
+    ) -> Result<Vec<discord_token::Model>> {
         Ok(discord_token::Entity::find()
             .apply_if(discord_user_id, |query, value| {
                 query.filter(discord_token::Column::DiscordUserId.eq(value))
+            })
+            .apply_if(before_expires, |query, value| {
+                query.filter(discord_token::Column::ExpiresAt.lt(value))
             })
             .all(&self.db)
             .await?)

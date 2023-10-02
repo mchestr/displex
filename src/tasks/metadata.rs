@@ -6,15 +6,6 @@ use crate::{
 };
 use anyhow::Result;
 use axum::http::HeaderValue;
-use clap::Parser;
-
-#[derive(Parser)]
-#[command(name = "displex")]
-#[command(about = "A Discord/Plex/Tautulli Application", long_about = None)]
-struct Cli {
-    #[clap(short, long, default_value = ".")]
-    config_dir: String,
-}
 
 pub async fn run(config: &AppConfig) -> Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();

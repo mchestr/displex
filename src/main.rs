@@ -43,6 +43,7 @@ struct Cli {
 enum Commands {
     Bot,
     ChannelRefresh,
+    CleanTokens,
     Metadata,
     RequestsUpgrade,
     Server,
@@ -117,6 +118,9 @@ async fn main() -> Result<()> {
         }
         Commands::ChannelRefresh => {
             displex::tasks::channel_statistics::run(&config, &app_services).await?;
+        }
+        Commands::CleanTokens => {
+            displex::tasks::clean_tokens::run(&app_services).await?;
         }
         Commands::Metadata => {
             displex::tasks::metadata::run(&config).await?;

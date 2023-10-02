@@ -445,7 +445,7 @@ impl DiscordUsersService {
 
         let discord_tokens = self
             .discord_tokens_service
-            .list(Some(discord_user.id.clone()))
+            .list(Some(discord_user.id.clone()), None)
             .await?;
         let plex_users = self
             .plex_users_service

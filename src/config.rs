@@ -1,6 +1,7 @@
 use std::{
     fmt,
     path::PathBuf,
+    time::Duration,
 };
 
 use anyhow::{
@@ -44,6 +45,7 @@ pub struct AppConfig {
     pub discord: DiscordConfig,
     pub discord_bot: DiscordBotConfig,
     pub http: HttpConfig,
+    pub http_client: HttpClientConfig,
     pub plex: PlexConfig,
     pub overseerr: OverseerrConfig,
     pub session: SessionConfig,
@@ -112,6 +114,26 @@ pub struct HttpConfig {
     pub hostname: String,
     pub host: String,
     pub port: u16,
+}
+
+#[derive(Deserialize, Debug, Clone, Serialize)]
+pub struct HttpClientConfig {
+    #[serde(with = "humantime_serde")]
+    pub timeout: Duration,
+    #[serde(with = "humantime_serde")]
+    pub connect_timeout: Duration,
+    #[serde(with = "humantime_serde")]
+    pub pool_idle_timeout: Duration,
+}
+
+impl Default for HttpClientConfig {
+    fn default() -> Self {
+        Self {
+            timeout: Duration::from_secs(10),
+            connect_timeout: Duration::from_secs(5),
+            pool_idle_timeout: Duration::from_secs(60),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Clone, Serialize)]

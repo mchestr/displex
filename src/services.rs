@@ -1,4 +1,4 @@
-use std::time::Duration;
+
 
 use axum::http::HeaderValue;
 use sea_orm::DatabaseConnection;
@@ -39,9 +39,9 @@ pub async fn create_app_services(
     default_headers.append("Accept", HeaderValue::from_static("application/json"));
 
     let reqwest_client = reqwest::ClientBuilder::new()
-        .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(30))
-        .pool_idle_timeout(Duration::from_secs(90))
+        .connect_timeout(config.http_client.connect_timeout)
+        .timeout(config.http_client.timeout)
+        .pool_idle_timeout(config.http_client.pool_idle_timeout)
         .default_headers(default_headers)
         .danger_accept_invalid_certs(config.debug.accept_invalid_certs)
         .build()
