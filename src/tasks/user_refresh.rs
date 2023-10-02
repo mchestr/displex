@@ -103,7 +103,7 @@ async fn maybe_refresh_token(
     discord_user: &discord_user::Model,
     discord_token: discord_token::Model,
 ) -> Result<discord_token::Model> {
-    if discord_token.expires_at < chrono::Utc::now() + chrono::Duration::days(-5) {
+    if discord_token.expires_at < chrono::Utc::now() + chrono::Duration::days(-3) {
         tracing::info!("refreshing token for user {}", &discord_user.username);
         let new_token = services
             .discord_service
@@ -115,10 +115,10 @@ async fn maybe_refresh_token(
                     .expires_in()
                     .unwrap_or_else(|| {
                         tracing::error!(
-                        "failed to figure out when token will expire, defaulting to 3 days for {}",
+                        "failed to figure out when token will expire, defaulting to 7 days for {}",
                         discord_user.username
                     );
-                        Duration::from_secs(3600 * 24 * 3)
+                        Duration::from_secs(3600 * 24 * 7)
                     })
                     .as_secs() as i64,
             );

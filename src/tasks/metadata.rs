@@ -38,7 +38,6 @@ async fn register_metadata(config: &AppConfig, client: &reqwest::Client) -> Resu
             type_: 2,
         },
     ];
-    // let metadata_spec = vec![];
 
     let current_metadata: Vec<ApplicationMetadataDefinition> = client
         .get(format!(
@@ -69,7 +68,7 @@ async fn register_metadata(config: &AppConfig, client: &reqwest::Client) -> Resu
                 .await?
         );
     } else {
-        tracing::info!("Discord application metadata is up to date")
+        tracing::info!("Discord application metadata is up to date");
     }
 
     Ok(())
