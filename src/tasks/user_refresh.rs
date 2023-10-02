@@ -5,17 +5,19 @@ use oauth2::TokenResponse;
 
 use crate::{
     config::AppConfig,
-    discord::models::{
-        ApplicationMetadata,
-        ApplicationMetadataUpdate,
-    },
     entities::{
         discord_token,
         discord_user,
         plex_user,
     },
-    services::AppServices,
-    tautulli::models::QueryDays,
+    services::{
+        discord::models::{
+            ApplicationMetadata,
+            ApplicationMetadataUpdate,
+        },
+        tautulli::models::QueryDays,
+        AppServices,
+    },
 };
 
 pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {

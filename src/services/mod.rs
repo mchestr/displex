@@ -5,6 +5,9 @@ use serenity::http::HttpBuilder;
 use crate::{
     bot,
     config::AppConfig,
+};
+
+use self::{
     discord::DiscordService,
     discord_token::resolver::DiscordTokensService,
     discord_user::resolver::DiscordUsersService,
@@ -14,6 +17,15 @@ use crate::{
     plex_user::resolver::PlexUsersService,
     tautulli::TautulliService,
 };
+
+pub mod discord;
+pub mod discord_token;
+pub mod discord_user;
+pub mod overseerr;
+pub mod plex;
+pub mod plex_token;
+pub mod plex_user;
+pub mod tautulli;
 
 /// All the services that are used by the app
 #[derive(Clone)]

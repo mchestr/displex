@@ -16,23 +16,25 @@ use serde::{
 
 use crate::{
     config::AppConfig,
-    discord_token::resolver::{
-        DiscordTokensMutation,
-        DiscordTokensQuery,
+    services::{
+        discord_token::resolver::{
+            DiscordTokensMutation,
+            DiscordTokensQuery,
+        },
+        discord_user::resolver::{
+            DiscordUsersMutation,
+            DiscordUsersQuery,
+        },
+        plex_token::resolver::{
+            PlexTokensMutation,
+            PlexTokensQuery,
+        },
+        plex_user::resolver::{
+            PlexUsersMutation,
+            PlexUsersQuery,
+        },
+        AppServices,
     },
-    discord_user::resolver::{
-        DiscordUsersMutation,
-        DiscordUsersQuery,
-    },
-    plex_token::resolver::{
-        PlexTokensMutation,
-        PlexTokensQuery,
-    },
-    plex_user::resolver::{
-        PlexUsersMutation,
-        PlexUsersQuery,
-    },
-    services::AppServices,
     AUTHOR,
     REPOSITORY_LINK,
     VERSION,

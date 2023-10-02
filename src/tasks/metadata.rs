@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::{
     config::AppConfig,
-    discord::models::ApplicationMetadataDefinition,
+    services::discord::models::ApplicationMetadataDefinition,
 };
 use anyhow::Result;
 use axum::http::HeaderValue;

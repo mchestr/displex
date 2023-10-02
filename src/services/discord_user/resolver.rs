@@ -21,15 +21,17 @@ use serde::{
 };
 
 use crate::{
-    discord_token::resolver::DiscordTokensService,
     entities::{
         discord_token,
         discord_user,
         plex_token,
         plex_user,
     },
-    plex_token::resolver::PlexTokensService,
-    plex_user::resolver::PlexUsersService,
+    services::{
+        discord_token::resolver::DiscordTokensService,
+        plex_token::resolver::PlexTokensService,
+        plex_user::resolver::PlexUsersService,
+    },
 };
 
 pub static COOKIE_NAME: &str = "auth";

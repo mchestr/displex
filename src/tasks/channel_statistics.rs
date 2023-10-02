@@ -19,14 +19,16 @@ use crate::{
         AppConfig,
         StatUpdateConfig,
     },
-    discord::DiscordService,
-    services::AppServices,
-    tautulli::{
-        models::{
-            GetActivity,
-            GetLibrary,
+    services::{
+        discord::DiscordService,
+        tautulli::{
+            models::{
+                GetActivity,
+                GetLibrary,
+            },
+            TautulliService,
         },
-        TautulliService,
+        AppServices,
     },
 };
 

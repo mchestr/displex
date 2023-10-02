@@ -22,8 +22,8 @@ use tower_cookies::Cookies;
 
 use crate::{
     config::AppConfig,
-    discord_token::resolver::COOKIE_NAME,
     graphql::GraphqlSchema,
+    services::discord_token::resolver::COOKIE_NAME,
 };
 
 use super::DisplexState;
@@ -60,6 +60,7 @@ async fn graphql_playground() -> impl IntoResponse {
 pub fn configure(config: &AppConfig) -> Router<DisplexState> {
     let router = Router::new().merge(discord::routes()).merge(plex::routes());
     if config.api.enabled {
+        tracing::info!("GraphQL API is enabled");
         router.route("/graphql", get(graphql_playground).post(graphql_handler))
     } else {
         router

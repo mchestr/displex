@@ -8,7 +8,7 @@ use crate::{
         AppConfig,
         RequestLimitTier,
     },
-    tautulli::{
+    services::tautulli::{
         models::QueryDays,
         TautulliService,
     },
