@@ -13,6 +13,7 @@ use sea_orm::{
     ActiveValue,
     QueryTrait,
 };
+use sea_query::OnConflict;
 
 use crate::entities::plex_token;
 
@@ -95,7 +96,6 @@ pub struct ListPlexTokenInput {
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
 pub enum CreatePlexTokenErrorVariant {
-    TokenAlreadyExists,
     InternalError,
 }
 
@@ -188,24 +188,20 @@ impl PlexTokensService {
             ..Default::default()
         };
 
-        let result = match plex_token::Entity::insert(data).exec(conn).await {
+        let result = match plex_token::Entity::insert(data)
+            .on_conflict(
+                OnConflict::column(plex_token::Column::AccessToken)
+                    .do_nothing()
+                    .to_owned(),
+            )
+            .exec(conn)
+            .await
+        {
             Ok(result) => result,
-            Err(DbErr::UnpackInsertId) => {
+            Err(DbErr::UnpackInsertId) | Err(DbErr::RecordNotInserted) => {
                 return Ok(CreatePlexTokenResult::Ok(PlexTokenId {
                     access_token: access_token.into(),
                 }))
-            }
-            Err(DbErr::Query(err)) => {
-                tracing::warn!("create DbErr::Query: {:?}", err);
-                return Ok(CreatePlexTokenResult::Error(CreatePlexTokenError {
-                    error: CreatePlexTokenErrorVariant::TokenAlreadyExists,
-                }));
-            }
-            Err(DbErr::Exec(err)) => {
-                tracing::warn!("create DbErr::Exec: {:?}", err);
-                return Ok(CreatePlexTokenResult::Error(CreatePlexTokenError {
-                    error: CreatePlexTokenErrorVariant::TokenAlreadyExists,
-                }));
             }
             Err(err) => {
                 tracing::warn!("create Unknown: {:?}", err);

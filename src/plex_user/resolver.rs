@@ -14,6 +14,7 @@ use sea_orm::{
     ActiveValue,
     QueryTrait,
 };
+use sea_query::OnConflict;
 
 use crate::entities::plex_user;
 
@@ -120,7 +121,6 @@ struct ListPlexUserInput {
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
 pub enum CreatePlexUserErrorVariant {
-    UserAlreadyExists,
     InternalError,
 }
 
@@ -236,22 +236,18 @@ impl PlexUsersService {
             ..Default::default()
         };
 
-        let result = match plex_user::Entity::insert(data).exec(conn).await {
+        let result = match plex_user::Entity::insert(data)
+            .on_conflict(
+                OnConflict::column(plex_user::Column::Id)
+                    .do_nothing()
+                    .to_owned(),
+            )
+            .exec(conn)
+            .await
+        {
             Ok(result) => result,
-            Err(DbErr::UnpackInsertId) => {
+            Err(DbErr::UnpackInsertId) | Err(DbErr::RecordNotInserted) => {
                 return Ok(CreatePlexUserResult::Ok(PlexUserId { id: id.to_owned() }))
-            }
-            Err(DbErr::Query(err)) => {
-                tracing::warn!("create DbErr::Query: {:?}", err);
-                return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
-                    error: CreatePlexUserErrorVariant::UserAlreadyExists,
-                }));
-            }
-            Err(DbErr::Exec(err)) => {
-                tracing::warn!("create DbErr::Exec: {:?}", err);
-                return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
-                    error: CreatePlexUserErrorVariant::UserAlreadyExists,
-                }));
             }
             Err(err) => {
                 tracing::warn!("create Unknown: {:?}", err);

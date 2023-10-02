@@ -14,6 +14,7 @@ use sea_orm::{
     ActiveValue,
     FromJsonQueryResult,
 };
+use sea_query::OnConflict;
 use serde::{
     Deserialize,
     Serialize,
@@ -144,7 +145,6 @@ pub enum UserSummaryBy {
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
 pub enum CreateDiscordUserErrorVariant {
-    UserAlreadyExists,
     InternalError,
 }
 
@@ -284,22 +284,18 @@ impl DiscordUsersService {
             ..Default::default()
         };
 
-        let user = match discord_user::Entity::insert(user).exec(conn).await {
+        let user = match discord_user::Entity::insert(user)
+            .on_conflict(
+                OnConflict::column(discord_user::Column::Id)
+                    .do_nothing()
+                    .to_owned(),
+            )
+            .exec(conn)
+            .await
+        {
             Ok(user) => user,
-            Err(DbErr::UnpackInsertId) => {
+            Err(DbErr::UnpackInsertId) | Err(DbErr::RecordNotInserted) => {
                 return Ok(CreateDiscordUserResult::Ok(DiscordUserId { id: id.into() }))
-            }
-            Err(DbErr::Query(err)) => {
-                tracing::warn!("create DbErr::Query: {:?}", err);
-                return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {
-                    error: CreateDiscordUserErrorVariant::UserAlreadyExists,
-                }));
-            }
-            Err(DbErr::Exec(err)) => {
-                tracing::warn!("create DbErr::Exec: {:?}", err);
-                return Ok(CreateDiscordUserResult::Error(CreateDiscordUserError {
-                    error: CreateDiscordUserErrorVariant::UserAlreadyExists,
-                }));
             }
             Err(err) => {
                 tracing::warn!("create Unknown: {:?}", err);

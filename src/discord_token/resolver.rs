@@ -14,6 +14,7 @@ use sea_orm::{
     QueryOrder,
     QueryTrait,
 };
+use sea_query::OnConflict;
 
 use crate::entities::discord_token;
 
@@ -106,7 +107,6 @@ pub struct ListDiscordTokenInput {
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
 pub enum CreateDiscordTokenErrorVariant {
-    TokenAlreadyExists,
     InternalError,
 }
 
@@ -214,24 +214,20 @@ impl DiscordTokensService {
             ..Default::default()
         };
 
-        match discord_token::Entity::insert(data).exec(conn).await {
+        match discord_token::Entity::insert(data)
+            .on_conflict(
+                OnConflict::column(discord_token::Column::AccessToken)
+                    .do_nothing()
+                    .to_owned(),
+            )
+            .exec(conn)
+            .await
+        {
             Ok(result) => result,
-            Err(DbErr::UnpackInsertId) => {
+            Err(DbErr::UnpackInsertId) | Err(DbErr::RecordNotInserted) => {
                 return Ok(CreateDiscordTokenResult::Ok(DiscordTokenId {
                     access_token: access_token.into(),
                 }))
-            }
-            Err(DbErr::Query(err)) => {
-                tracing::warn!("create DbErr::Query: {:?}", err);
-                return Ok(CreateDiscordTokenResult::Ok(DiscordTokenId {
-                    access_token: access_token.to_owned(),
-                }));
-            }
-            Err(DbErr::Exec(err)) => {
-                tracing::warn!("create DbErr::Exec: {:?}", err);
-                return Ok(CreateDiscordTokenResult::Error(CreateDiscordTokenError {
-                    error: CreateDiscordTokenErrorVariant::TokenAlreadyExists,
-                }));
             }
             Err(err) => {
                 tracing::warn!("create Unknown: {:?}", err);

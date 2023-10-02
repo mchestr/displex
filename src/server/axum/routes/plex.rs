@@ -103,7 +103,6 @@ async fn callback(
                     .await?;
                 match result {
                     CreateDiscordUserResult::Error(err) => match err.error {
-                        CreateDiscordUserErrorVariant::UserAlreadyExists => Ok(()),
                         CreateDiscordUserErrorVariant::InternalError => {
                             Err(DisplexError(anyhow!("internal error")))
                         }
@@ -135,7 +134,6 @@ async fn callback(
                     .await?;
                 match result {
                     CreateDiscordTokenResult::Error(err) => match err.error {
-                        CreateDiscordTokenErrorVariant::TokenAlreadyExists => Ok(()),
                         CreateDiscordTokenErrorVariant::InternalError => {
                             Err(DisplexError(anyhow!("internal error")))
                         }
@@ -154,7 +152,6 @@ async fn callback(
                     .await?;
                 match result {
                     CreatePlexUserResult::Error(err) => match err.error {
-                        CreatePlexUserErrorVariant::UserAlreadyExists => Ok(()),
                         CreatePlexUserErrorVariant::InternalError => {
                             Err(DisplexError(anyhow!("internal error")))
                         }
@@ -167,7 +164,6 @@ async fn callback(
                     .await?;
                 match result {
                     CreatePlexTokenResult::Error(err) => match err.error {
-                        CreatePlexTokenErrorVariant::TokenAlreadyExists => Ok(()),
                         CreatePlexTokenErrorVariant::InternalError => {
                             Err(DisplexError(anyhow!("internal error")))
                         }
