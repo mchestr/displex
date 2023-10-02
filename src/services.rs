@@ -1,5 +1,3 @@
-
-
 use axum::http::HeaderValue;
 use sea_orm::DatabaseConnection;
 use serenity::http::HttpBuilder;
