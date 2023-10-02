@@ -167,8 +167,6 @@ pub struct OverseerrConfig {
     pub url: String,
     #[derivative(Debug(format_with = "obfuscated_formatter"))]
     pub api_key: String,
-    pub tv_request_limits: RequestLimit,
-    pub movie_request_limits: RequestLimit,
 }
 
 impl Default for OverseerrConfig {
@@ -176,8 +174,6 @@ impl Default for OverseerrConfig {
         Self {
             url: "http://localhost:5055".into(),
             api_key: Default::default(),
-            tv_request_limits: Default::default(),
-            movie_request_limits: Default::default(),
         }
     }
 }
