@@ -266,13 +266,25 @@ impl DiscordUsersService {
     }
 
     pub async fn create(&self, id: &str, username: &str) -> Result<CreateDiscordUserResult> {
+        self.create_with_conn(id, username, &self.db).await
+    }
+
+    pub async fn create_with_conn<'a, C>(
+        &self,
+        id: &str,
+        username: &str,
+        conn: &'a C,
+    ) -> Result<CreateDiscordUserResult>
+    where
+        C: ConnectionTrait,
+    {
         let user = discord_user::ActiveModel {
             id: ActiveValue::Set(id.to_owned()),
             username: ActiveValue::Set(username.to_owned()),
             ..Default::default()
         };
 
-        let user = match discord_user::Entity::insert(user).exec(&self.db).await {
+        let user = match discord_user::Entity::insert(user).exec(conn).await {
             Ok(user) => user,
             Err(DbErr::UnpackInsertId) => {
                 return Ok(CreateDiscordUserResult::Ok(DiscordUserId { id: id.into() }))

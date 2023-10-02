@@ -103,7 +103,7 @@ async fn maybe_refresh_token(
     discord_user: &discord_user::Model,
     discord_token: discord_token::Model,
 ) -> Result<discord_token::Model> {
-    if discord_token.expires_at < chrono::Utc::now() + chrono::Duration::days(-1) {
+    if discord_token.expires_at < chrono::Utc::now() + chrono::Duration::days(-5) {
         tracing::info!("refreshing token for user {}", &discord_user.username);
         let new_token = services
             .discord_service

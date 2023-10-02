@@ -169,13 +169,26 @@ impl PlexTokensService {
         access_token: &str,
         plex_user_id: &str,
     ) -> Result<CreatePlexTokenResult> {
+        self.create_with_conn(access_token, plex_user_id, &self.db)
+            .await
+    }
+
+    pub async fn create_with_conn<'a, C>(
+        &self,
+        access_token: &str,
+        plex_user_id: &str,
+        conn: &'a C,
+    ) -> Result<CreatePlexTokenResult>
+    where
+        C: ConnectionTrait,
+    {
         let data = plex_token::ActiveModel {
             access_token: ActiveValue::Set(access_token.to_owned()),
             plex_user_id: ActiveValue::Set(plex_user_id.to_owned()),
             ..Default::default()
         };
 
-        let result = match plex_token::Entity::insert(data).exec(&self.db).await {
+        let result = match plex_token::Entity::insert(data).exec(conn).await {
             Ok(result) => result,
             Err(DbErr::UnpackInsertId) => {
                 return Ok(CreatePlexTokenResult::Ok(PlexTokenId {

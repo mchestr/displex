@@ -28,6 +28,7 @@ pub struct AppServices {
     pub discord_service: DiscordService,
     pub plex_service: PlexService,
     pub overseerr_service: OverseerrService,
+    pub db: DatabaseConnection,
 }
 
 pub async fn create_app_services(
@@ -98,6 +99,7 @@ pub async fn create_app_services(
             discord_service,
             plex_service,
             overseerr_service,
+            db,
         },
     )
 }

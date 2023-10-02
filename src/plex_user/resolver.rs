@@ -120,7 +120,7 @@ struct ListPlexUserInput {
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
 pub enum CreatePlexUserErrorVariant {
-    TokenAlreadyExists,
+    UserAlreadyExists,
     InternalError,
 }
 
@@ -213,6 +213,21 @@ impl PlexUsersService {
         is_subscriber: bool,
         discord_user_id: &str,
     ) -> Result<CreatePlexUserResult> {
+        self.create_with_conn(id, username, is_subscriber, discord_user_id, &self.db)
+            .await
+    }
+
+    pub async fn create_with_conn<'a, C>(
+        &self,
+        id: &str,
+        username: &str,
+        is_subscriber: bool,
+        discord_user_id: &str,
+        conn: &'a C,
+    ) -> Result<CreatePlexUserResult>
+    where
+        C: ConnectionTrait,
+    {
         let data = plex_user::ActiveModel {
             id: ActiveValue::Set(id.to_owned()),
             username: ActiveValue::Set(username.to_owned()),
@@ -221,7 +236,7 @@ impl PlexUsersService {
             ..Default::default()
         };
 
-        let result = match plex_user::Entity::insert(data).exec(&self.db).await {
+        let result = match plex_user::Entity::insert(data).exec(conn).await {
             Ok(result) => result,
             Err(DbErr::UnpackInsertId) => {
                 return Ok(CreatePlexUserResult::Ok(PlexUserId { id: id.to_owned() }))
@@ -229,13 +244,13 @@ impl PlexUsersService {
             Err(DbErr::Query(err)) => {
                 tracing::warn!("create DbErr::Query: {:?}", err);
                 return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
-                    error: CreatePlexUserErrorVariant::TokenAlreadyExists,
+                    error: CreatePlexUserErrorVariant::UserAlreadyExists,
                 }));
             }
             Err(DbErr::Exec(err)) => {
                 tracing::warn!("create DbErr::Exec: {:?}", err);
                 return Ok(CreatePlexUserResult::Error(CreatePlexUserError {
-                    error: CreatePlexUserErrorVariant::TokenAlreadyExists,
+                    error: CreatePlexUserErrorVariant::UserAlreadyExists,
                 }));
             }
             Err(err) => {

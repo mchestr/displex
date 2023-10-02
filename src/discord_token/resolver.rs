@@ -174,7 +174,6 @@ impl DiscordTokensService {
     pub fn new(db: &DatabaseConnection) -> Self {
         Self { db: db.clone() }
     }
-
     pub async fn create(
         &self,
         access_token: &str,
@@ -183,6 +182,29 @@ impl DiscordTokensService {
         scopes: &str,
         discord_user_id: &str,
     ) -> Result<CreateDiscordTokenResult> {
+        self.create_with_conn(
+            access_token,
+            refresh_token,
+            expires_at,
+            scopes,
+            discord_user_id,
+            &self.db,
+        )
+        .await
+    }
+
+    pub async fn create_with_conn<'a, C>(
+        &self,
+        access_token: &str,
+        refresh_token: &str,
+        expires_at: &DateTimeUtc,
+        scopes: &str,
+        discord_user_id: &str,
+        conn: &'a C,
+    ) -> Result<CreateDiscordTokenResult>
+    where
+        C: ConnectionTrait,
+    {
         let data = discord_token::ActiveModel {
             access_token: ActiveValue::Set(access_token.to_owned()),
             refresh_token: ActiveValue::Set(refresh_token.to_owned()),
@@ -192,7 +214,7 @@ impl DiscordTokensService {
             ..Default::default()
         };
 
-        match discord_token::Entity::insert(data).exec(&self.db).await {
+        match discord_token::Entity::insert(data).exec(conn).await {
             Ok(result) => result,
             Err(DbErr::UnpackInsertId) => {
                 return Ok(CreateDiscordTokenResult::Ok(DiscordTokenId {

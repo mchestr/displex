@@ -15,6 +15,7 @@ use axum::{
 };
 use axum_sessions::extractors::ReadableSession;
 use oauth2::TokenResponse;
+use sea_orm::TransactionTrait;
 use serde::Deserialize;
 
 use crate::{
@@ -81,10 +82,9 @@ async fn callback(
         .any(|d| d.client_identifier == state.config.plex.server_id);
 
     let token = discord_svc.token(&discord_token).await?;
-
     let d_access_token = String::from(token.access_token().secret());
     let discord_user = discord_svc.user(&d_access_token).await?;
-
+    let discord_user_id = String::from(&discord_user.id);
     let plex_user = plex_svc.user(&resp.auth_token).await?;
 
     tracing::info!(
@@ -93,148 +93,92 @@ async fn callback(
         is_subscribed
     );
 
-    match discord_users_svc
-        .create(&discord_user.id, &discord_user.username)
-        .await
-    {
-        Ok(result) => match result {
-            CreateDiscordUserResult::Ok(_) => {
-                tracing::info!("discord user created {}", discord_user.username);
-            }
-            CreateDiscordUserResult::Error(err) => match err.error {
-                CreateDiscordUserErrorVariant::UserAlreadyExists => {
-                    tracing::info!("discord user already exists {}", discord_user.username);
-                }
-                CreateDiscordUserErrorVariant::InternalError => {
-                    return Err(DisplexError(anyhow::anyhow!(
-                        "failed to create discord_user: {:?}",
-                        err
-                    )))
-                }
-            },
-        },
-        Err(err) => {
-            return Err(DisplexError(anyhow::anyhow!(
-                "failed to create discord_user: {:?}",
-                err
-            )))
-        }
-    };
-    let scopes: String = token.scopes().map_or("".into(), |d| {
-        d.iter().map(|i| i.to_string() + ",").collect()
-    });
-    match discord_tokens_svc
-        .create(
-            token.access_token().secret(),
-            token
-                .refresh_token()
-                .expect("expecting refresh token")
-                .secret(),
-            &(chrono::Utc::now()
-                + chrono::Duration::seconds(
-                    token
-                        .expires_in()
-                        .unwrap_or(Duration::from_secs(1800))
-                        .as_secs() as i64,
-                )),
-            &scopes,
-            &discord_user.id,
-        )
-        .await
-    {
-        Ok(result) => match result {
-            CreateDiscordTokenResult::Ok(_) => {
-                tracing::info!("discord token created for user {}", discord_user.username);
-            }
-            CreateDiscordTokenResult::Error(err) => match err.error {
-                CreateDiscordTokenErrorVariant::TokenAlreadyExists => {
-                    tracing::info!(
-                        "Discord token already exists for user {}",
-                        discord_user.username
-                    );
-                }
-                CreateDiscordTokenErrorVariant::InternalError => {
-                    return Err(DisplexError(anyhow::anyhow!(
-                        "failed to create discord token: {:?}",
-                        err
-                    )))
-                }
-            },
-        },
-        Err(err) => {
-            return Err(DisplexError(anyhow::anyhow!(
-                "failed to create discord token {:?}",
-                err
-            )))
-        }
-    };
+    state
+        .services
+        .db
+        .transaction::<_, (), DisplexError>(|txn| {
+            Box::pin(async move {
+                let result = discord_users_svc
+                    .create_with_conn(&discord_user.id, &discord_user.username, txn)
+                    .await?;
+                match result {
+                    CreateDiscordUserResult::Error(err) => match err.error {
+                        CreateDiscordUserErrorVariant::UserAlreadyExists => Ok(()),
+                        CreateDiscordUserErrorVariant::InternalError => {
+                            Err(DisplexError(anyhow!("internal error")))
+                        }
+                    },
+                    _ => Ok(()),
+                }?;
 
-    match plex_users_svc
-        .create(
-            &plex_user.id.to_string(),
-            &plex_user.username,
-            is_subscribed,
-            &discord_user.id,
-        )
-        .await
-    {
-        Ok(result) => match result {
-            CreatePlexUserResult::Ok(_) => {
-                tracing::info!("plex user created for user {}", discord_user.username);
-            }
-            CreatePlexUserResult::Error(err) => match err.error {
-                CreatePlexUserErrorVariant::TokenAlreadyExists => {
-                    tracing::info!(
-                        "Plex user already exists for user {}",
-                        discord_user.username
-                    );
-                }
-                CreatePlexUserErrorVariant::InternalError => {
-                    return Err(DisplexError(anyhow::anyhow!(
-                        "failed to create plex user: {:?}",
-                        err
-                    )))
-                }
-            },
-        },
-        Err(err) => {
-            return Err(DisplexError(anyhow::anyhow!(
-                "failed to create plex_user: {:?}",
-                err
-            )))
-        }
-    };
+                let scopes: String = token.scopes().map_or("".into(), |d| {
+                    d.iter().map(|i| i.to_string() + ",").collect()
+                });
+                let result = discord_tokens_svc
+                    .create_with_conn(
+                        token.access_token().secret(),
+                        token
+                            .refresh_token()
+                            .expect("expecting refresh token")
+                            .secret(),
+                        &(chrono::Utc::now()
+                            + chrono::Duration::seconds(
+                                token
+                                    .expires_in()
+                                    .unwrap_or(Duration::from_secs(1800))
+                                    .as_secs() as i64,
+                            )),
+                        &scopes,
+                        &discord_user.id,
+                        txn,
+                    )
+                    .await?;
+                match result {
+                    CreateDiscordTokenResult::Error(err) => match err.error {
+                        CreateDiscordTokenErrorVariant::TokenAlreadyExists => Ok(()),
+                        CreateDiscordTokenErrorVariant::InternalError => {
+                            Err(DisplexError(anyhow!("internal error")))
+                        }
+                    },
+                    _ => Ok(()),
+                }?;
 
-    match plex_tokens_svc
-        .create(&resp.auth_token, &plex_user.id.to_string())
+                let result = plex_users_svc
+                    .create_with_conn(
+                        &plex_user.id.to_string(),
+                        &plex_user.username,
+                        is_subscribed,
+                        &discord_user.id,
+                        txn,
+                    )
+                    .await?;
+                match result {
+                    CreatePlexUserResult::Error(err) => match err.error {
+                        CreatePlexUserErrorVariant::UserAlreadyExists => Ok(()),
+                        CreatePlexUserErrorVariant::InternalError => {
+                            Err(DisplexError(anyhow!("internal error")))
+                        }
+                    },
+                    _ => Ok(()),
+                }?;
+
+                let result = plex_tokens_svc
+                    .create_with_conn(&resp.auth_token, &plex_user.id.to_string(), txn)
+                    .await?;
+                match result {
+                    CreatePlexTokenResult::Error(err) => match err.error {
+                        CreatePlexTokenErrorVariant::TokenAlreadyExists => Ok(()),
+                        CreatePlexTokenErrorVariant::InternalError => {
+                            Err(DisplexError(anyhow!("internal error")))
+                        }
+                    },
+                    _ => Ok(()),
+                }?;
+                Ok(())
+            })
+        })
         .await
-    {
-        Ok(result) => match result {
-            CreatePlexTokenResult::Ok(_) => {
-                tracing::info!("plex token created for user {}", discord_user.username);
-            }
-            CreatePlexTokenResult::Error(err) => match err.error {
-                CreatePlexTokenErrorVariant::TokenAlreadyExists => {
-                    tracing::info!(
-                        "plex token already exists for user {}",
-                        discord_user.username
-                    );
-                }
-                CreatePlexTokenErrorVariant::InternalError => {
-                    return Err(DisplexError(anyhow::anyhow!(
-                        "failed to create plex_token for user {:?}",
-                        err
-                    )))
-                }
-            },
-        },
-        Err(err) => {
-            return Err(DisplexError(anyhow::anyhow!(
-                "failed to create plex_token: {:?}",
-                err
-            )))
-        }
-    };
+        .expect("test");
 
     let mut data = ApplicationMetadataUpdate {
         platform_name: String::from(&state.config.application_name),
@@ -262,7 +206,7 @@ async fn callback(
         .link_application(state.config.discord.client_id, data, &d_access_token)
         .await?;
     overseerr_svc
-        .verified_user(&discord_user.id, &plex_user.id.to_string())
+        .verified_user(&discord_user_id, &plex_user.id.to_string())
         .await?;
     Ok(Redirect::to(&format!(
         "discord://-/channels/{}/@home",
