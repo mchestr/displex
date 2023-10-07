@@ -1,12 +1,8 @@
-use std::time::Duration;
-
 use anyhow::Result;
-use oauth2::TokenResponse;
 
 use crate::{
     config::AppConfig,
     entities::{
-        discord_token,
         discord_user,
         plex_user,
     },
@@ -32,8 +28,10 @@ pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {
             anyhow::bail!("No plex user found! {:?}", discord_user);
         }
         let plex_user = plex_user.unwrap();
-        refresh_user_stats(config, services, &discord_user, &plex_user).await?;
-        tracing::info!("successfully refreshed {}", discord_user.username);
+        match refresh_user_stats(config, services, &discord_user, &plex_user).await {
+            Ok(_) => tracing::info!("successfully refreshed {}", discord_user.username),
+            Err(err) => tracing::error!("failed to refresh {}: {err:?}", discord_user.username),
+        };
     }
     Ok(())
 }
@@ -53,23 +51,12 @@ async fn refresh_user_stats(
         .await
         .unwrap();
     if discord_token.is_none() {
-        anyhow::bail!("no token found for user! {discord_user_id}")
+        anyhow::bail!(
+            "unable to refresh {:?} as discord token does not exist.",
+            discord_user.username
+        );
     }
     let discord_token = discord_token.unwrap();
-
-    let discord_token = match maybe_refresh_token(services, discord_user, discord_token).await {
-        Ok(token) => token,
-        Err(err) => {
-            tracing::error!("Failed to refresh users token: {}", err);
-            services
-                .discord_users_service
-                .deactivate(&discord_user_id)
-                .await
-                .unwrap();
-            tracing::warn!("Deactivated user: {}", discord_user.username);
-            return Err(err);
-        }
-    };
 
     let watch_stats = services
         .tautulli_service
@@ -98,53 +85,4 @@ async fn refresh_user_stats(
         )
         .await?;
     Ok(())
-}
-
-async fn maybe_refresh_token(
-    services: &AppServices,
-    discord_user: &discord_user::Model,
-    discord_token: discord_token::Model,
-) -> Result<discord_token::Model> {
-    if discord_token.expires_at < chrono::Utc::now() + chrono::Duration::days(-3) {
-        tracing::info!("refreshing token for user {}", &discord_user.username);
-        let new_token = services
-            .discord_service
-            .refresh_token(&discord_token.refresh_token)
-            .await?;
-        let expires_at = chrono::Utc::now()
-            + chrono::Duration::seconds(
-                new_token
-                    .expires_in()
-                    .unwrap_or_else(|| {
-                        tracing::error!(
-                        "failed to figure out when token will expire, defaulting to 7 days for {}",
-                        discord_user.username
-                    );
-                        Duration::from_secs(3600 * 24 * 7)
-                    })
-                    .as_secs() as i64,
-            );
-
-        let discord_user = discord_user.clone();
-        services
-            .discord_tokens_service
-            .create(
-                new_token.access_token().secret(),
-                new_token
-                    .refresh_token()
-                    .expect("no refresh token returned!")
-                    .secret(),
-                &expires_at,
-                &discord_token.scopes,
-                &discord_user.id,
-            )
-            .await
-            .unwrap();
-        Ok(discord_token::Model {
-            access_token: new_token.access_token().secret().to_owned(),
-            ..Default::default()
-        })
-    } else {
-        Ok(discord_token)
-    }
 }

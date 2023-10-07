@@ -43,10 +43,10 @@ struct Cli {
 enum Commands {
     Bot,
     ChannelRefresh,
-    CleanTokens,
     Metadata,
     RequestsUpgrade,
     Server,
+    TokenMaintenance,
     UserRefresh,
 }
 
@@ -117,10 +117,7 @@ async fn main() -> Result<()> {
             config.discord_bot.type_.run(rx, serenity_client).await?;
         }
         Commands::ChannelRefresh => {
-            displex::tasks::channel_statistics::run(&config, &app_services).await?;
-        }
-        Commands::CleanTokens => {
-            displex::tasks::clean_tokens::run(&app_services).await?;
+            displex::tasks::channel_refresh::run(&config, &app_services).await?;
         }
         Commands::Metadata => {
             displex::tasks::metadata::run(&config).await?;
@@ -134,6 +131,9 @@ async fn main() -> Result<()> {
                 .type_
                 .run(rx, config.clone(), &app_services, &schema)
                 .await?;
+        }
+        Commands::TokenMaintenance => {
+            displex::tasks::token_maintenance::run(&config, &app_services).await?;
         }
         Commands::UserRefresh => {
             displex::tasks::user_refresh::run(&config, &app_services).await?;

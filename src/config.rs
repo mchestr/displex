@@ -52,6 +52,7 @@ pub struct AppConfig {
     pub tautulli: TautulliConfig,
     pub web: WebConfig,
     pub requests_config: RequestsUpgradeConfig,
+    pub token_maintenance: TokenMaintenanceConfig,
 }
 
 #[derive(Deserialize, Debug, Clone, Serialize)]
@@ -407,6 +408,20 @@ impl Default for LibraryCategoryConfig {
 pub struct WebConfig {
     pub cors_origins: Vec<String>,
     pub insecure_cookie: bool,
+}
+
+#[derive(Deserialize, Debug, Clone, Serialize)]
+pub struct TokenMaintenanceConfig {
+    #[serde(with = "humantime_serde")]
+    pub refresh_days_to_expire: Duration,
+}
+
+impl Default for TokenMaintenanceConfig {
+    fn default() -> Self {
+        Self {
+            refresh_days_to_expire: Duration::from_secs(60 * 60 * 24 * 2),
+        }
+    }
 }
 
 pub fn load(path: &str) -> Result<AppConfig> {
