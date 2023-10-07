@@ -16,6 +16,7 @@ use sea_orm::{
     QueryTrait,
 };
 use sea_query::OnConflict;
+use tracing::instrument;
 
 use crate::entities::discord_token::{
     self,
@@ -123,13 +124,13 @@ pub struct CreateDiscordTokenError {
     pub error: CreateDiscordTokenErrorVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum CreateDiscordTokenResult {
     Ok(DiscordTokenId),
     Error(CreateDiscordTokenError),
 }
 
-#[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
+#[derive(Debug, Enum, Clone, Copy, PartialEq, Eq)]
 pub enum GetDiscordTokenVariant {
     TokenDoesNotExist,
     InternalError,
@@ -140,7 +141,7 @@ pub struct GetDiscordTokenError {
     pub error: GetDiscordTokenVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum GetDiscordTokenResult {
     Ok(discord_token::Model),
     Err(GetDiscordTokenError),
@@ -162,7 +163,7 @@ pub struct DeleteDiscordTokenSuccess {
     pub message: String,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum DeleteDiscordTokenResult {
     Ok(DeleteDiscordTokenSuccess),
     Err(DeleteDiscordTokenError),
@@ -182,6 +183,8 @@ impl DiscordTokensService {
     pub fn new(db: &DatabaseConnection) -> Self {
         Self { db: db.clone() }
     }
+
+    #[instrument(skip(self), ret)]
     pub async fn create(
         &self,
         access_token: &str,
@@ -201,6 +204,7 @@ impl DiscordTokensService {
         .await
     }
 
+    #[instrument(skip(self, conn), ret)]
     pub async fn create_with_conn<'a, C>(
         &self,
         access_token: &str,
@@ -250,6 +254,7 @@ impl DiscordTokensService {
         }))
     }
 
+    #[instrument(skip(self))]
     pub async fn get(&self, access_token: &str) -> Result<GetDiscordTokenResult> {
         Ok(
             match DiscordToken::find_by_id(access_token).one(&self.db).await {
@@ -267,6 +272,7 @@ impl DiscordTokensService {
         )
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn list(
         &self,
         discord_user_id: Option<String>,
@@ -287,6 +293,7 @@ impl DiscordTokensService {
             .await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn delete(&self, access_token: &str) -> Result<DeleteDiscordTokenResult> {
         Ok(
             match DiscordToken::delete_by_id(access_token)
@@ -311,6 +318,7 @@ impl DiscordTokensService {
         )
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn set_status(
         &self,
         discord_token: &str,
@@ -325,6 +333,7 @@ impl DiscordTokensService {
         .await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn latest_token(
         &self,
         discord_user_id: &str,

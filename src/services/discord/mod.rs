@@ -10,6 +10,7 @@ use serenity::{
     },
 };
 use std::sync::Arc;
+use tracing::instrument;
 
 use self::{
     models::{
@@ -52,6 +53,7 @@ impl DiscordService {
         }
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn link_application(
         &self,
         application_id: u64,
@@ -69,6 +71,7 @@ impl DiscordService {
         Ok(())
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn unlink_application(
         &self,
         application_id: u64,
@@ -86,6 +89,7 @@ impl DiscordService {
         Ok(())
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn user(&self, token: &str) -> Result<User> {
         Ok(self
             .client
@@ -96,30 +100,38 @@ impl DiscordService {
             .json()
             .await?)
     }
+
+    #[instrument(skip(self), ret)]
     pub fn authorize_url(&self) -> (Url, CsrfToken) {
         self.oauth2_client.authorize_url()
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn token(&self, code: &str) -> Result<DiscordOAuth2Token> {
         self.oauth2_client.token(code).await
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn refresh_token(&self, refresh_token: &str) -> Result<DiscordOAuth2Token> {
         self.oauth2_client.refresh_token(refresh_token).await
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn revoke_token(&self, refresh_token: &str) -> Result<()> {
         self.oauth2_client.revoke_token(refresh_token).await
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get_guild_roles(&self, guild_id: u64) -> Result<Vec<Role>> {
         Ok(self.discord_http_client.get_guild_roles(guild_id).await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get_channels(&self, guild_id: u64) -> Result<Vec<GuildChannel>> {
         Ok(self.discord_http_client.get_channels(guild_id).await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn create_channel(
         &self,
         guild_id: u64,
@@ -132,6 +144,7 @@ impl DiscordService {
             .await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn edit_channel(
         &self,
         channel_id: u64,

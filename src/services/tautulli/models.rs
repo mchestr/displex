@@ -9,7 +9,7 @@ use serde::{
     Serialize,
 };
 
-#[derive(Display)]
+#[derive(Debug, Display)]
 pub enum QueryDays {
     #[display(fmt = "1")]
     Day,

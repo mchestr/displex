@@ -1,5 +1,6 @@
 use anyhow::Result;
 use reqwest::Url;
+use tracing::instrument;
 
 use self::models::{
     ApiResponse,
@@ -28,6 +29,7 @@ impl TautulliService {
         }
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get_user_watch_time_stats(
         &self,
         user_id: &str,
@@ -60,6 +62,7 @@ impl TautulliService {
         Ok(response.response.data)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn server_status(&self) -> Result<ServerStatus> {
         let params = vec![
             ("apikey", self.api_key.clone()),
@@ -72,6 +75,7 @@ impl TautulliService {
         Ok(response.response.data)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get_activity(&self) -> Result<GetActivity> {
         let params = vec![
             ("apikey", self.api_key.clone()),
@@ -84,6 +88,7 @@ impl TautulliService {
         Ok(response.response.data)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get_libraries(&self) -> Result<Vec<GetLibrary>> {
         let params = vec![
             ("apikey", self.api_key.clone()),

@@ -20,6 +20,7 @@ use oauth2::{
     TokenUrl,
 };
 use reqwest::Url;
+use tracing::instrument;
 
 type OAuth2Client = oauth2::Client<
     oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
@@ -73,6 +74,7 @@ impl DiscordOAuth2Client {
         }
     }
 
+    #[instrument(skip(self))]
     pub fn authorize_url(&self) -> (Url, CsrfToken) {
         self.oauth_client
             .authorize_url(CsrfToken::new_random)
@@ -81,6 +83,7 @@ impl DiscordOAuth2Client {
             .url()
     }
 
+    #[instrument(skip(self))]
     pub async fn token(&self, code: &str) -> Result<DiscordOAuth2Token> {
         let resp = self
             .oauth_client
@@ -90,6 +93,7 @@ impl DiscordOAuth2Client {
         Ok(resp)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn refresh_token(&self, refresh_token: &str) -> Result<DiscordOAuth2Token> {
         Ok(self
             .oauth_client
@@ -98,6 +102,7 @@ impl DiscordOAuth2Client {
             .await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn revoke_token(&self, refresh_token: &str) -> Result<()> {
         Ok(self
             .oauth_client
@@ -108,6 +113,7 @@ impl DiscordOAuth2Client {
             .await?)
     }
 
+    #[instrument(skip(self), ret)]
     async fn send(
         &self,
         request: HttpRequest,

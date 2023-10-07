@@ -1,7 +1,10 @@
 pub mod models;
 
 use anyhow::Result;
-use tracing::info;
+use tracing::{
+    info,
+    instrument,
+};
 
 use crate::{
     config::{
@@ -46,6 +49,7 @@ impl OverseerrService {
         }
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get_users(&self) -> Result<Vec<User>> {
         let result: ApiResponse<User> = self
             .client
@@ -60,6 +64,7 @@ impl OverseerrService {
         Ok(result.results)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn set_request_tier(&self, user: &User) -> Result<()> {
         let watch_stats = self
             .tautulli_service
@@ -106,6 +111,7 @@ impl OverseerrService {
         Ok(())
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn set_user_request_settings(
         &self,
         user_id: &str,
@@ -124,6 +130,7 @@ impl OverseerrService {
         Ok(())
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn set_default_request_settings(&self, user: &User) -> Result<()> {
         self.set_user_request_settings(
             &user.id.to_string(),
@@ -138,6 +145,7 @@ impl OverseerrService {
         Ok(())
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn verified_user(&self, discord_user_id: &str, plex_user_id: &str) -> Result<()> {
         info!(
             "Setting Overseerr settings... discord: {}, plex: {}",

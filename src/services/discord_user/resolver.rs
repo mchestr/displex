@@ -19,6 +19,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tracing::instrument;
 
 use crate::{
     entities::{
@@ -140,7 +141,7 @@ pub struct DeleteDiscordUserInput {
     pub id: String,
 }
 
-#[derive(OneofObject)]
+#[derive(Debug, OneofObject)]
 pub enum UserSummaryBy {
     Username(String),
     Id(String),
@@ -156,7 +157,7 @@ pub struct CreateDiscordUserError {
     pub error: CreateDiscordUserErrorVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum CreateDiscordUserResult {
     Ok(DiscordUserId),
     Error(CreateDiscordUserError),
@@ -173,7 +174,7 @@ pub struct UpdateDiscordUserError {
     pub error: UpdateDiscordUserErrorVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum UpdateDiscordUserResult {
     Ok(discord_user::Model),
     Err(UpdateDiscordUserError),
@@ -190,7 +191,7 @@ pub struct GetDiscordUserError {
     pub error: GetDiscordUserVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum GetDiscordUserResult {
     Ok(discord_user::Model),
     Err(GetDiscordUserError),
@@ -212,7 +213,7 @@ pub struct DeleteDiscordUserSuccess {
     pub message: String,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum DeleteDiscordUserResult {
     Ok(DeleteDiscordUserSuccess),
     Err(DeleteDiscordUserError),
@@ -247,7 +248,7 @@ pub struct SummaryDiscordUserSuccess {
     pub summary: DiscordUserSummary,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum SummaryDiscordUserResult {
     Ok(SummaryDiscordUserSuccess),
     Err(SummaryDiscordUserError),
@@ -268,10 +269,12 @@ impl DiscordUsersService {
         }
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn create(&self, id: &str, username: &str) -> Result<CreateDiscordUserResult> {
         self.create_with_conn(id, username, &self.db).await
     }
 
+    #[instrument(skip(self, conn), ret)]
     pub async fn create_with_conn<'a, C>(
         &self,
         id: &str,
@@ -313,10 +316,12 @@ impl DiscordUsersService {
         }))
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn list(&self) -> Result<Vec<discord_user::Model>> {
         Ok(DiscordUser::find().all(&self.db).await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn deactivate(&self, id: &str) -> Result<UpdateDiscordUserResult> {
         let user = discord_user::ActiveModel {
             id: ActiveValue::Set(id.to_owned()),
@@ -338,6 +343,7 @@ impl DiscordUsersService {
         })
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn update(&self, id: &str, username: &str) -> Result<UpdateDiscordUserResult> {
         let user = discord_user::ActiveModel {
             id: ActiveValue::Set(id.to_owned()),
@@ -359,6 +365,7 @@ impl DiscordUsersService {
         })
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get(&self, id: &str) -> Result<GetDiscordUserResult> {
         Ok(match DiscordUser::find_by_id(id).one(&self.db).await {
             Ok(Some(result)) => GetDiscordUserResult::Ok(result),
@@ -374,6 +381,7 @@ impl DiscordUsersService {
         })
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get_by_username(&self, username: &str) -> Result<GetDiscordUserResult> {
         Ok(
             match DiscordUser::find()
@@ -395,6 +403,7 @@ impl DiscordUsersService {
         )
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn delete(&self, id: &str) -> Result<DeleteDiscordUserResult> {
         Ok(match DiscordUser::delete_by_id(id).exec(&self.db).await {
             Ok(res) => match res.rows_affected {
@@ -414,6 +423,7 @@ impl DiscordUsersService {
         })
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn summary(&self, user_by: &UserSummaryBy) -> Result<SummaryDiscordUserResult> {
         let discord_user = match user_by {
             UserSummaryBy::Username(username) => match self.get_by_username(username).await? {
@@ -457,6 +467,7 @@ impl DiscordUsersService {
         }))
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn list_users_for_refresh(
         &self,
     ) -> Result<Vec<(discord_user::Model, Option<plex_user::Model>)>> {
@@ -467,6 +478,7 @@ impl DiscordUsersService {
             .await?)
     }
 
+    #[instrument(skip(self))]
     pub async fn list_subscribers(
         &self,
     ) -> Result<Vec<(discord_user::Model, Option<plex_user::Model>)>> {

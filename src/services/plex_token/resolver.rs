@@ -14,6 +14,7 @@ use sea_orm::{
     QueryTrait,
 };
 use sea_query::OnConflict;
+use tracing::instrument;
 
 use crate::entities::plex_token;
 
@@ -106,7 +107,7 @@ pub struct CreatePlexTokenError {
     pub error: CreatePlexTokenErrorVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum CreatePlexTokenResult {
     Ok(PlexTokenId),
     Error(CreatePlexTokenError),
@@ -123,7 +124,7 @@ pub struct GetPlexTokenError {
     pub error: GetPlexTokenVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum GetPlexTokenResult {
     Ok(plex_token::Model),
     Err(GetPlexTokenError),
@@ -145,7 +146,7 @@ pub struct DeletePlexTokenSuccess {
     pub message: String,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum DeletePlexTokenResult {
     Ok(DeletePlexTokenSuccess),
     Err(DeletePlexTokenError),
@@ -166,6 +167,7 @@ impl PlexTokensService {
         Self { db: db.clone() }
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn create(
         &self,
         access_token: &str,
@@ -175,6 +177,7 @@ impl PlexTokensService {
             .await
     }
 
+    #[instrument(skip(self, conn), ret)]
     pub async fn create_with_conn<'a, C>(
         &self,
         access_token: &str,
@@ -218,6 +221,7 @@ impl PlexTokensService {
         }))
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get(&self, access_token: &str) -> Result<GetPlexTokenResult> {
         Ok(
             match PlexToken::find_by_id(access_token).one(&self.db).await {
@@ -235,6 +239,7 @@ impl PlexTokensService {
         )
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn list(
         &self,
         plex_user_id: Option<String>,
@@ -251,6 +256,7 @@ impl PlexTokensService {
             .await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn delete(&self, access_token: &str) -> Result<DeletePlexTokenResult> {
         Ok(
             match PlexToken::delete_by_id(access_token).exec(&self.db).await {

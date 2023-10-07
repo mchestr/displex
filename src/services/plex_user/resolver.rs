@@ -15,6 +15,7 @@ use sea_orm::{
     QueryTrait,
 };
 use sea_query::OnConflict;
+use tracing::instrument;
 
 use crate::entities::{
     plex_user,
@@ -132,7 +133,7 @@ pub struct CreatePlexUserError {
     pub error: CreatePlexUserErrorVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum CreatePlexUserResult {
     Ok(PlexUserId),
     Error(CreatePlexUserError),
@@ -149,7 +150,7 @@ pub struct UpdatePlexUserError {
     pub error: UpdatePlexUserErrorVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum UpdatePlexUserResult {
     Ok(plex_user::Model),
     Err(UpdatePlexUserError),
@@ -166,7 +167,7 @@ pub struct GetPlexUserError {
     pub error: GetPlexUserVariant,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum GetPlexUserResult {
     Ok(plex_user::Model),
     Err(GetPlexUserError),
@@ -188,7 +189,7 @@ pub struct DeletePlexUserSuccess {
     pub message: String,
 }
 
-#[derive(Union)]
+#[derive(Debug, Union)]
 pub enum DeletePlexUserResult {
     Ok(DeletePlexUserSuccess),
     Err(DeletePlexUserError),
@@ -209,6 +210,7 @@ impl PlexUsersService {
         Self { db: db.clone() }
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn create(
         &self,
         id: &str,
@@ -220,6 +222,7 @@ impl PlexUsersService {
             .await
     }
 
+    #[instrument(skip(self, conn), ret)]
     pub async fn create_with_conn<'a, C>(
         &self,
         id: &str,
@@ -265,6 +268,7 @@ impl PlexUsersService {
         }))
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn get(&self, id: &str) -> Result<GetPlexUserResult> {
         Ok(match PlexUser::find_by_id(id).one(&self.db).await {
             Ok(Some(result)) => GetPlexUserResult::Ok(result),
@@ -280,6 +284,7 @@ impl PlexUsersService {
         })
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn list(&self, discord_user_id: Option<String>) -> Result<Vec<plex_user::Model>> {
         Ok(PlexUser::find()
             .apply_if(discord_user_id, |query, value| {
@@ -289,6 +294,7 @@ impl PlexUsersService {
             .await?)
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn update(
         &self,
         id: &str,
@@ -316,6 +322,7 @@ impl PlexUsersService {
         })
     }
 
+    #[instrument(skip(self), ret)]
     pub async fn delete(&self, id: &str) -> Result<DeletePlexUserResult> {
         Ok(match PlexUser::delete_by_id(id).exec(&self.db).await {
             Ok(res) => match res.rows_affected {
