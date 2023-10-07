@@ -74,7 +74,7 @@ impl DiscordOAuth2Client {
         }
     }
 
-    #[instrument(skip(self))]
+    #[instrument(skip(self), ret)]
     pub fn authorize_url(&self) -> (Url, CsrfToken) {
         self.oauth_client
             .authorize_url(CsrfToken::new_random)
@@ -83,7 +83,7 @@ impl DiscordOAuth2Client {
             .url()
     }
 
-    #[instrument(skip(self))]
+    #[instrument(skip(self), ret, err)]
     pub async fn token(&self, code: &str) -> Result<DiscordOAuth2Token> {
         let resp = self
             .oauth_client
