@@ -16,22 +16,22 @@ use crate::{
 pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {
     let tokens = services
         .discord_tokens_service
-        .list(None, None)
+        .list(None, None, Some(discord_token::TokenStatus::Active))
         .await
         .map_err(|err| anyhow!(err.message))?;
 
     let now = Utc::now();
     for token in tokens {
         if token.expires_at <= now {
-            tracing::info!("Removing token for user: {:?}", token.discord_user_id);
+            tracing::info!("token for user expired: {:?}", token.discord_user_id);
             services
                 .discord_tokens_service
-                .delete(&token.access_token)
+                .set_status(&token.access_token, discord_token::TokenStatus::Expired)
                 .await
                 .map_err(|err| anyhow!(err.message))?;
         } else if token.expires_at < now + config.token_maintenance.refresh_days_to_expire {
             tracing::info!(
-                "User {:?} token expires at {:?}, refreshing token...",
+                "user {:?} token expires at {:?}, refreshing token...",
                 token.discord_user_id,
                 token.expires_at
             );
@@ -40,7 +40,7 @@ pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {
                     tracing::info!("Success");
                     services
                         .discord_tokens_service
-                        .delete(&token.access_token)
+                        .set_status(&token.access_token, discord_token::TokenStatus::Renewed)
                         .await
                         .map_err(|err| anyhow!(err.message))?;
                 }
@@ -64,6 +64,14 @@ async fn refresh_token(services: &AppServices, discord_token: &discord_token::Mo
                 .discord_service
                 .revoke_token(&discord_token.refresh_token)
                 .await?;
+            services
+                .discord_tokens_service
+                .set_status(
+                    &discord_token.access_token,
+                    discord_token::TokenStatus::Revoked,
+                )
+                .await
+                .map_err(|err| anyhow!(err.message))?;
             return Ok(());
         }
     };

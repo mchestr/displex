@@ -17,7 +17,10 @@ use sea_orm::{
 };
 use sea_query::OnConflict;
 
-use crate::entities::discord_token;
+use crate::entities::discord_token::{
+    self,
+    TokenStatus,
+};
 
 pub static COOKIE_NAME: &str = "auth";
 
@@ -43,7 +46,7 @@ impl DiscordTokensQuery {
     ) -> Result<Vec<discord_token::Model>> {
         gql_ctx
             .data_unchecked::<DiscordTokensService>()
-            .list(input.discord_user_id, input.before_expires_at)
+            .list(input.discord_user_id, input.before_expires_at, input.status)
             .await
     }
 }
@@ -105,6 +108,7 @@ pub struct DeleteDiscordTokenInput {
 pub struct ListDiscordTokenInput {
     pub discord_user_id: Option<String>,
     pub before_expires_at: Option<chrono::DateTime<Utc>>,
+    pub status: Option<TokenStatus>,
 }
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
@@ -268,6 +272,7 @@ impl DiscordTokensService {
         &self,
         discord_user_id: Option<String>,
         before_expires: Option<chrono::DateTime<Utc>>,
+        status: Option<TokenStatus>,
     ) -> Result<Vec<discord_token::Model>> {
         Ok(discord_token::Entity::find()
             .apply_if(discord_user_id, |query, value| {
@@ -275,6 +280,9 @@ impl DiscordTokensService {
             })
             .apply_if(before_expires, |query, value| {
                 query.filter(discord_token::Column::ExpiresAt.lt(value))
+            })
+            .apply_if(status, |query, value| {
+                query.filter(discord_token::Column::Status.eq(value))
             })
             .all(&self.db)
             .await?)
@@ -302,6 +310,20 @@ impl DiscordTokensService {
                 }
             },
         )
+    }
+
+    pub async fn set_status(
+        &self,
+        discord_token: &str,
+        status: TokenStatus,
+    ) -> Result<discord_token::Model> {
+        Ok(discord_token::Entity::update(discord_token::ActiveModel {
+            access_token: ActiveValue::Set(discord_token.into()),
+            status: ActiveValue::Set(status),
+            ..Default::default()
+        })
+        .exec(&self.db)
+        .await?)
     }
 
     pub async fn latest_token(

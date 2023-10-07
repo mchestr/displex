@@ -1,9 +1,29 @@
-use async_graphql::SimpleObject;
+use async_graphql::{
+    Enum,
+    SimpleObject,
+};
 use sea_orm::entity::prelude::*;
 use serde::{
     Deserialize,
     Serialize,
 };
+
+#[derive(
+    Debug, Enum, Copy, Eq, Deserialize, Clone, PartialEq, EnumIter, Serialize, DeriveActiveEnum,
+)]
+#[sea_orm(rs_type = "i32", db_type = "Integer")]
+#[derive(Default)]
+pub enum TokenStatus {
+    #[sea_orm(num_value = 0)]
+    #[default]
+    Active,
+    #[sea_orm(num_value = 1)]
+    Revoked,
+    #[sea_orm(num_value = 2)]
+    Renewed,
+    #[sea_orm(num_value = 3)]
+    Expired,
+}
 
 #[derive(
     Clone, Debug, Default, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, SimpleObject,
@@ -19,6 +39,7 @@ pub struct Model {
     pub discord_user_id: String,
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
+    pub status: TokenStatus,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
