@@ -17,6 +17,8 @@ use sea_query::OnConflict;
 
 use crate::entities::plex_token;
 
+use crate::entities::prelude::*;
+
 #[derive(Default)]
 pub struct PlexTokensQuery;
 
@@ -188,7 +190,7 @@ impl PlexTokensService {
             ..Default::default()
         };
 
-        let result = match plex_token::Entity::insert(data)
+        let result = match PlexToken::insert(data)
             .on_conflict(
                 OnConflict::column(plex_token::Column::AccessToken)
                     .do_nothing()
@@ -218,10 +220,7 @@ impl PlexTokensService {
 
     pub async fn get(&self, access_token: &str) -> Result<GetPlexTokenResult> {
         Ok(
-            match plex_token::Entity::find_by_id(access_token)
-                .one(&self.db)
-                .await
-            {
+            match PlexToken::find_by_id(access_token).one(&self.db).await {
                 Ok(Some(result)) => GetPlexTokenResult::Ok(result),
                 Ok(None) => GetPlexTokenResult::Err(GetPlexTokenError {
                     error: GetPlexTokenVariant::TokenDoesNotExist,
@@ -241,7 +240,7 @@ impl PlexTokensService {
         plex_user_id: Option<String>,
         plex_user_ids: Option<Vec<String>>,
     ) -> Result<Vec<plex_token::Model>> {
-        Ok(plex_token::Entity::find()
+        Ok(PlexToken::find()
             .apply_if(plex_user_id, |query, value| {
                 query.filter(plex_token::Column::PlexUserId.eq(value))
             })
@@ -254,10 +253,7 @@ impl PlexTokensService {
 
     pub async fn delete(&self, access_token: &str) -> Result<DeletePlexTokenResult> {
         Ok(
-            match plex_token::Entity::delete_by_id(access_token)
-                .exec(&self.db)
-                .await
-            {
+            match PlexToken::delete_by_id(access_token).exec(&self.db).await {
                 Ok(res) => match res.rows_affected {
                     0 => DeletePlexTokenResult::Err(DeletePlexTokenError {
                         error: DeletePlexTokenErrorVariant::TokenDoesNotExist,

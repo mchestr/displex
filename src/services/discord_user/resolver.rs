@@ -26,6 +26,7 @@ use crate::{
         discord_user,
         plex_token,
         plex_user,
+        prelude::*,
     },
     services::{
         discord_token::resolver::DiscordTokensService,
@@ -286,7 +287,7 @@ impl DiscordUsersService {
             ..Default::default()
         };
 
-        let user = match discord_user::Entity::insert(user)
+        let user = match DiscordUser::insert(user)
             .on_conflict(
                 OnConflict::column(discord_user::Column::Id)
                     .do_nothing()
@@ -313,7 +314,7 @@ impl DiscordUsersService {
     }
 
     pub async fn list(&self) -> Result<Vec<discord_user::Model>> {
-        Ok(discord_user::Entity::find().all(&self.db).await?)
+        Ok(DiscordUser::find().all(&self.db).await?)
     }
 
     pub async fn deactivate(&self, id: &str) -> Result<UpdateDiscordUserResult> {
@@ -323,22 +324,18 @@ impl DiscordUsersService {
             updated_at: ActiveValue::Set(Utc::now()),
             ..Default::default()
         };
-        Ok(
-            match discord_user::Entity::update(user).exec(&self.db).await {
-                Ok(user) => UpdateDiscordUserResult::Ok(user),
-                Err(DbErr::RecordNotUpdated) => {
-                    UpdateDiscordUserResult::Err(UpdateDiscordUserError {
-                        error: UpdateDiscordUserErrorVariant::UserDoesNotExist,
-                    })
-                }
-                Err(err) => {
-                    tracing::warn!("update db error: {:?}", err);
-                    UpdateDiscordUserResult::Err(UpdateDiscordUserError {
-                        error: UpdateDiscordUserErrorVariant::InternalError,
-                    })
-                }
-            },
-        )
+        Ok(match DiscordUser::update(user).exec(&self.db).await {
+            Ok(user) => UpdateDiscordUserResult::Ok(user),
+            Err(DbErr::RecordNotUpdated) => UpdateDiscordUserResult::Err(UpdateDiscordUserError {
+                error: UpdateDiscordUserErrorVariant::UserDoesNotExist,
+            }),
+            Err(err) => {
+                tracing::warn!("update db error: {:?}", err);
+                UpdateDiscordUserResult::Err(UpdateDiscordUserError {
+                    error: UpdateDiscordUserErrorVariant::InternalError,
+                })
+            }
+        })
     }
 
     pub async fn update(&self, id: &str, username: &str) -> Result<UpdateDiscordUserResult> {
@@ -348,44 +345,38 @@ impl DiscordUsersService {
             updated_at: ActiveValue::Set(Utc::now()),
             ..Default::default()
         };
-        Ok(
-            match discord_user::Entity::update(user).exec(&self.db).await {
-                Ok(user) => UpdateDiscordUserResult::Ok(user),
-                Err(DbErr::RecordNotUpdated) => {
-                    UpdateDiscordUserResult::Err(UpdateDiscordUserError {
-                        error: UpdateDiscordUserErrorVariant::UserDoesNotExist,
-                    })
-                }
-                Err(err) => {
-                    tracing::warn!("update db error: {:?}", err);
-                    UpdateDiscordUserResult::Err(UpdateDiscordUserError {
-                        error: UpdateDiscordUserErrorVariant::InternalError,
-                    })
-                }
-            },
-        )
+        Ok(match DiscordUser::update(user).exec(&self.db).await {
+            Ok(user) => UpdateDiscordUserResult::Ok(user),
+            Err(DbErr::RecordNotUpdated) => UpdateDiscordUserResult::Err(UpdateDiscordUserError {
+                error: UpdateDiscordUserErrorVariant::UserDoesNotExist,
+            }),
+            Err(err) => {
+                tracing::warn!("update db error: {:?}", err);
+                UpdateDiscordUserResult::Err(UpdateDiscordUserError {
+                    error: UpdateDiscordUserErrorVariant::InternalError,
+                })
+            }
+        })
     }
 
     pub async fn get(&self, id: &str) -> Result<GetDiscordUserResult> {
-        Ok(
-            match discord_user::Entity::find_by_id(id).one(&self.db).await {
-                Ok(Some(result)) => GetDiscordUserResult::Ok(result),
-                Ok(None) => GetDiscordUserResult::Err(GetDiscordUserError {
-                    error: GetDiscordUserVariant::UserDoesNotExist,
-                }),
-                Err(err) => {
-                    tracing::warn!("get db error: {:?}", err);
-                    GetDiscordUserResult::Err(GetDiscordUserError {
-                        error: GetDiscordUserVariant::InternalError,
-                    })
-                }
-            },
-        )
+        Ok(match DiscordUser::find_by_id(id).one(&self.db).await {
+            Ok(Some(result)) => GetDiscordUserResult::Ok(result),
+            Ok(None) => GetDiscordUserResult::Err(GetDiscordUserError {
+                error: GetDiscordUserVariant::UserDoesNotExist,
+            }),
+            Err(err) => {
+                tracing::warn!("get db error: {:?}", err);
+                GetDiscordUserResult::Err(GetDiscordUserError {
+                    error: GetDiscordUserVariant::InternalError,
+                })
+            }
+        })
     }
 
     pub async fn get_by_username(&self, username: &str) -> Result<GetDiscordUserResult> {
         Ok(
-            match discord_user::Entity::find()
+            match DiscordUser::find()
                 .filter(discord_user::Column::Username.eq(username))
                 .one(&self.db)
                 .await
@@ -405,24 +396,22 @@ impl DiscordUsersService {
     }
 
     pub async fn delete(&self, id: &str) -> Result<DeleteDiscordUserResult> {
-        Ok(
-            match discord_user::Entity::delete_by_id(id).exec(&self.db).await {
-                Ok(res) => match res.rows_affected {
-                    0 => DeleteDiscordUserResult::Err(DeleteDiscordUserError {
-                        error: DeleteDiscordUserErrorVariant::UserDoesNotExist,
-                    }),
-                    _ => DeleteDiscordUserResult::Ok(DeleteDiscordUserSuccess {
-                        message: "ok".into(),
-                    }),
-                },
-                Err(err) => {
-                    tracing::warn!("delete db error: {:?}", err);
-                    DeleteDiscordUserResult::Err(DeleteDiscordUserError {
-                        error: DeleteDiscordUserErrorVariant::InternalError,
-                    })
-                }
+        Ok(match DiscordUser::delete_by_id(id).exec(&self.db).await {
+            Ok(res) => match res.rows_affected {
+                0 => DeleteDiscordUserResult::Err(DeleteDiscordUserError {
+                    error: DeleteDiscordUserErrorVariant::UserDoesNotExist,
+                }),
+                _ => DeleteDiscordUserResult::Ok(DeleteDiscordUserSuccess {
+                    message: "ok".into(),
+                }),
             },
-        )
+            Err(err) => {
+                tracing::warn!("delete db error: {:?}", err);
+                DeleteDiscordUserResult::Err(DeleteDiscordUserError {
+                    error: DeleteDiscordUserErrorVariant::InternalError,
+                })
+            }
+        })
     }
 
     pub async fn summary(&self, user_by: &UserSummaryBy) -> Result<SummaryDiscordUserResult> {
@@ -471,7 +460,7 @@ impl DiscordUsersService {
     pub async fn list_users_for_refresh(
         &self,
     ) -> Result<Vec<(discord_user::Model, Option<plex_user::Model>)>> {
-        Ok(discord_user::Entity::find()
+        Ok(DiscordUser::find()
             .filter(discord_user::Column::IsActive.eq(true))
             .find_also_related(plex_user::Entity)
             .all(&self.db)
@@ -481,7 +470,7 @@ impl DiscordUsersService {
     pub async fn list_subscribers(
         &self,
     ) -> Result<Vec<(discord_user::Model, Option<plex_user::Model>)>> {
-        Ok(discord_user::Entity::find()
+        Ok(DiscordUser::find()
             .find_also_related(plex_user::Entity)
             .all(&self.db)
             .await?)

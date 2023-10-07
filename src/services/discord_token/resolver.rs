@@ -22,6 +22,8 @@ use crate::entities::discord_token::{
     TokenStatus,
 };
 
+use crate::entities::prelude::*;
+
 pub static COOKIE_NAME: &str = "auth";
 
 #[derive(Default)]
@@ -220,7 +222,7 @@ impl DiscordTokensService {
             ..Default::default()
         };
 
-        match discord_token::Entity::insert(data)
+        match DiscordToken::insert(data)
             .on_conflict(
                 OnConflict::column(discord_token::Column::AccessToken)
                     .do_nothing()
@@ -250,10 +252,7 @@ impl DiscordTokensService {
 
     pub async fn get(&self, access_token: &str) -> Result<GetDiscordTokenResult> {
         Ok(
-            match discord_token::Entity::find_by_id(access_token)
-                .one(&self.db)
-                .await
-            {
+            match DiscordToken::find_by_id(access_token).one(&self.db).await {
                 Ok(Some(result)) => GetDiscordTokenResult::Ok(result),
                 Ok(None) => GetDiscordTokenResult::Err(GetDiscordTokenError {
                     error: GetDiscordTokenVariant::TokenDoesNotExist,
@@ -274,7 +273,7 @@ impl DiscordTokensService {
         before_expires: Option<chrono::DateTime<Utc>>,
         status: Option<TokenStatus>,
     ) -> Result<Vec<discord_token::Model>> {
-        Ok(discord_token::Entity::find()
+        Ok(DiscordToken::find()
             .apply_if(discord_user_id, |query, value| {
                 query.filter(discord_token::Column::DiscordUserId.eq(value))
             })
@@ -290,7 +289,7 @@ impl DiscordTokensService {
 
     pub async fn delete(&self, access_token: &str) -> Result<DeleteDiscordTokenResult> {
         Ok(
-            match discord_token::Entity::delete_by_id(access_token)
+            match DiscordToken::delete_by_id(access_token)
                 .exec(&self.db)
                 .await
             {
@@ -317,7 +316,7 @@ impl DiscordTokensService {
         discord_token: &str,
         status: TokenStatus,
     ) -> Result<discord_token::Model> {
-        Ok(discord_token::Entity::update(discord_token::ActiveModel {
+        Ok(DiscordToken::update(discord_token::ActiveModel {
             access_token: ActiveValue::Set(discord_token.into()),
             status: ActiveValue::Set(status),
             ..Default::default()
@@ -330,7 +329,7 @@ impl DiscordTokensService {
         &self,
         discord_user_id: &str,
     ) -> Result<Option<discord_token::Model>> {
-        Ok(discord_token::Entity::find()
+        Ok(DiscordToken::find()
             .filter(discord_token::Column::DiscordUserId.eq(discord_user_id))
             .order_by_desc(discord_token::Column::ExpiresAt)
             .one(&self.db)

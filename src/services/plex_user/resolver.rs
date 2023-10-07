@@ -16,7 +16,10 @@ use sea_orm::{
 };
 use sea_query::OnConflict;
 
-use crate::entities::plex_user;
+use crate::entities::{
+    plex_user,
+    prelude::*,
+};
 
 #[derive(Default)]
 pub struct PlexUsersQuery;
@@ -236,7 +239,7 @@ impl PlexUsersService {
             ..Default::default()
         };
 
-        let result = match plex_user::Entity::insert(data)
+        let result = match PlexUser::insert(data)
             .on_conflict(
                 OnConflict::column(plex_user::Column::Id)
                     .do_nothing()
@@ -263,24 +266,22 @@ impl PlexUsersService {
     }
 
     pub async fn get(&self, id: &str) -> Result<GetPlexUserResult> {
-        Ok(
-            match plex_user::Entity::find_by_id(id).one(&self.db).await {
-                Ok(Some(result)) => GetPlexUserResult::Ok(result),
-                Ok(None) => GetPlexUserResult::Err(GetPlexUserError {
-                    error: GetPlexUserVariant::UserDoesNotExist,
-                }),
-                Err(err) => {
-                    tracing::warn!("get db error: {:?}", err);
-                    GetPlexUserResult::Err(GetPlexUserError {
-                        error: GetPlexUserVariant::InternalError,
-                    })
-                }
-            },
-        )
+        Ok(match PlexUser::find_by_id(id).one(&self.db).await {
+            Ok(Some(result)) => GetPlexUserResult::Ok(result),
+            Ok(None) => GetPlexUserResult::Err(GetPlexUserError {
+                error: GetPlexUserVariant::UserDoesNotExist,
+            }),
+            Err(err) => {
+                tracing::warn!("get db error: {:?}", err);
+                GetPlexUserResult::Err(GetPlexUserError {
+                    error: GetPlexUserVariant::InternalError,
+                })
+            }
+        })
     }
 
     pub async fn list(&self, discord_user_id: Option<String>) -> Result<Vec<plex_user::Model>> {
-        Ok(plex_user::Entity::find()
+        Ok(PlexUser::find()
             .apply_if(discord_user_id, |query, value| {
                 query.filter(plex_user::Column::DiscordUserId.eq(value))
             })
@@ -301,7 +302,7 @@ impl PlexUsersService {
             updated_at: ActiveValue::Set(Utc::now()),
             ..Default::default()
         };
-        Ok(match plex_user::Entity::update(user).exec(&self.db).await {
+        Ok(match PlexUser::update(user).exec(&self.db).await {
             Ok(user) => UpdatePlexUserResult::Ok(user),
             Err(DbErr::RecordNotUpdated) => UpdatePlexUserResult::Err(UpdatePlexUserError {
                 error: UpdatePlexUserErrorVariant::UserDoesNotExist,
@@ -316,23 +317,21 @@ impl PlexUsersService {
     }
 
     pub async fn delete(&self, id: &str) -> Result<DeletePlexUserResult> {
-        Ok(
-            match plex_user::Entity::delete_by_id(id).exec(&self.db).await {
-                Ok(res) => match res.rows_affected {
-                    0 => DeletePlexUserResult::Err(DeletePlexUserError {
-                        error: DeletePlexUserErrorVariant::UserDoesNotExist,
-                    }),
-                    _ => DeletePlexUserResult::Ok(DeletePlexUserSuccess {
-                        message: "ok".into(),
-                    }),
-                },
-                Err(err) => {
-                    tracing::warn!("delete db error: {:?}", err);
-                    DeletePlexUserResult::Err(DeletePlexUserError {
-                        error: DeletePlexUserErrorVariant::InternalError,
-                    })
-                }
+        Ok(match PlexUser::delete_by_id(id).exec(&self.db).await {
+            Ok(res) => match res.rows_affected {
+                0 => DeletePlexUserResult::Err(DeletePlexUserError {
+                    error: DeletePlexUserErrorVariant::UserDoesNotExist,
+                }),
+                _ => DeletePlexUserResult::Ok(DeletePlexUserSuccess {
+                    message: "ok".into(),
+                }),
             },
-        )
+            Err(err) => {
+                tracing::warn!("delete db error: {:?}", err);
+                DeletePlexUserResult::Err(DeletePlexUserError {
+                    error: DeletePlexUserErrorVariant::InternalError,
+                })
+            }
+        })
     }
 }
