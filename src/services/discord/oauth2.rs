@@ -14,7 +14,9 @@ use oauth2::{
     HttpResponse,
     RedirectUrl,
     RefreshToken,
+    RevocationUrl,
     Scope,
+    StandardRevocableToken,
     TokenUrl,
 };
 use reqwest::Url;
@@ -54,8 +56,11 @@ impl DiscordOAuth2Client {
             .expect("Invalid authorization endpoint URL");
         let token_url = TokenUrl::new("https://discord.com/api/oauth2/token".to_string())
             .expect("Invalid token endpoint URL");
-        let mut oauth_client = BasicClient::new(cid, Some(cs), auth_url, Some(token_url));
-
+        let mut oauth_client = BasicClient::new(cid, Some(cs), auth_url, Some(token_url))
+            .set_revocation_uri(
+                RevocationUrl::new(String::from("https://discord.com/api/oauth2/token/revoke"))
+                    .expect("invalid revocation url"),
+            );
         if let Some(redirect_url) = redirect_url {
             oauth_client = oauth_client.set_redirect_uri(
                 RedirectUrl::new(redirect_url.into()).expect("Invalid redirect URL"),
@@ -89,6 +94,16 @@ impl DiscordOAuth2Client {
         Ok(self
             .oauth_client
             .exchange_refresh_token(&RefreshToken::new(String::from(refresh_token)))
+            .request_async(|request| self.send(request))
+            .await?)
+    }
+
+    pub async fn revoke_token(&self, refresh_token: &str) -> Result<()> {
+        Ok(self
+            .oauth_client
+            .revoke_token(StandardRevocableToken::RefreshToken(RefreshToken::new(
+                String::from(refresh_token),
+            )))?
             .request_async(|request| self.send(request))
             .await?)
     }

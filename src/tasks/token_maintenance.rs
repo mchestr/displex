@@ -52,10 +52,21 @@ pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {
 }
 
 async fn refresh_token(services: &AppServices, discord_token: &discord_token::Model) -> Result<()> {
-    let new_token = services
+    let new_token = match services
         .discord_service
         .refresh_token(&discord_token.refresh_token)
-        .await?;
+        .await
+    {
+        Ok(token) => token,
+        Err(err) => {
+            tracing::error!("failed to refresh token {err:?}... revoking.");
+            services
+                .discord_service
+                .revoke_token(&discord_token.refresh_token)
+                .await?;
+            return Ok(());
+        }
+    };
     tracing::info!("new token: {:?}", new_token);
     let expires_at = chrono::Utc::now()
         + chrono::Duration::seconds(

@@ -108,6 +108,10 @@ impl DiscordService {
         self.oauth2_client.refresh_token(refresh_token).await
     }
 
+    pub async fn revoke_token(&self, refresh_token: &str) -> Result<()> {
+        self.oauth2_client.revoke_token(refresh_token).await
+    }
+
     pub async fn get_guild_roles(&self, guild_id: u64) -> Result<Vec<Role>> {
         Ok(self.discord_http_client.get_guild_roles(guild_id).await?)
     }
