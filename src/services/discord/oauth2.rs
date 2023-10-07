@@ -93,7 +93,7 @@ impl DiscordOAuth2Client {
         Ok(resp)
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, err)]
     pub async fn refresh_token(&self, refresh_token: &str) -> Result<DiscordOAuth2Token> {
         Ok(self
             .oauth_client
@@ -102,7 +102,7 @@ impl DiscordOAuth2Client {
             .await?)
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, err)]
     pub async fn revoke_token(&self, refresh_token: &str) -> Result<()> {
         Ok(self
             .oauth_client
@@ -113,7 +113,7 @@ impl DiscordOAuth2Client {
             .await?)
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, err)]
     async fn send(
         &self,
         request: HttpRequest,
