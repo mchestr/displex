@@ -56,6 +56,7 @@ async fn refresh_token(services: &AppServices, discord_token: &discord_token::Mo
         .discord_service
         .refresh_token(&discord_token.refresh_token)
         .await?;
+    tracing::info!("new token: {:?}", new_token);
     let expires_at = chrono::Utc::now()
         + chrono::Duration::seconds(
             new_token
