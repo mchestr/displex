@@ -35,7 +35,7 @@ pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {
                 token.discord_user_id,
                 token.expires_at
             );
-            match refresh_token(&services, &token).await {
+            match refresh_token(services, &token).await {
                 Ok(_) => {
                     tracing::info!("Success");
                     services
