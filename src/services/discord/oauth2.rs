@@ -135,13 +135,7 @@ impl DiscordOAuth2Client {
         let chunks = response.bytes().await?;
 
         tracing::Span::current().record("status", status_code.as_str());
-        tracing::Span::current().record(
-            "body",
-            match str::from_utf8(&chunks) {
-                Ok(body) => body,
-                Err(_) => "decode_error",
-            },
-        );
+        tracing::Span::current().record("body", str::from_utf8(&chunks).unwrap_or("decode_error"));
         tracing::info!("got Discord OAuth2 response");
         Ok(HttpResponse {
             status_code,
