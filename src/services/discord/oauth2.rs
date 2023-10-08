@@ -140,6 +140,7 @@ impl DiscordOAuth2Client {
             Ok(body) => body,
             Err(_) => "decode_error",
         });
+        tracing::info!("got Discord OAuth2 response");
         Ok(HttpResponse {
             status_code,
             headers,
