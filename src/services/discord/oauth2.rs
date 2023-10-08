@@ -20,9 +20,8 @@ use oauth2::{
     TokenUrl,
 };
 use reqwest::Url;
-use tracing::instrument;
 use std::str;
-
+use tracing::instrument;
 
 type OAuth2Client = oauth2::Client<
     oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
@@ -136,10 +135,13 @@ impl DiscordOAuth2Client {
         let chunks = response.bytes().await?;
 
         tracing::Span::current().record("status", status_code.as_str());
-        tracing::Span::current().record("body", match str::from_utf8(&chunks) {
-            Ok(body) => body,
-            Err(_) => "decode_error",
-        });
+        tracing::Span::current().record(
+            "body",
+            match str::from_utf8(&chunks) {
+                Ok(body) => body,
+                Err(_) => "decode_error",
+            },
+        );
         tracing::info!("got Discord OAuth2 response");
         Ok(HttpResponse {
             status_code,
