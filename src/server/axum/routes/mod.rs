@@ -7,6 +7,7 @@ use async_graphql_axum::{
     GraphQLResponse,
 };
 use axum::{
+    extract::State,
     http::HeaderMap,
     response::{
         Html,
@@ -17,7 +18,11 @@ use axum::{
     Router,
 };
 
-use reqwest::header::AUTHORIZATION;
+use prometheus_client::encoding::text::encode;
+use reqwest::header::{
+    self,
+    AUTHORIZATION,
+};
 use tower_cookies::Cookies;
 
 use crate::{
@@ -57,8 +62,24 @@ async fn graphql_playground() -> impl IntoResponse {
     Html(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
 }
 
+async fn metrics(State(state): State<DisplexState>) -> impl IntoResponse {
+    let mut body = String::new();
+    encode(&mut body, &state.registry).unwrap();
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        "application/openmetrics-text; version=1.0.0; charset=utf-8"
+            .parse()
+            .unwrap(),
+    );
+    (headers, body)
+}
+
 pub fn configure(config: &AppConfig) -> Router<DisplexState> {
-    let router = Router::new().merge(discord::routes()).merge(plex::routes());
+    let router = Router::new()
+        .merge(discord::routes())
+        .merge(plex::routes())
+        .route("/metrics", get(metrics));
     if config.api.enabled {
         tracing::info!("GraphQL API is enabled");
         router.route("/graphql", get(graphql_playground).post(graphql_handler))

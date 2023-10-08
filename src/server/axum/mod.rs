@@ -6,6 +6,7 @@ use axum_sessions::{
     async_session::CookieStore,
     SessionLayer,
 };
+use prometheus_client::registry::Registry;
 use reqwest::{
     header,
     Method,
@@ -21,6 +22,10 @@ use tower_http::{
 use crate::{
     config::AppConfig,
     graphql::GraphqlSchema,
+    metrics::{
+        new_registry,
+        Metrics,
+    },
     services::AppServices,
 };
 
@@ -34,6 +39,8 @@ pub const DISCORD_STATE: &str = "state";
 pub struct DisplexState {
     pub config: AppConfig,
     pub services: AppServices,
+    pub metrics: Metrics,
+    pub registry: std::sync::Arc<Registry>,
 }
 
 pub async fn run(
@@ -63,11 +70,15 @@ pub async fn run(
         .allow_credentials(true);
 
     let addr = format!("{}:{}", &config.http.host, &config.http.port);
+    let metrics = Metrics::new();
+    let registry = std::sync::Arc::new(new_registry(&metrics));
     let app = Router::new()
         .merge(routes::configure(&config))
         .with_state(DisplexState {
             config,
             services: services.clone(),
+            metrics,
+            registry,
         })
         .layer(session_layer)
         .layer(Extension(schema.clone()))
