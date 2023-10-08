@@ -49,7 +49,7 @@ impl OverseerrService {
         }
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, level = "debug")]
     pub async fn get_users(&self) -> Result<Vec<User>> {
         let result: ApiResponse<User> = self
             .client

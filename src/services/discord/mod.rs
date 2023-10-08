@@ -53,7 +53,7 @@ impl DiscordService {
         }
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, level = "debug")]
     pub async fn link_application(
         &self,
         application_id: u64,
@@ -71,25 +71,7 @@ impl DiscordService {
         Ok(())
     }
 
-    #[instrument(skip(self), ret)]
-    pub async fn unlink_application(
-        &self,
-        application_id: u64,
-        metadata: ApplicationMetadataUpdate,
-        token: &str,
-    ) -> Result<()> {
-        self.client
-            .put(format_url(&format!(
-                "/users/@me/applications/{application_id}/role-connection"
-            )))
-            .bearer_auth(token)
-            .json(&metadata)
-            .send()
-            .await?;
-        Ok(())
-    }
-
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, level = "debug")]
     pub async fn user(&self, token: &str) -> Result<User> {
         Ok(self
             .client
@@ -121,17 +103,17 @@ impl DiscordService {
         self.oauth2_client.revoke_token(refresh_token).await
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, level = "debug")]
     pub async fn get_guild_roles(&self, guild_id: u64) -> Result<Vec<Role>> {
         Ok(self.discord_http_client.get_guild_roles(guild_id).await?)
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, level = "debug")]
     pub async fn get_channels(&self, guild_id: u64) -> Result<Vec<GuildChannel>> {
         Ok(self.discord_http_client.get_channels(guild_id).await?)
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, level = "debug")]
     pub async fn create_channel(
         &self,
         guild_id: u64,
@@ -144,7 +126,7 @@ impl DiscordService {
             .await?)
     }
 
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self), ret, level = "debug")]
     pub async fn edit_channel(
         &self,
         channel_id: u64,
