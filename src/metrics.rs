@@ -49,6 +49,10 @@ impl Metrics {
 
 pub fn new_registry(metrics: &Metrics) -> Registry {
     let mut registry = Registry::default();
-    registry.register("displex_counters", "counter metrics", metrics.counters.clone());
+    registry.register(
+        "displex_counters",
+        "counter metrics",
+        metrics.counters.clone(),
+    );
     registry
 }
