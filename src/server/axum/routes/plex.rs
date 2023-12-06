@@ -13,6 +13,7 @@ use axum::{
     routing::get,
     Router,
 };
+use cookie::Key;
 use oauth2::TokenResponse;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
@@ -73,7 +74,9 @@ async fn callback(
         .pin_claim(query_string.id, &query_string.code)
         .await?;
 
-    let discord_token = cookies
+    let key = Key::from(state.config.session.secret_key.as_bytes());
+    let signed = cookies.signed(&key);
+    let discord_token = signed
         .get(DISCORD_CODE)
         .ok_or_else(|| anyhow!("no code found for session"))?;
 

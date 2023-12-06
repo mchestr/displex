@@ -15,6 +15,7 @@ use axum::{
 };
 use cookie::{
     time::OffsetDateTime,
+    Key,
     SameSite,
 };
 use serde::Deserialize;
@@ -39,6 +40,9 @@ async fn linked_role(
     let (url, persist_state) = state.services.discord_service.authorize_url();
 
     let persist_state = String::from(persist_state.secret());
+
+    let key = Key::from(state.config.session.secret_key.as_bytes());
+    let signed = cookies.signed(&key);
     let cookie = Cookie::build((DISCORD_STATE, persist_state))
         .same_site(SameSite::Lax)
         .http_only(true)
@@ -46,7 +50,7 @@ async fn linked_role(
         .path("/")
         .expires(OffsetDateTime::now_utc() + Duration::from_secs(300))
         .build();
-    cookies.add(cookie);
+    signed.add(cookie);
 
     Ok(Redirect::to(url.as_str()))
 }
@@ -62,12 +66,16 @@ async fn callback(
     State(state): State<DisplexState>,
     query_string: Query<CallbackQueryParams>,
 ) -> Result<impl IntoResponse, DisplexError> {
-    let session_state = cookies
+    let key = Key::from(state.config.session.secret_key.as_bytes());
+    let signed = cookies.signed(&key);
+    let session_state = signed
         .get(DISCORD_STATE)
         .ok_or_else(|| anyhow!("session state is invalid"))?;
     verify_state(session_state.value(), &query_string.state)?;
 
     let code = String::from(&query_string.code);
+    let key = Key::from(state.config.session.secret_key.as_bytes());
+    let signed = cookies.signed(&key);
     let cookie = Cookie::build((DISCORD_CODE, code))
         .same_site(SameSite::Lax)
         .http_only(true)
@@ -75,7 +83,7 @@ async fn callback(
         .path("/")
         .expires(OffsetDateTime::now_utc() + Duration::from_secs(300))
         .build();
-    cookies.add(cookie);
+    signed.add(cookie);
 
     let pin = state.services.plex_service.get_pin().await?;
     let url = state
