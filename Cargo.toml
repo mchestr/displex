@@ -88,7 +88,7 @@ sea-orm-migration = "0.12.6"
 sea-query = "0.30.4"
 tower-cookies = "0.10.0"
 thiserror = "1.0.50"
-prometheus-client = "0.21.2"
+prometheus-client = "0.22.0"
 
 
 [[bin]]
