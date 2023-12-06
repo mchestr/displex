@@ -73,7 +73,7 @@ tracing = "0.1"
 tracing-actix-web = "0.7.7"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.4.1", features = ["fast-rng"] }
-sea-orm = { version = "0.12.3", features = [
+sea-orm = { version = "0.12.8", features = [
     "sqlx-mysql",
     "sqlx-postgres",
     "sqlx-sqlite",
@@ -84,7 +84,7 @@ sea-orm = { version = "0.12.3", features = [
     "with-rust_decimal",
     "debug-print",
 ] }
-sea-orm-migration = "0.12.3"
+sea-orm-migration = "0.12.6"
 sea-query = "0.30.4"
 tower-cookies = "0.9.0"
 thiserror = "1.0.50"
