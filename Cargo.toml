@@ -75,7 +75,7 @@ tower-http = { version = "0.5.0", features = ["catch-panic", "cors", "trace"] }
 tracing = "0.1"
 tracing-actix-web = "0.7.9"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-uuid = { version = "1.4.1", features = ["fast-rng"] }
+uuid = { version = "1.6.1", features = ["fast-rng"] }
 sea-orm = { version = "0.12.8", features = [
     "sqlx-mysql",
     "sqlx-postgres",
