@@ -13,10 +13,10 @@ use axum::{
     routing::get,
     Router,
 };
-use axum_sessions::extractors::ReadableSession;
 use oauth2::TokenResponse;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
+use tower_cookies::Cookies;
 
 use crate::{
     errors::DisplexError,
@@ -56,7 +56,7 @@ struct CallbackQueryParams {
 }
 
 async fn callback(
-    session: ReadableSession,
+    cookies: Cookies,
     State(state): State<DisplexState>,
     query_string: Query<CallbackQueryParams>,
 ) -> Result<impl IntoResponse, DisplexError> {
@@ -73,8 +73,8 @@ async fn callback(
         .pin_claim(query_string.id, &query_string.code)
         .await?;
 
-    let discord_token = session
-        .get::<String>(DISCORD_CODE)
+    let discord_token = cookies
+        .get(DISCORD_CODE)
         .ok_or_else(|| anyhow!("no code found for session"))?;
 
     let is_subscribed = plex_svc
@@ -83,7 +83,7 @@ async fn callback(
         .iter()
         .any(|d| d.client_identifier == state.config.plex.server_id);
 
-    let token = discord_svc.token(&discord_token).await?;
+    let token = discord_svc.token(discord_token.value()).await?;
     let d_access_token = String::from(token.access_token().secret());
     let discord_user = discord_svc.user(&d_access_token).await?;
     let discord_user_id = String::from(&discord_user.id);

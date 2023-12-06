@@ -2,16 +2,12 @@ use axum::{
     Extension,
     Router,
 };
-use axum_sessions::{
-    async_session::CookieStore,
-    SessionLayer,
-};
+
 use prometheus_client::registry::Registry;
-use reqwest::{
-    header,
-    Method,
+use tokio::{
+    net::TcpListener,
+    sync::broadcast::Receiver,
 };
-use tokio::sync::broadcast::Receiver;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{
     catch_panic::CatchPanicLayer,
@@ -44,21 +40,14 @@ pub struct DisplexState {
 }
 
 pub async fn run(
-    mut kill: Receiver<()>,
+    _kill: Receiver<()>,
     config: AppConfig,
     services: &AppServices,
     schema: &GraphqlSchema,
 ) {
-    let store = CookieStore::new();
-    let secret = &config.session.secret_key;
-    let session_layer = SessionLayer::new(store, secret.as_bytes())
-        .with_secure(true)
-        .with_same_site_policy(axum_sessions::SameSite::Lax)
-        .with_cookie_domain(&config.http.hostname);
-
     let cors = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST])
-        .allow_headers([header::ACCEPT, header::CONTENT_TYPE])
+        .allow_methods([http::Method::GET, http::Method::POST])
+        .allow_headers([http::header::ACCEPT, http::header::CONTENT_TYPE])
         .allow_origin(
             config
                 .web
@@ -80,7 +69,7 @@ pub async fn run(
             metrics,
             registry,
         })
-        .layer(session_layer)
+        .layer(CookieManagerLayer::new())
         .layer(Extension(schema.clone()))
         .layer(TraceLayer::new_for_http())
         .layer(CatchPanicLayer::new())
@@ -88,13 +77,6 @@ pub async fn run(
         .layer(cors);
 
     tracing::info!("starting server on {}", &addr);
-    axum::Server::bind(&addr.parse().unwrap())
-        .serve(app.into_make_service())
-        .with_graceful_shutdown(async {
-            tokio::select! {
-                _ = kill.recv() => tracing::info!("shutting down http server..."),
-            }
-        })
-        .await
-        .unwrap();
+    let listener = TcpListener::bind(&addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

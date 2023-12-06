@@ -5,11 +5,13 @@ use crate::{
     services::discord::models::ApplicationMetadataDefinition,
 };
 use anyhow::Result;
-use axum::http::HeaderValue;
 
 pub async fn run(config: &AppConfig) -> Result<()> {
     let mut default_headers = reqwest::header::HeaderMap::new();
-    default_headers.append("Accept", HeaderValue::from_static("application/json"));
+    default_headers.append(
+        "Accept",
+        reqwest::header::HeaderValue::from_static("application/json"),
+    );
 
     let reqwest_client = reqwest::ClientBuilder::new()
         .connect_timeout(Duration::from_secs(10))

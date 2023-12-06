@@ -23,7 +23,7 @@ lto = "thin"
 
 [package]
 name = "displex"
-version = "0.11.15"
+version = "0.12.0"
 edition = "2021"
 authors = ["Mike Chester <mike@chestr.dev>"]
 readme = "README.md"
@@ -36,7 +36,6 @@ default-run = "displex"
 anyhow = "1.0.75"
 async-trait = "0.1.69"
 axum = { version = "0.7.2", features = ["tracing"] }
-axum-sessions = "0.5.0"
 async-graphql-axum = "6.0.11"
 async-graphql = { version = "6.0.11", features = [
     "chrono",
@@ -46,12 +45,15 @@ async-graphql = { version = "6.0.11", features = [
 ] }
 chrono = { version = "0.4.31", features = ["serde"] }
 clap = { version = "4.3.10", features = ["derive", "env"] }
+cookie = { version = "0.18", features = ["percent-encode"] }
 derivative = "2.2.0"
 derive_more = "0.99.17"
 dotenvy = "0.15.7"
 figment = { version = "0.10.12", features = ["env", "json", "toml", "yaml"] }
 humantime = "2.1.0"
 humantime-serde = "1.1.1"
+hyper = { version = "1.0", features = [] }
+hyper-util = { version = "0.1", features = ["tokio", "server-auto", "http1"] }
 oauth2 = "4"
 reqwest = { version = "0.11.22", features = [
     "json",
@@ -68,6 +70,7 @@ sqlx = { version = "0.7.2", features = [
     "chrono",
 ] }
 tokio = { version = "1", features = ["full", "tracing"] }
+tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.5.0", features = ["catch-panic", "cors", "trace"] }
 tracing = "0.1"
 tracing-actix-web = "0.7.9"
@@ -89,7 +92,7 @@ sea-query = "0.30.4"
 tower-cookies = "0.10.0"
 thiserror = "1.0.50"
 prometheus-client = "0.22.0"
-
+http = "1.0.0"
 
 [[bin]]
 name = "displex"

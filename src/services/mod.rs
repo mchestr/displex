@@ -1,4 +1,3 @@
-use axum::http::HeaderValue;
 use sea_orm::DatabaseConnection;
 use serenity::http::HttpBuilder;
 
@@ -46,7 +45,10 @@ pub async fn create_app_services(
     config: &AppConfig,
 ) -> (serenity::Client, AppServices) {
     let mut default_headers = reqwest::header::HeaderMap::new();
-    default_headers.append("Accept", HeaderValue::from_static("application/json"));
+    default_headers.append(
+        "Accept",
+        reqwest::header::HeaderValue::from_static("application/json"),
+    );
 
     let reqwest_client = reqwest::ClientBuilder::new()
         .connect_timeout(config.http_client.connect_timeout)

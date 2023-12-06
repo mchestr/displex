@@ -11,8 +11,11 @@ use axum::{
     routing::get,
     Router,
 };
-use axum_sessions::extractors::WritableSession;
 use serde::Deserialize;
+use tower_cookies::{
+    Cookie,
+    Cookies,
+};
 
 use crate::{
     errors::DisplexError,
@@ -24,11 +27,13 @@ use crate::{
 };
 
 async fn linked_role(
-    mut session: WritableSession,
+    cookies: Cookies,
     State(state): State<DisplexState>,
 ) -> Result<impl IntoResponse, DisplexError> {
     let (url, state) = state.services.discord_service.authorize_url();
-    session.insert(DISCORD_STATE, state.secret())?;
+
+    let state = String::from(state.secret());
+    cookies.add(Cookie::new(DISCORD_STATE, state));
 
     Ok(Redirect::to(url.as_str()))
 }
@@ -40,16 +45,17 @@ struct CallbackQueryParams {
 }
 
 async fn callback(
-    mut session: WritableSession,
+    cookies: Cookies,
     State(state): State<DisplexState>,
     query_string: Query<CallbackQueryParams>,
 ) -> Result<impl IntoResponse, DisplexError> {
-    let session_state = session
-        .get::<String>(DISCORD_STATE)
+    let session_state = cookies
+        .get(DISCORD_STATE)
         .ok_or_else(|| anyhow!("session state is invalid"))?;
-    verify_state(&session_state, &query_string.state)?;
+    verify_state(session_state.value(), &query_string.state)?;
 
-    session.insert(DISCORD_CODE, &query_string.code)?;
+    let code = String::from(&query_string.code);
+    cookies.add(Cookie::new(DISCORD_CODE, code));
 
     let pin = state.services.plex_service.get_pin().await?;
     let url = state
