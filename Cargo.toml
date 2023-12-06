@@ -23,7 +23,7 @@ lto = "thin"
 
 [package]
 name = "displex"
-version = "0.12.2"
+version = "0.12.3"
 edition = "2021"
 authors = ["Mike Chester <mike@chestr.dev>"]
 readme = "README.md"
