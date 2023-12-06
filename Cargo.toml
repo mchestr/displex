@@ -68,7 +68,7 @@ sqlx = { version = "0.7.2", features = [
     "chrono",
 ] }
 tokio = { version = "1", features = ["full", "tracing"] }
-tower-http = { version = "0.4.4", features = ["catch-panic", "cors", "trace"] }
+tower-http = { version = "0.5.0", features = ["catch-panic", "cors", "trace"] }
 tracing = "0.1"
 tracing-actix-web = "0.7.7"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
