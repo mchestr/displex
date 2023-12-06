@@ -361,7 +361,7 @@ checksum = "01a1c20a2059bffbc95130715b23435a05168c518fba9709c81fa2a38eed990c"
 dependencies = [
  "async-graphql",
  "async-trait",
- "axum",
+ "axum 0.6.20",
  "bytes",
  "futures-util",
  "serde_json",
@@ -530,7 +530,7 @@ dependencies = [
  "headers",
  "http 0.2.9",
  "http-body 0.4.5",
- "hyper",
+ "hyper 0.14.27",
  "itoa",
  "matchit",
  "memchr",
@@ -546,6 +546,39 @@ dependencies = [
  "sync_wrapper",
  "tokio",
  "tokio-tungstenite",
+ "tower",
+ "tower-layer",
+ "tower-service",
+]
+
+[[package]]
+name = "axum"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "202651474fe73c62d9e0a56c6133f7a0ff1dc1c8cf7a5b03381af2a26553ac9d"
+dependencies = [
+ "async-trait",
+ "axum-core 0.4.1",
+ "bytes",
+ "futures-util",
+ "http 1.0.0",
+ "http-body 1.0.0",
+ "http-body-util",
+ "hyper 1.0.1",
+ "hyper-util",
+ "itoa",
+ "matchit",
+ "memchr",
+ "mime",
+ "percent-encoding",
+ "pin-project-lite",
+ "rustversion",
+ "serde",
+ "serde_json",
+ "serde_path_to_error",
+ "serde_urlencoded",
+ "sync_wrapper",
+ "tokio",
  "tower",
  "tower-layer",
  "tower-service",
@@ -567,7 +600,6 @@ dependencies = [
  "rustversion",
  "tower-layer",
  "tower-service",
- "tracing",
 ]
 
 [[package]]
@@ -588,6 +620,7 @@ dependencies = [
  "sync_wrapper",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -596,7 +629,7 @@ version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a93e433be9382c737320af3924f7d5fc6f89c155cf2bf88949d8f5126fab283f"
 dependencies = [
- "axum",
+ "axum 0.6.20",
  "axum-core 0.3.4",
  "bytes",
  "cookie 0.17.0",
@@ -614,12 +647,12 @@ dependencies = [
 
 [[package]]
 name = "axum-sessions"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "714cad544cd87d8da821cda715bb9aaa5d4d1adbdb64c549b18138e3cbf93c44"
+checksum = "c84930174d586fdc66a8c317cdf48b8bb487a1d079c38efc67d81a80c11c664f"
 dependencies = [
  "async-session",
- "axum",
+ "axum 0.6.20",
  "axum-extra",
  "futures",
  "http-body 0.4.5",
@@ -1208,7 +1241,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-axum",
  "async-trait",
- "axum",
+ "axum 0.7.2",
  "axum-sessions",
  "chrono",
  "clap",
@@ -1553,6 +1586,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "h2"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1d308f63daf4181410c242d34c11f928dcb3aa105852019e043c9d1f4e4368a"
+dependencies = [
+ "bytes",
+ "fnv",
+ "futures-core",
+ "futures-sink",
+ "futures-util",
+ "http 1.0.0",
+ "indexmap 2.0.2",
+ "slab",
+ "tokio",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
 name = "handlebars"
 version = "4.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1779,7 +1831,7 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-util",
- "h2",
+ "h2 0.3.21",
  "http 0.2.9",
  "http-body 0.4.5",
  "httparse",
@@ -1794,6 +1846,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyper"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "403f9214f3e703236b221f1a9cd88ec8b4adfa5296de01ab96216361f4692f56"
+dependencies = [
+ "bytes",
+ "futures-channel",
+ "futures-util",
+ "h2 0.4.0",
+ "http 1.0.0",
+ "http-body 1.0.0",
+ "httparse",
+ "httpdate",
+ "itoa",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "hyper-rustls"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1801,10 +1872,30 @@ checksum = "8d78e1e73ec14cf7375674f74d7dde185c8206fd9dea6fb6295e8a98098aaa97"
 dependencies = [
  "futures-util",
  "http 0.2.9",
- "hyper",
+ "hyper 0.14.27",
  "rustls 0.21.7",
  "tokio",
  "tokio-rustls 0.24.1",
+]
+
+[[package]]
+name = "hyper-util"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ca339002caeb0d159cc6e023dff48e199f081e42fa039895c7c6f38b37f2e9d"
+dependencies = [
+ "bytes",
+ "futures-channel",
+ "futures-util",
+ "http 1.0.0",
+ "http-body 1.0.0",
+ "hyper 1.0.1",
+ "pin-project-lite",
+ "socket2 0.5.4",
+ "tokio",
+ "tower",
+ "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -2691,10 +2782,10 @@ dependencies = [
  "encoding_rs",
  "futures-core",
  "futures-util",
- "h2",
+ "h2 0.3.21",
  "http 0.2.9",
  "http-body 0.4.5",
- "hyper",
+ "hyper 0.14.27",
  "hyper-rustls",
  "ipnet",
  "js-sys",
