@@ -1,3 +1,7 @@
 mod ping;
+mod status;
 
-pub use self::ping::*;
+pub use self::{
+    ping::*,
+    status::*,
+};

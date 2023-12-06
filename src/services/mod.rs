@@ -83,7 +83,7 @@ pub async fn create_app_services(
 
     let discord_service = DiscordService::new(
         &reqwest_client,
-        &serenity_client.cache_and_http.http.clone(),
+        &serenity_client.http.clone(),
         config.discord.client_id,
         &config.discord.client_secret,
         &format!("https://{}/auth/discord/callback", &config.http.hostname),

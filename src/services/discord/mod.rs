@@ -2,6 +2,10 @@ use ::oauth2::CsrfToken;
 use anyhow::Result;
 use reqwest::Url;
 use serenity::{
+    all::{
+        ChannelId,
+        GuildId,
+    },
     http::Http,
     json::JsonMap,
     model::prelude::{
@@ -105,12 +109,18 @@ impl DiscordService {
 
     #[instrument(skip(self), ret, level = "debug")]
     pub async fn get_guild_roles(&self, guild_id: u64) -> Result<Vec<Role>> {
-        Ok(self.discord_http_client.get_guild_roles(guild_id).await?)
+        Ok(self
+            .discord_http_client
+            .get_guild_roles(GuildId::new(guild_id))
+            .await?)
     }
 
     #[instrument(skip(self), ret, level = "debug")]
     pub async fn get_channels(&self, guild_id: u64) -> Result<Vec<GuildChannel>> {
-        Ok(self.discord_http_client.get_channels(guild_id).await?)
+        Ok(self
+            .discord_http_client
+            .get_channels(GuildId::new(guild_id))
+            .await?)
     }
 
     #[instrument(skip(self), ret, level = "debug")]
@@ -122,7 +132,7 @@ impl DiscordService {
     ) -> Result<GuildChannel> {
         Ok(self
             .discord_http_client
-            .create_channel(guild_id, map, audit_log_reason)
+            .create_channel(GuildId::new(guild_id), map, audit_log_reason)
             .await?)
     }
 
@@ -135,7 +145,7 @@ impl DiscordService {
     ) -> Result<GuildChannel> {
         Ok(self
             .discord_http_client
-            .edit_channel(channel_id, map, audit_log_reason)
+            .edit_channel(ChannelId::new(channel_id), map, audit_log_reason)
             .await?)
     }
 }

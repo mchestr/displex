@@ -100,17 +100,17 @@ pub async fn run(config: &AppConfig, services: &AppServices) -> Result<()> {
         | Permissions::CONNECT;
 
     let mut bot_permissions = JsonMap::new();
-    bot_permissions.insert("id".into(), bot_role.id.0.into());
+    bot_permissions.insert("id".into(), bot_role.id.get().into());
     bot_permissions.insert("type".into(), 0.into());
     bot_permissions.insert("allow".into(), bot_perms.bits().into());
 
     let mut sub_permissions = JsonMap::new();
-    sub_permissions.insert("id".into(), sub_role.id.0.into());
+    sub_permissions.insert("id".into(), sub_role.id.get().into());
     sub_permissions.insert("type".into(), 0.into());
     sub_permissions.insert("allow".into(), sub_perms.bits().into());
 
     let mut everyone_permissions = JsonMap::new();
-    everyone_permissions.insert("id".into(), everyone_role.id.0.into());
+    everyone_permissions.insert("id".into(), everyone_role.id.get().into());
     everyone_permissions.insert("type".into(), 0.into());
     everyone_permissions.insert("deny".into(), everyone_perms.bits().into());
 
@@ -173,8 +173,9 @@ async fn create_category(
     config: CreateChannelConfig,
 ) -> Result<GuildChannel> {
     let mut create_channel_map = JsonMap::new();
+    let channel_type: u8 = config.type_.into();
     create_channel_map.insert("name".into(), config.name_prefix.as_str().into());
-    create_channel_map.insert("type".into(), config.type_.num().into());
+    create_channel_map.insert("type".into(), channel_type.into());
     create_channel_map.insert("permission_overwrites".into(), config.permissions.into());
 
     if let Some(position) = config.position {
@@ -199,7 +200,7 @@ async fn update_channel_name(
         tracing::info!("updating channel name {new_name}");
         let mut map = JsonMap::new();
         map.insert("name".into(), new_name.into());
-        client.edit_channel(channel.id.0, &map, None).await?;
+        client.edit_channel(channel.id.get(), &map, None).await?;
     } else {
         tracing::debug!("channel name is the same, skipping...");
     }
@@ -385,7 +386,7 @@ async fn generate_stats_categories(
                     },
                 )
                 .await?;
-                let category_id = category.channel.id.0;
+                let category_id = category.channel.id.get();
                 stat_channels.status = Some(category);
 
                 if let Some(name) = &config.stream_name {
@@ -511,7 +512,7 @@ async fn generate_library_categories(
                     },
                 )
                 .await?;
-                let category_id = category.channel.id.0;
+                let category_id = category.channel.id.get();
 
                 if let Some(name) = &config.movies_name {
                     lib_channels.movies = Some(

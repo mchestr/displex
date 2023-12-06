@@ -62,7 +62,7 @@ reqwest = { version = "0.11.22", features = [
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_qs = "0.12.0"
-serenity = "0.11"
+serenity = "0.12"
 sqlx = { version = "0.7.2", features = [
     "runtime-tokio-rustls",
     "postgres",
