@@ -2099,6 +2099,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "mutually_exclusive_features"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d02c0b00610773bb7fc61d85e13d86c7858cbdf00e1a120bfc41bc055dbaa0e"
+
+[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4026,11 +4032,12 @@ dependencies = [
 
 [[package]]
 name = "tracing-actix-web"
-version = "0.7.7"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94982c2ad939d5d0bfd71c2f9b7ed273c72348485c72bb87bb4db6bd69df10cb"
+checksum = "1fe0d5feac3f4ca21ba33496bcb1ccab58cca6412b1405ae80f0581541e0ca78"
 dependencies = [
  "actix-web",
+ "mutually_exclusive_features",
  "pin-project",
  "tracing",
  "uuid",
