@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::anyhow;
 use axum::{
     extract::{
@@ -10,6 +12,10 @@ use axum::{
     },
     routing::get,
     Router,
+};
+use cookie::{
+    time::OffsetDateTime,
+    SameSite,
 };
 use serde::Deserialize;
 use tower_cookies::{
@@ -30,10 +36,17 @@ async fn linked_role(
     cookies: Cookies,
     State(state): State<DisplexState>,
 ) -> Result<impl IntoResponse, DisplexError> {
-    let (url, state) = state.services.discord_service.authorize_url();
+    let (url, persist_state) = state.services.discord_service.authorize_url();
 
-    let state = String::from(state.secret());
-    cookies.add(Cookie::new(DISCORD_STATE, state));
+    let persist_state = String::from(persist_state.secret());
+    let cookie = Cookie::build((DISCORD_STATE, persist_state))
+        .same_site(SameSite::Lax)
+        .http_only(true)
+        .secure(true)
+        .path("/")
+        .expires(OffsetDateTime::now_utc() + Duration::from_secs(300))
+        .build();
+    cookies.add(cookie);
 
     Ok(Redirect::to(url.as_str()))
 }
@@ -55,7 +68,14 @@ async fn callback(
     verify_state(session_state.value(), &query_string.state)?;
 
     let code = String::from(&query_string.code);
-    cookies.add(Cookie::new(DISCORD_CODE, code));
+    let cookie = Cookie::build((DISCORD_CODE, code))
+        .same_site(SameSite::Lax)
+        .http_only(true)
+        .secure(true)
+        .path("/")
+        .expires(OffsetDateTime::now_utc() + Duration::from_secs(300))
+        .build();
+    cookies.add(cookie);
 
     let pin = state.services.plex_service.get_pin().await?;
     let url = state
