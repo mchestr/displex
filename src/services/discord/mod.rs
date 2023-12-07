@@ -40,14 +40,14 @@ pub struct DiscordService {
 impl DiscordService {
     pub fn new(
         client: &reqwest::Client,
-        discord_http_client: &Arc<Http>,
+        discord_http_client: Http,
         client_id: u64,
         client_secret: &str,
         redirect_url: &str,
     ) -> DiscordService {
         DiscordService {
             client: client.clone(),
-            discord_http_client: discord_http_client.clone(),
+            discord_http_client: Arc::new(discord_http_client),
             oauth2_client: DiscordOAuth2Client::new(
                 client.clone(),
                 client_id,

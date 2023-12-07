@@ -1,7 +1,7 @@
-mod ping;
-mod status;
+mod general;
+mod subscribers;
 
 pub use self::{
-    ping::*,
-    status::*,
+    general::*,
+    subscribers::*,
 };

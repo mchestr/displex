@@ -487,4 +487,14 @@ impl DiscordUsersService {
             .all(&self.db)
             .await?)
     }
+
+    pub async fn list_subscriber_tokens(
+        &self,
+    ) -> Result<Vec<(discord_user::Model, Option<discord_token::Model>)>> {
+        Ok(DiscordUser::find()
+            .find_also_related(discord_token::Entity)
+            .filter(discord_token::Column::Status.eq(discord_token::TokenStatus::Active))
+            .all(&self.db)
+            .await?)
+    }
 }

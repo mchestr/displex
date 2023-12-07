@@ -1,5 +1,8 @@
 use sea_orm::DatabaseConnection;
-use serenity::http::HttpBuilder;
+use serenity::{
+    http::HttpBuilder,
+    prelude::TypeMapKey,
+};
 
 use crate::{
     bot,
@@ -38,6 +41,7 @@ pub struct AppServices {
     pub plex_service: PlexService,
     pub overseerr_service: OverseerrService,
     pub db: DatabaseConnection,
+    pub reqwest_client: reqwest::Client,
 }
 
 pub async fn create_app_services(
@@ -77,13 +81,10 @@ pub async fn create_app_services(
     let http_client = HttpBuilder::new(&config.discord_bot.token)
         .client(reqwest_client.clone())
         .build();
-    let serenity_client = bot::discord::init(config.clone(), http_client)
-        .await
-        .unwrap();
 
     let discord_service = DiscordService::new(
         &reqwest_client,
-        &serenity_client.http.clone(),
+        http_client,
         config.discord.client_id,
         &config.discord.client_secret,
         &format!("https://{}/auth/discord/callback", &config.http.hostname),
@@ -100,18 +101,24 @@ pub async fn create_app_services(
         &config.overseerr.api_key,
         &tautulli_service,
     );
-    (
-        serenity_client,
-        AppServices {
-            discord_users_service,
-            discord_tokens_service,
-            plex_users_service,
-            plex_tokens_service,
-            tautulli_service,
-            discord_service,
-            plex_service,
-            overseerr_service,
-            db,
-        },
-    )
+
+    let services = AppServices {
+        discord_users_service,
+        discord_tokens_service,
+        plex_users_service,
+        plex_tokens_service,
+        tautulli_service,
+        discord_service,
+        plex_service,
+        overseerr_service,
+        db,
+        reqwest_client,
+    };
+
+    let serenity_client = bot::discord::init(config.clone(), &services).await.unwrap();
+    (serenity_client, services)
+}
+
+impl TypeMapKey for AppServices {
+    type Value = AppServices;
 }
