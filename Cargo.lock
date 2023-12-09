@@ -2927,9 +2927,9 @@ dependencies = [
 
 [[package]]
 name = "sea-orm"
-version = "0.12.8"
+version = "0.12.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8e2dd2f8a2d129c1632ec45dcfc15c44cc3d8b969adc8ac58c5f011ca7aecee"
+checksum = "c5181eedee8ad0d002d2a288600140fe9937581c4668426a4ff1295c14c736cf"
 dependencies = [
  "async-stream",
  "async-trait",
