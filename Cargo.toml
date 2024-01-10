@@ -88,7 +88,7 @@ sea-orm = { version = "0.12.9", features = [
     "debug-print",
 ] }
 sea-orm-migration = "0.12.6"
-sea-query = "0.30.4"
+sea-query = "0.30.6"
 tower-cookies = { version = "0.10.0", features = ["signed"] }
 thiserror = "1.0.56"
 prometheus-client = "0.22.0"
