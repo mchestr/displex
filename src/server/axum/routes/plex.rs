@@ -198,7 +198,7 @@ async fn callback(
             )
             .await?;
 
-        if let Some(latest) = watch_stats.get(0) {
+        if let Some(latest) = watch_stats.first() {
             data.metadata.watched_hours = latest.total_time / 3600;
         };
     };
