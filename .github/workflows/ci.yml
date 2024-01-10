@@ -14,7 +14,6 @@ env:
 
 jobs:
   check:
-    if: ${{ github.event.pull_request.head.repo.full_name == 'mchestr/displex' }}
     name: "Cargo check"
     runs-on: "ubuntu-latest"
     steps:
@@ -32,7 +31,6 @@ jobs:
           command: "check"
 
   test:
-    if: ${{ github.event.pull_request.head.repo.full_name == 'mchestr/displex' }}
     name: "Cargo test"
     runs-on: "ubuntu-latest"
     steps:
@@ -50,7 +48,6 @@ jobs:
           command: "test"
 
   fmt:
-    if: ${{ github.event.pull_request.head.repo.full_name == 'mchestr/displex' }}
     name: "Cargo format"
     runs-on: "ubuntu-latest"
     steps:
@@ -71,7 +68,6 @@ jobs:
           args: "--all -- --check"
 
   clippy:
-    if: ${{ github.event.pull_request.head.repo.full_name == 'mchestr/displex' }}
     name: "Cargo clippy"
     runs-on: "ubuntu-latest"
     steps:
@@ -92,7 +88,6 @@ jobs:
           args: "-- -D warnings"
 
   publish-docker:
-    if: ${{ github.event.pull_request.head.repo.full_name == 'mchestr/displex' }}
     name: Publish Docker image
     runs-on: ubuntu-latest
     steps:
