@@ -67,24 +67,7 @@ Script to set users metadata on Discord and how many hours they have streamed. U
 
 # Installation and setup
 
-## Requirements
-
-- A Plex Media Server
-- Tautulli
-- Overseerr
-- A Discord server
-- Valid SSL Cert
-- Docker
-- [A Discord bot token](https://www.digitaltrends.com/gaming/how-to-make-a-discord-bot/)
-  - Permissions required:
-    - Manage Channels
-    - View Channels
-    - Send Messages
-  - **Shortcut**: Use the following link to invite your bot to your server with the above permissions:
-    https://discord.com/oauth2/authorize?client_id=YOUR_APPLICATION_ID&scope=bot&permissions=2064
-
-DisPlex runs as a Docker container. The Dockerfile is included in this repository, or can be pulled
-from [GitHub Packages](https://github.com/mchestr/displex/pkgs/container/displex).
+Documentation is pretty lacking at the moment. I currently have this deployed as a mixture of deployments & cronjobs on my kubernetes cluster. The Flux HelmRelease for this can be found in my [home-cluster](https://github.com/mchestr/home-cluster/tree/main/kubernetes/apps/default/displex), it best describes how this is currently being run.
 
 # Development
 
