@@ -75,7 +75,8 @@ impl OverseerrService {
             )
             .await?;
 
-        let latest_stat = watch_stats.first()
+        let latest_stat = watch_stats
+            .first()
             .ok_or_else(|| anyhow::anyhow!("failed to fetch stats"))?;
 
         let watch_hours = latest_stat.total_time / 3600;

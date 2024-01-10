@@ -63,7 +63,8 @@ async fn refresh_user_stats(
         .get_user_watch_time_stats(&plex_user.id, Some(true), Some(QueryDays::Total))
         .await?;
 
-    let latest_stat = watch_stats.first()
+    let latest_stat = watch_stats
+        .first()
         .ok_or_else(|| anyhow::anyhow!("failed to fetch stats"))?;
 
     let metadata = ApplicationMetadataUpdate {
