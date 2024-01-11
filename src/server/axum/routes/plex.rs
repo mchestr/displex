@@ -209,7 +209,6 @@ async fn callback(
     overseerr_svc
         .verified_user(&discord_user_id, &plex_user.id.to_string())
         .await?;
-    state.metrics.inc_subscriber();
     Ok(Redirect::to(&format!(
         "discord://-/channels/{}/@home",
         state.config.discord.server_id
