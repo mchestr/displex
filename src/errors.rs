@@ -16,3 +16,15 @@ impl From<serde_json::Error> for DisplexError {
         Self(err.into())
     }
 }
+
+impl From<String> for DisplexError {
+    fn from(err: String) -> Self {
+        Self(anyhow::Error::msg(err))
+    }
+}
+
+impl From<&'static str> for DisplexError {
+    fn from(err: &'static str) -> Self {
+        Self(anyhow::Error::msg(err))
+    }
+}

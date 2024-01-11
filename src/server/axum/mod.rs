@@ -1,6 +1,5 @@
 use axum::{
     extract::Request,
-    Extension,
     Router,
 };
 
@@ -37,6 +36,7 @@ pub const DISCORD_STATE: &str = "state";
 pub struct DisplexState {
     pub config: AppConfig,
     pub services: AppServices,
+    pub schema: GraphqlSchema,
 }
 
 pub async fn run(
@@ -64,9 +64,9 @@ pub async fn run(
         .with_state(DisplexState {
             config,
             services: services.clone(),
+            schema: schema.clone(),
         })
         .layer(CookieManagerLayer::new())
-        .layer(Extension(schema.clone()))
         .layer(TraceLayer::new_for_http())
         .layer(CatchPanicLayer::new())
         .layer(CookieManagerLayer::new())
