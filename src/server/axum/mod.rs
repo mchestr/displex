@@ -50,8 +50,8 @@ pub async fn run(
         .allow_headers([http::header::ACCEPT, http::header::CONTENT_TYPE])
         .allow_origin(
             config
-                .web
-                .cors_origins
+                .api
+                .cors_allowed_origins
                 .iter()
                 .map(|f| f.parse().unwrap())
                 .collect::<Vec<_>>(),
@@ -66,10 +66,9 @@ pub async fn run(
             services: services.clone(),
             schema: schema.clone(),
         })
-        .layer(CookieManagerLayer::new())
         .layer(TraceLayer::new_for_http())
-        .layer(CatchPanicLayer::new())
         .layer(CookieManagerLayer::new())
+        .layer(CatchPanicLayer::new())
         .layer(cors);
 
     tracing::info!("starting server on {}", &addr);

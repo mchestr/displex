@@ -103,7 +103,7 @@ impl DiscordUsersMutation {
     ) -> Result<UpdateDiscordUserResult> {
         gql_ctx
             .data_unchecked::<DiscordUsersService>()
-            .update(&input.id, &input.username)
+            .update(&input.id, input.is_active)
             .await
     }
 
@@ -128,7 +128,7 @@ pub struct CreateDiscordUserInput {
 #[derive(Debug, InputObject)]
 pub struct UpdateDiscordUserInput {
     pub id: String,
-    pub username: String,
+    pub is_active: Option<bool>,
 }
 
 #[derive(Debug, InputObject)]
@@ -344,13 +344,19 @@ impl DiscordUsersService {
     }
 
     #[instrument(skip(self), ret)]
-    pub async fn update(&self, id: &str, username: &str) -> Result<UpdateDiscordUserResult> {
-        let user = discord_user::ActiveModel {
+    pub async fn update(
+        &self,
+        id: &str,
+        is_active: Option<bool>,
+    ) -> Result<UpdateDiscordUserResult> {
+        let mut user = discord_user::ActiveModel {
             id: ActiveValue::Set(id.to_owned()),
-            username: ActiveValue::Set(username.to_owned()),
             updated_at: ActiveValue::Set(Utc::now()),
             ..Default::default()
         };
+        if let Some(is_active) = is_active {
+            user.is_active = ActiveValue::Set(is_active);
+        }
         Ok(match DiscordUser::update(user).exec(&self.db).await {
             Ok(user) => UpdateDiscordUserResult::Ok(user),
             Err(DbErr::RecordNotUpdated) => UpdateDiscordUserResult::Err(UpdateDiscordUserError {

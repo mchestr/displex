@@ -1,3 +1,4 @@
+use async_graphql::SimpleObject;
 use derive_more::Display;
 use serde::{
     de::{
@@ -40,12 +41,12 @@ pub struct UserWatchStat {
     pub total_time: i32,
 }
 
-#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize, SimpleObject)]
 pub struct ServerStatus {
     pub connected: bool,
 }
 
-#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize, SimpleObject)]
 pub struct GetActivity {
     pub stream_count: String,
     pub stream_count_direct_play: u32,

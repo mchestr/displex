@@ -33,6 +33,7 @@ use crate::{
             PlexUsersMutation,
             PlexUsersQuery,
         },
+        tautulli::resolver::TautulliQuery,
         AppServices,
     },
     AUTHOR,
@@ -91,6 +92,7 @@ pub struct QueryRoot(
     DiscordUsersQuery,
     PlexTokensQuery,
     PlexUsersQuery,
+    TautulliQuery,
 );
 
 #[derive(MergedObject, Default)]
@@ -127,5 +129,6 @@ pub async fn get_schema(
     .data(app_services.discord_tokens_service.clone())
     .data(app_services.plex_users_service.clone())
     .data(app_services.plex_tokens_service.clone())
+    .data(app_services.tautulli_service.clone())
     .finish()
 }

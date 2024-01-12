@@ -141,6 +141,7 @@ impl Default for HttpClientConfig {
 pub struct ApiConfig {
     pub enabled: bool,
     pub api_key: String,
+    pub cors_allowed_origins: Vec<String>,
 }
 
 impl Default for ApiConfig {
@@ -148,6 +149,7 @@ impl Default for ApiConfig {
         Self {
             enabled: false,
             api_key: "notasecret".into(),
+            cors_allowed_origins: vec![],
         }
     }
 }
@@ -406,7 +408,6 @@ impl Default for LibraryCategoryConfig {
 
 #[derive(Deserialize, Debug, Clone, Serialize, Default)]
 pub struct WebConfig {
-    pub cors_origins: Vec<String>,
     pub insecure_cookie: bool,
 }
 
