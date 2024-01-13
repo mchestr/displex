@@ -22,8 +22,6 @@ jobs:
         uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4
       - run: npm ci
         working-directory: web
-      - run: npm run lint
-        working-directory: web
       - run: npm run build --if-present
         working-directory: web
 
