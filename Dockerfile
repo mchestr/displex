@@ -36,7 +36,7 @@ VOLUME [ "/data" ]
 WORKDIR /data
 
 USER displex
-ENV RUST_LOG="displex=debug,sea_orm=info" \
+ENV RUST_LOG="displex=info,sea_orm=info" \
     DISPLEX_HTTP__HOST=0.0.0.0 \
     DISPLEX_HTTP__PORT=8080 \
     DATABASE_URL=sqlite://displex.db?mode=rwc
