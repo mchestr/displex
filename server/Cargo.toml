@@ -95,4 +95,4 @@ http = "1.0.0"
 
 [[bin]]
 name = "displex"
-path = "server/main.rs"
+path = "src/main.rs"
