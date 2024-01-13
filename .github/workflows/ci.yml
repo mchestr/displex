@@ -21,8 +21,11 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
       - run: npm ci
+        working-directory: web
       - run: npm run lint
+        working-directory: web
       - run: npm run build --if-present
+        working-directory: web
 
   cargo-check:
     name: "Cargo check"
@@ -38,9 +41,9 @@ jobs:
           override: true
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
+        working-directory: server
         with:
           command: "check"
-          working-directory: server
 
   cargo-test:
     name: "Cargo test"
@@ -56,9 +59,9 @@ jobs:
           override: true
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
+        working-directory: server
         with:
           command: "test"
-          working-directory: server
 
   cargo-fmt:
     name: "Cargo format"
@@ -76,9 +79,9 @@ jobs:
       - run: "rustup component add rustfmt"
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
+        working-directory: server
         with:
           command: "fmt"
-          working-directory: server
           args: "--all -- --check"
 
   cargo-clippy:
@@ -97,9 +100,9 @@ jobs:
       - run: "rustup component add clippy"
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
+        working-directory: server
         with:
           command: "clippy"
-          working-directory: server
           args: "-- -D warnings"
 
   publish-docker:
