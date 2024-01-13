@@ -88,11 +88,11 @@ sea-orm = { version = "0.12.10", features = [
     "debug-print",
 ] }
 sea-orm-migration = "0.12.10"
-sea-query = "0.30.6"
+sea-query = "0.30.7"
 tower-cookies = { version = "0.10.0", features = ["signed"] }
 thiserror = "1.0.56"
 http = "1.0.0"
 
 [[bin]]
 name = "displex"
-path = "server/main.rs"
+path = "src/main.rs"

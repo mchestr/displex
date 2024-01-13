@@ -33,6 +33,7 @@ use crate::{
     },
 };
 
+#[allow(dead_code)]
 async fn signin(
     cookies: Cookies,
     State(state): State<DisplexState>,
@@ -114,9 +115,9 @@ async fn callback(
         .build();
     signed.add(cookie);
 
-    let mut url = format!("{}", state.config.http.hostname);
+    let mut url = state.config.http.hostname.to_string();
     let pin = state.services.plex_service.get_pin().await?;
-    if let Some(_) = &query_string.next {
+    if query_string.next.is_some() {
         url = state
             .services
             .plex_service
