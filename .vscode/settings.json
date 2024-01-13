@@ -3,4 +3,5 @@
         "./server/Cargo.toml"
     ],
     "rust-analyzer.showUnlinkedFileNotification": false,
+    "svg.preview.background": "white",
 }
