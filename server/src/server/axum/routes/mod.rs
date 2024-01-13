@@ -1,4 +1,7 @@
-use axum::{Router, routing::get_service};
+use axum::{
+    routing::get_service,
+    Router,
+};
 use http::StatusCode;
 use tower_http::services::ServeDir;
 
