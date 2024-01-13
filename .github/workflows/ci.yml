@@ -41,9 +41,9 @@ jobs:
           override: true
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
-        working-directory: server
         with:
-          command: "check"
+          command: check
+          args: "--manifest-path=server/Cargo.toml"
 
   cargo-test:
     name: "Cargo test"
@@ -59,9 +59,9 @@ jobs:
           override: true
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
-        working-directory: server
         with:
-          command: "test"
+          command: test
+          args: "--manifest-path=server/Cargo.toml"
 
   cargo-fmt:
     name: "Cargo format"
@@ -79,10 +79,9 @@ jobs:
       - run: "rustup component add rustfmt"
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
-        working-directory: server
         with:
-          command: "fmt"
-          args: "--all -- --check"
+          command: fmt
+          args: "--all --manifest-path=server/Cargo.toml -- --check "
 
   cargo-clippy:
     name: "Cargo clippy"
@@ -100,10 +99,9 @@ jobs:
       - run: "rustup component add clippy"
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
-        working-directory: server
         with:
-          command: "clippy"
-          args: "-- -D warnings"
+          command: clippy
+          args: "--manifest-path=server/Cargo.toml -- -D warnings"
 
   publish-docker:
     name: Publish Docker image
