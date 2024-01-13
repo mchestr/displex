@@ -146,7 +146,7 @@ function Admin() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {data.listDiscordUsers.map((row: any) => (
+                    {data.listDiscordUsers.map((row) => (
                       <TableRow
                         key={row.id}
                         sx={{

@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { useParams } from "react-router-dom";
 import Moment from "moment";
+import React from "react";
 
 const USER_SUMMARY_QUERY = gql`
   query UserSummary($id: String!) {
@@ -134,7 +135,7 @@ const UserSummary: React.FC = () => {
             </TableHead>
             <TableBody>
               {!loading &&
-                data.userSummary.summary.plexUsers.map((row: any) => (
+                data.userSummary.summary.plexUsers.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>{row.username}</TableCell>
                     <TableCell>{Moment(row.createdAt).format("lll")}</TableCell>
@@ -173,7 +174,7 @@ const UserSummary: React.FC = () => {
             </TableHead>
             <TableBody>
               {!loading &&
-                data.userSummary.summary.discordTokens.map((row: any) => (
+                data.userSummary.summary.discordTokens.map((row) => (
                   <TableRow key={row.accessToken}>
                     <TableCell>{row.accessToken}</TableCell>
                     <TableCell>
@@ -214,7 +215,7 @@ const UserSummary: React.FC = () => {
             </TableHead>
             <TableBody>
               {!loading &&
-                data.userSummary.summary.plexTokens.map((row: any) => (
+                data.userSummary.summary.plexTokens.map((row) => (
                   <TableRow key={row.accessToken}>
                     <TableCell>{row.accessToken}</TableCell>
                     <TableCell>{Moment(row.createdAt).format("lll")}</TableCell>

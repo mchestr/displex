@@ -4,7 +4,7 @@ permissions:
   packages: write
 
 on:
-  push: 
+  push:
     branches: ["main"]
   pull_request:
 
@@ -13,7 +13,18 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  check:
+  npm-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build --if-present
+
+  cargo-check:
     name: "Cargo check"
     runs-on: "ubuntu-latest"
     steps:
@@ -29,8 +40,9 @@ jobs:
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
         with:
           command: "check"
+          working-directory: server
 
-  test:
+  cargo-test:
     name: "Cargo test"
     runs-on: "ubuntu-latest"
     steps:
@@ -46,8 +58,9 @@ jobs:
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
         with:
           command: "test"
+          working-directory: server
 
-  fmt:
+  cargo-fmt:
     name: "Cargo format"
     runs-on: "ubuntu-latest"
     steps:
@@ -59,15 +72,16 @@ jobs:
           profile: "minimal"
           toolchain: "nightly"
           override: true
-          
+
       - run: "rustup component add rustfmt"
 
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
         with:
           command: "fmt"
+          working-directory: server
           args: "--all -- --check"
 
-  clippy:
+  cargo-clippy:
     name: "Cargo clippy"
     runs-on: "ubuntu-latest"
     steps:
@@ -85,6 +99,7 @@ jobs:
       - uses: "actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505" # v1
         with:
           command: "clippy"
+          working-directory: server
           args: "-- -D warnings"
 
   publish-docker:
