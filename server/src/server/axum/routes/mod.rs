@@ -1,4 +1,6 @@
-use axum::Router;
+use axum::{Router, routing::get_service};
+use http::StatusCode;
+use tower_http::services::ServeDir;
 
 use crate::config::AppConfig;
 
@@ -14,5 +16,9 @@ pub fn configure(config: &AppConfig) -> Router<DisplexState> {
     if config.api.enabled {
         router = router.nest("/gql", graphql::routes());
     }
-    router
+    router.fallback(
+        get_service(ServeDir::new("./dist")).handle_error(|_| async move {
+            (StatusCode::INTERNAL_SERVER_ERROR, "internal server error")
+        }),
+    )
 }

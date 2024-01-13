@@ -289,6 +289,7 @@ impl DiscordTokensService {
             .apply_if(status, |query, value| {
                 query.filter(discord_token::Column::Status.eq(value))
             })
+            .order_by_desc(discord_token::Column::ExpiresAt)
             .all(&self.db)
             .await?)
     }

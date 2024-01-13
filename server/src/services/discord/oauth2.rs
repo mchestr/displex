@@ -20,7 +20,10 @@ use oauth2::{
     TokenUrl,
 };
 use reqwest::Url;
-use std::str;
+use std::str::{
+    self,
+    FromStr,
+};
 use tracing::instrument;
 
 type OAuth2Client = oauth2::Client<
@@ -76,9 +79,11 @@ impl DiscordOAuth2Client {
     }
 
     #[instrument(skip(self), ret)]
-    pub fn authorize_url(&self) -> (Url, CsrfToken) {
+    pub fn authorize_url(&self, redirect_url: &str) -> (Url, CsrfToken) {
+        let redirect_url = RedirectUrl::from_url(Url::from_str(redirect_url).unwrap());
         self.oauth_client
             .authorize_url(CsrfToken::new_random)
+            .set_redirect_uri(std::borrow::Cow::Owned(redirect_url))
             .add_scope(Scope::new(String::from("identify")))
             .add_scope(Scope::new(String::from("role_connections.write")))
             .url()

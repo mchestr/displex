@@ -88,8 +88,8 @@ impl DiscordService {
     }
 
     #[instrument(skip(self), ret)]
-    pub fn authorize_url(&self) -> (Url, CsrfToken) {
-        self.oauth2_client.authorize_url()
+    pub fn authorize_url(&self, redirect_url: &str) -> (Url, CsrfToken) {
+        self.oauth2_client.authorize_url(redirect_url)
     }
 
     #[instrument(skip(self), ret)]

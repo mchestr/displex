@@ -33,11 +33,39 @@ use crate::{
     },
 };
 
+async fn signin(
+    cookies: Cookies,
+    State(state): State<DisplexState>,
+) -> Result<impl IntoResponse, DisplexError> {
+    let (url, persist_state) = state.services.discord_service.authorize_url(&format!(
+        "https://{}/auth/discord/callback",
+        &state.config.http.hostname
+    ));
+
+    let persist_state = String::from(persist_state.secret());
+
+    let key = Key::from(state.config.session.secret_key.as_bytes());
+    let signed = cookies.signed(&key);
+    let cookie = Cookie::build((DISCORD_STATE, persist_state))
+        .same_site(SameSite::Lax)
+        .http_only(true)
+        .secure(true)
+        .path("/")
+        .expires(OffsetDateTime::now_utc() + Duration::from_secs(300))
+        .build();
+    signed.add(cookie);
+
+    Ok(Redirect::to(url.as_str()))
+}
+
 async fn linked_role(
     cookies: Cookies,
     State(state): State<DisplexState>,
 ) -> Result<impl IntoResponse, DisplexError> {
-    let (url, persist_state) = state.services.discord_service.authorize_url();
+    let (url, persist_state) = state.services.discord_service.authorize_url(&format!(
+        "https://{}/auth/discord/callback?next=plex",
+        &state.config.http.hostname
+    ));
 
     let persist_state = String::from(persist_state.secret());
 
@@ -59,6 +87,7 @@ async fn linked_role(
 struct CallbackQueryParams {
     pub code: String,
     pub state: String,
+    pub next: Option<String>,
 }
 
 async fn callback(
@@ -85,12 +114,15 @@ async fn callback(
         .build();
     signed.add(cookie);
 
+    let mut url = format!("{}", state.config.http.hostname);
     let pin = state.services.plex_service.get_pin().await?;
-    let url = state
-        .services
-        .plex_service
-        .generate_auth_url(pin.id, &pin.code)
-        .await?;
+    if let Some(_) = &query_string.next {
+        url = state
+            .services
+            .plex_service
+            .generate_auth_url(pin.id, &pin.code)
+            .await?;
+    }
 
     Ok(Redirect::to(url.as_str()))
 }
@@ -107,5 +139,6 @@ fn verify_state(session_state: &str, query_string_state: &str) -> Result<(), any
 pub fn routes() -> Router<DisplexState> {
     Router::new()
         .route("/auth/discord/linked-role", get(linked_role))
+        .route("/auth/discord/signin", get(linked_role))
         .route("/auth/discord/callback", get(callback))
 }
