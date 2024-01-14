@@ -146,7 +146,7 @@ async fn callback(
         };
     };
 
-    cookie_data.plex_user = Some(plex_user.id);
+    cookie_data.plex_user = Some(plex_user.id.to_string());
     set_cookie_data(&state.config.session.secret_key, &cookies, &cookie_data)?;
 
     discord_svc

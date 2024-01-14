@@ -36,6 +36,7 @@ use crate::{
         plex_user::resolver::{
             PlexUsersMutation,
             PlexUsersQuery,
+            PlexUsersService,
         },
         tautulli::resolver::TautulliQuery,
         AppServices,
@@ -69,10 +70,10 @@ pub struct CoreDetails {
     repository_link: String,
 }
 
-#[derive(SimpleObject, Default)]
+#[derive(SimpleObject, Default, Clone)]
 pub struct UserDetails {
     discord_user_id: Option<String>,
-    plex_user_id: Option<i64>,
+    plex_user_id: Option<String>,
     role: Role,
 }
 
@@ -96,16 +97,30 @@ impl CoreQuery {
     }
 
     async fn whoami(&self, gql_ctx: &Context<'_>) -> UserDetails {
-        match gql_ctx.data::<CookieData>() {
+        let mut user_details = match gql_ctx.data::<CookieData>() {
             Ok(cookie) => UserDetails {
                 discord_user_id: cookie.discord_user.clone(),
-                plex_user_id: cookie.plex_user,
+                plex_user_id: cookie.plex_user.clone(),
                 role: cookie.role,
             },
             Err(_) => UserDetails {
                 ..Default::default()
             },
+        };
+        if let Some(ref discord_user_id) = user_details.discord_user_id {
+            if user_details.plex_user_id.is_none() {
+                if let Ok(plex_users) = gql_ctx
+                    .data_unchecked::<PlexUsersService>()
+                    .list(Some(discord_user_id.clone()))
+                    .await
+                {
+                    if let Some(plex_user) = plex_users.first() {
+                        user_details.plex_user_id = Some(plex_user.id.clone());
+                    }
+                }
+            }
         }
+        user_details
     }
 }
 

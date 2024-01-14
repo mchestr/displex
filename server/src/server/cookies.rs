@@ -34,7 +34,7 @@ pub struct CookieData {
     #[serde(rename = "du")]
     pub discord_user: Option<String>,
     #[serde(rename = "pu")]
-    pub plex_user: Option<i64>,
+    pub plex_user: Option<String>,
     #[serde(rename = "r", default)]
     pub role: Role,
 }
@@ -103,21 +103,21 @@ mod test {
 
     #[test]
     fn serde_works() {
-        let json = "{\"ds\":\"ds\",\"du\":\"du\",\"pu\":1}";
+        let json = "{\"ds\":\"ds\",\"du\":\"du\",\"pu\":\"1\"}";
         let data: CookieData = serde_json::from_str(json).unwrap();
         assert_eq!(data.discord_state, Some(String::from("ds")));
         assert_eq!(data.discord_user, Some(String::from("du")));
-        assert_eq!(data.plex_user, Some(1));
+        assert_eq!(data.plex_user, Some(String::from("1")));
         assert_eq!(data.role, Role::Anonymous);
     }
 
     #[test]
     fn serde_works_role() {
-        let json = "{\"ds\":\"ds\",\"du\":\"du\",\"pu\":1,\"r\":\"Admin\"}";
+        let json = "{\"ds\":\"ds\",\"du\":\"du\",\"pu\":\"1\",\"r\":\"Admin\"}";
         let data: CookieData = serde_json::from_str(json).unwrap();
         assert_eq!(data.discord_state, Some(String::from("ds")));
         assert_eq!(data.discord_user, Some(String::from("du")));
-        assert_eq!(data.plex_user, Some(1));
+        assert_eq!(data.plex_user, Some(String::from("1")));
         assert_eq!(data.role, Role::Admin);
     }
 }
