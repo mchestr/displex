@@ -51,7 +51,6 @@ impl DiscordOAuth2Client {
         client: reqwest::Client,
         client_id: u64,
         client_secret: &str,
-        redirect_url: Option<&str>,
     ) -> DiscordOAuth2Client {
         let cid = ClientId::new(client_id.to_string());
         let cs = ClientSecret::new(String::from(client_secret));
@@ -61,16 +60,11 @@ impl DiscordOAuth2Client {
             .expect("Invalid authorization endpoint URL");
         let token_url = TokenUrl::new("https://discord.com/api/oauth2/token".to_string())
             .expect("Invalid token endpoint URL");
-        let mut oauth_client = BasicClient::new(cid, Some(cs), auth_url, Some(token_url))
+        let oauth_client = BasicClient::new(cid, Some(cs), auth_url, Some(token_url))
             .set_revocation_uri(
                 RevocationUrl::new(String::from("https://discord.com/api/oauth2/token/revoke"))
                     .expect("invalid revocation url"),
             );
-        if let Some(redirect_url) = redirect_url {
-            oauth_client = oauth_client.set_redirect_uri(
-                RedirectUrl::new(redirect_url.into()).expect("Invalid redirect URL"),
-            );
-        }
 
         DiscordOAuth2Client {
             client,
@@ -90,10 +84,12 @@ impl DiscordOAuth2Client {
     }
 
     #[instrument(skip(self), ret, err)]
-    pub async fn token(&self, code: &str) -> Result<DiscordOAuth2Token> {
+    pub async fn token(&self, code: &str, redirect_url: &str) -> Result<DiscordOAuth2Token> {
+        let redirect_url = RedirectUrl::from_url(Url::from_str(redirect_url).unwrap());
         let resp = self
             .oauth_client
             .exchange_code(AuthorizationCode::new(String::from(code)))
+            .set_redirect_uri(std::borrow::Cow::Owned(redirect_url))
             .request_async(|request| self.send(request))
             .await?;
         Ok(resp)

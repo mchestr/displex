@@ -1,6 +1,6 @@
+use anyhow::anyhow;
 use std::time::Duration;
 
-use anyhow::anyhow;
 use axum::{
     extract::{
         Query,
@@ -13,73 +13,63 @@ use axum::{
     routing::get,
     Router,
 };
-use cookie::{
-    time::OffsetDateTime,
-    Key,
-    SameSite,
-};
+
+use oauth2::TokenResponse;
+use sea_orm::TransactionTrait;
 use serde::Deserialize;
-use tower_cookies::{
-    Cookie,
-    Cookies,
-};
+use tower_cookies::Cookies;
 
 use crate::{
     errors::DisplexError,
-    server::axum::{
-        DisplexState,
-        DISCORD_CODE,
-        DISCORD_STATE,
+    server::{
+        axum::DisplexState,
+        cookies::{
+            get_cookie_data,
+            set_cookie_data,
+            CookieData,
+        },
+    },
+    services::{
+        discord_token::resolver::{
+            CreateDiscordTokenErrorVariant,
+            CreateDiscordTokenResult,
+        },
+        discord_user::resolver::{
+            CreateDiscordUserErrorVariant,
+            CreateDiscordUserResult,
+        },
     },
 };
 
-#[allow(dead_code)]
-async fn signin(
-    cookies: Cookies,
-    State(state): State<DisplexState>,
-) -> Result<impl IntoResponse, DisplexError> {
-    let (url, persist_state) = state.services.discord_service.authorize_url(&format!(
-        "https://{}/auth/discord/callback",
-        &state.config.http.hostname
-    ));
-
-    let persist_state = String::from(persist_state.secret());
-
-    let key = Key::from(state.config.session.secret_key.as_bytes());
-    let signed = cookies.signed(&key);
-    let cookie = Cookie::build((DISCORD_STATE, persist_state))
-        .same_site(SameSite::Lax)
-        .http_only(true)
-        .secure(true)
-        .path("/")
-        .expires(OffsetDateTime::now_utc() + Duration::from_secs(300))
-        .build();
-    signed.add(cookie);
-
-    Ok(Redirect::to(url.as_str()))
+#[derive(Deserialize)]
+struct DiscordAuthQueryParams {
+    pub next: Option<String>,
 }
 
-async fn linked_role(
+async fn discord_auth(
     cookies: Cookies,
     State(state): State<DisplexState>,
+    query_string: Query<DiscordAuthQueryParams>,
 ) -> Result<impl IntoResponse, DisplexError> {
+    let query_param = match &query_string.next {
+        Some(next) => format!("?next={}", next),
+        None => String::new(),
+    };
+
     let (url, persist_state) = state.services.discord_service.authorize_url(&format!(
-        "https://{}/auth/discord/callback?next=plex",
-        &state.config.http.hostname
+        "https://{}/auth/discord/callback{}",
+        &state.config.http.hostname, query_param
     ));
 
     let persist_state = String::from(persist_state.secret());
-
-    let key = Key::from(state.config.session.secret_key.as_bytes());
-    let signed = cookies.signed(&key);
-    let cookie = Cookie::build((DISCORD_STATE, persist_state))
-        .same_site(SameSite::Lax)
-        .http_only(true)
-        .secure(true)
-        .path("/")
-        .expires(OffsetDateTime::now_utc() + Duration::from_secs(300))
-        .build();
-    signed.add(cookie);
+    set_cookie_data(
+        &state.config.session.secret_key,
+        &cookies,
+        &CookieData {
+            discord_state: Some(persist_state),
+            ..Default::default()
+        },
+    )?;
 
     Ok(Redirect::to(url.as_str()))
 }
@@ -96,28 +86,93 @@ async fn callback(
     State(state): State<DisplexState>,
     query_string: Query<CallbackQueryParams>,
 ) -> Result<impl IntoResponse, DisplexError> {
-    let key = Key::from(state.config.session.secret_key.as_bytes());
-    let signed = cookies.signed(&key);
-    let session_state = signed
-        .get(DISCORD_STATE)
-        .ok_or_else(|| anyhow!("session state is invalid"))?;
-    verify_state(session_state.value(), &query_string.state)?;
+    let mut cookie_data = get_cookie_data(&state.config.session.secret_key, &cookies)?;
 
-    let code = String::from(&query_string.code);
-    let key = Key::from(state.config.session.secret_key.as_bytes());
-    let signed = cookies.signed(&key);
-    let cookie = Cookie::build((DISCORD_CODE, code))
-        .same_site(SameSite::Lax)
-        .http_only(true)
-        .secure(true)
-        .path("/")
-        .expires(OffsetDateTime::now_utc() + Duration::from_secs(300))
-        .build();
-    signed.add(cookie);
+    let discord_state = cookie_data.discord_state.as_mut().unwrap();
+    verify_state(discord_state, &query_string.state)?;
 
-    let mut url = state.config.http.hostname.to_string();
-    let pin = state.services.plex_service.get_pin().await?;
+    let params = match &query_string.next {
+        Some(next) => format!("?next={}", next),
+        None => String::new(),
+    };
+    let token = state
+        .services
+        .discord_service
+        .token(
+            &query_string.code,
+            &format!(
+                "https://{}/auth/discord/callback{}",
+                &state.config.http.hostname, params
+            ),
+        )
+        .await?;
+    let access_token = String::from(token.access_token().secret());
+    let discord_user = state.services.discord_service.user(&access_token).await?;
+
+    state
+        .services
+        .db
+        .transaction::<_, (), DisplexError>(|txn| {
+            let discord_user = discord_user.clone();
+            Box::pin(async move {
+                let result = state
+                    .services
+                    .discord_users_service
+                    .create_with_conn(&discord_user.id, &discord_user.username, txn)
+                    .await?;
+                match result {
+                    CreateDiscordUserResult::Error(err) => match err.error {
+                        CreateDiscordUserErrorVariant::InternalError => {
+                            Err(DisplexError(anyhow!("internal error")))
+                        }
+                    },
+                    _ => Ok(()),
+                }?;
+
+                let scopes: String = token.scopes().map_or("".into(), |d| {
+                    d.iter().map(|i| i.to_string() + ",").collect()
+                });
+                let result = state
+                    .services
+                    .discord_tokens_service
+                    .create_with_conn(
+                        token.access_token().secret(),
+                        token
+                            .refresh_token()
+                            .expect("expecting refresh token")
+                            .secret(),
+                        &(chrono::Utc::now()
+                            + chrono::Duration::seconds(
+                                token
+                                    .expires_in()
+                                    .unwrap_or(Duration::from_secs(1800))
+                                    .as_secs() as i64,
+                            )),
+                        &scopes,
+                        &discord_user.id,
+                        txn,
+                    )
+                    .await?;
+                match result {
+                    CreateDiscordTokenResult::Error(err) => match err.error {
+                        CreateDiscordTokenErrorVariant::InternalError => {
+                            Err(DisplexError(anyhow!("internal error")))
+                        }
+                    },
+                    _ => Ok(()),
+                }?;
+                Ok(())
+            })
+        })
+        .await
+        .expect("failed to save discord user info to database");
+
+    cookie_data.discord_user = Some(discord_user.id);
+    set_cookie_data(&state.config.session.secret_key, &cookies, &cookie_data)?;
+
+    let mut url = String::from("/");
     if query_string.next.is_some() {
+        let pin = state.services.plex_service.get_pin().await?;
         url = state
             .services
             .plex_service
@@ -139,7 +194,6 @@ fn verify_state(session_state: &str, query_string_state: &str) -> Result<(), any
 
 pub fn routes() -> Router<DisplexState> {
     Router::new()
-        .route("/auth/discord/linked-role", get(linked_role))
-        .route("/auth/discord/signin", get(linked_role))
+        .route("/auth/discord", get(discord_auth))
         .route("/auth/discord/callback", get(callback))
 }

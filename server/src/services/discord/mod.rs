@@ -43,17 +43,11 @@ impl DiscordService {
         discord_http_client: Http,
         client_id: u64,
         client_secret: &str,
-        redirect_url: &str,
     ) -> DiscordService {
         DiscordService {
             client: client.clone(),
             discord_http_client: Arc::new(discord_http_client),
-            oauth2_client: DiscordOAuth2Client::new(
-                client.clone(),
-                client_id,
-                client_secret,
-                Some(redirect_url),
-            ),
+            oauth2_client: DiscordOAuth2Client::new(client.clone(), client_id, client_secret),
         }
     }
 
@@ -93,8 +87,8 @@ impl DiscordService {
     }
 
     #[instrument(skip(self), ret)]
-    pub async fn token(&self, code: &str) -> Result<DiscordOAuth2Token> {
-        self.oauth2_client.token(code).await
+    pub async fn token(&self, code: &str, redirect_url: &str) -> Result<DiscordOAuth2Token> {
+        self.oauth2_client.token(code, redirect_url).await
     }
 
     #[instrument(skip(self), ret)]

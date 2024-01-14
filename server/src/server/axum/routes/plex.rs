@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use anyhow::anyhow;
 use axum::{
     extract::{
@@ -13,30 +11,20 @@ use axum::{
     routing::get,
     Router,
 };
-use cookie::Key;
-use oauth2::TokenResponse;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
 use tower_cookies::Cookies;
 
 use crate::{
     errors::DisplexError,
-    server::axum::{
-        DisplexState,
-        DISCORD_CODE,
+    server::{
+        axum::DisplexState,
+        cookies::get_cookie_data,
     },
     services::{
         discord::models::{
             ApplicationMetadata,
             ApplicationMetadataUpdate,
-        },
-        discord_token::resolver::{
-            CreateDiscordTokenErrorVariant,
-            CreateDiscordTokenResult,
-        },
-        discord_user::resolver::{
-            CreateDiscordUserErrorVariant,
-            CreateDiscordUserResult,
         },
         plex_token::resolver::{
             CreatePlexTokenErrorVariant,
@@ -64,7 +52,7 @@ async fn callback(
     let plex_svc = state.services.plex_service;
     let tautulli_svc = state.services.tautulli_service;
     let discord_svc = state.services.discord_service;
-    let discord_users_svc = state.services.discord_users_service;
+    let _discord_users_svc = state.services.discord_users_service;
     let discord_tokens_svc = state.services.discord_tokens_service;
     let plex_users_svc = state.services.plex_users_service;
     let plex_tokens_svc = state.services.plex_tokens_service;
@@ -74,27 +62,21 @@ async fn callback(
         .pin_claim(query_string.id, &query_string.code)
         .await?;
 
-    let key = Key::from(state.config.session.secret_key.as_bytes());
-    let signed = cookies.signed(&key);
-    let discord_token = signed
-        .get(DISCORD_CODE)
-        .ok_or_else(|| anyhow!("no code found for session"))?;
-
+    let cookie_data = get_cookie_data(&state.config.session.secret_key, &cookies)?;
+    let discord_token = discord_tokens_svc
+        .latest_token(&cookie_data.discord_user.clone().unwrap())
+        .await?
+        .unwrap();
+    let plex_user = plex_svc.user(&resp.auth_token).await?;
     let is_subscribed = plex_svc
         .get_devices(&resp.auth_token)
         .await?
         .iter()
         .any(|d| d.client_identifier == state.config.plex.server_id);
 
-    let token = discord_svc.token(discord_token.value()).await?;
-    let d_access_token = String::from(token.access_token().secret());
-    let discord_user = discord_svc.user(&d_access_token).await?;
-    let discord_user_id = String::from(&discord_user.id);
-    let plex_user = plex_svc.user(&resp.auth_token).await?;
-
     tracing::info!(
-        "{} is a subscriber: {}",
-        discord_user.username,
+        "{:?} is a subscriber: {}",
+        cookie_data.discord_user,
         is_subscribed
     );
 
@@ -102,56 +84,14 @@ async fn callback(
         .services
         .db
         .transaction::<_, (), DisplexError>(|txn| {
+            let discord_user_id = cookie_data.discord_user.clone();
             Box::pin(async move {
-                let result = discord_users_svc
-                    .create_with_conn(&discord_user.id, &discord_user.username, txn)
-                    .await?;
-                match result {
-                    CreateDiscordUserResult::Error(err) => match err.error {
-                        CreateDiscordUserErrorVariant::InternalError => {
-                            Err(DisplexError(anyhow!("internal error")))
-                        }
-                    },
-                    _ => Ok(()),
-                }?;
-
-                let scopes: String = token.scopes().map_or("".into(), |d| {
-                    d.iter().map(|i| i.to_string() + ",").collect()
-                });
-                let result = discord_tokens_svc
-                    .create_with_conn(
-                        token.access_token().secret(),
-                        token
-                            .refresh_token()
-                            .expect("expecting refresh token")
-                            .secret(),
-                        &(chrono::Utc::now()
-                            + chrono::Duration::seconds(
-                                token
-                                    .expires_in()
-                                    .unwrap_or(Duration::from_secs(1800))
-                                    .as_secs() as i64,
-                            )),
-                        &scopes,
-                        &discord_user.id,
-                        txn,
-                    )
-                    .await?;
-                match result {
-                    CreateDiscordTokenResult::Error(err) => match err.error {
-                        CreateDiscordTokenErrorVariant::InternalError => {
-                            Err(DisplexError(anyhow!("internal error")))
-                        }
-                    },
-                    _ => Ok(()),
-                }?;
-
                 let result = plex_users_svc
                     .create_with_conn(
                         &plex_user.id.to_string(),
                         &plex_user.username,
                         is_subscribed,
-                        &discord_user.id,
+                        &discord_user_id.unwrap(),
                         txn,
                     )
                     .await?;
@@ -179,7 +119,7 @@ async fn callback(
             })
         })
         .await
-        .expect("test");
+        .expect("failed to save plex user info to database");
 
     let mut data = ApplicationMetadataUpdate {
         platform_name: String::from(&state.config.application_name),
@@ -204,10 +144,17 @@ async fn callback(
     };
 
     discord_svc
-        .link_application(state.config.discord.client_id, data, &d_access_token)
+        .link_application(
+            state.config.discord.client_id,
+            data,
+            &discord_token.access_token,
+        )
         .await?;
     overseerr_svc
-        .verified_user(&discord_user_id, &plex_user.id.to_string())
+        .verified_user(
+            &cookie_data.discord_user.unwrap(),
+            &plex_user.id.to_string(),
+        )
         .await?;
     Ok(Redirect::to(&format!(
         "discord://-/channels/{}/@home",

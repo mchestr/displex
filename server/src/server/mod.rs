@@ -14,6 +14,7 @@ use crate::{
 };
 
 pub mod axum;
+pub mod cookies;
 
 #[derive(
     Debug,
