@@ -172,6 +172,8 @@ async fn callback(
         .contains(&discord_user_id.clone())
     {
         cookie_data.role = Role::Admin;
+    } else {
+        cookie_data.role = Role::User;
     }
     set_cookie_data(&state.config.session.secret_key, &cookies, &cookie_data)?;
 
