@@ -17,9 +17,15 @@ use sea_orm::{
 use sea_query::OnConflict;
 use tracing::instrument;
 
-use crate::entities::{
-    plex_user,
-    prelude::*,
+use crate::{
+    entities::{
+        plex_user,
+        prelude::*,
+    },
+    server::cookies::{
+        verify_role,
+        Role,
+    },
 };
 
 #[derive(Default)]
@@ -32,6 +38,7 @@ impl PlexUsersQuery {
         gql_ctx: &Context<'_>,
         input: GetPlexUserInput,
     ) -> Result<GetPlexUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexUsersService>()
             .get(&input.id)
@@ -42,6 +49,7 @@ impl PlexUsersQuery {
         gql_ctx: &Context<'_>,
         input: ListPlexUserInput,
     ) -> Result<Vec<plex_user::Model>> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexUsersService>()
             .list(input.discord_user_id)
@@ -59,6 +67,7 @@ impl PlexUsersMutation {
         gql_ctx: &Context<'_>,
         input: CreatePlexUserInput,
     ) -> Result<CreatePlexUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexUsersService>()
             .create(
@@ -75,6 +84,7 @@ impl PlexUsersMutation {
         gql_ctx: &Context<'_>,
         input: UpdatePlexUserInput,
     ) -> Result<UpdatePlexUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexUsersService>()
             .update(&input.id, &input.username, input.is_subscriber)
@@ -86,6 +96,7 @@ impl PlexUsersMutation {
         gql_ctx: &Context<'_>,
         input: DeletePlexUserInput,
     ) -> Result<DeletePlexUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexUsersService>()
             .delete(&input.id)

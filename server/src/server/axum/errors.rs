@@ -12,10 +12,6 @@ use crate::errors::DisplexError;
 impl IntoResponse for DisplexError {
     fn into_response(self) -> Response {
         tracing::error!("{:?}", self);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {}", self.0),
-        )
-            .into_response()
+        (StatusCode::INTERNAL_SERVER_ERROR, format!("{}", self.0)).into_response()
     }
 }

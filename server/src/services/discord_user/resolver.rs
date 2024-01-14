@@ -29,6 +29,10 @@ use crate::{
         plex_user,
         prelude::*,
     },
+    server::cookies::{
+        verify_role,
+        Role,
+    },
     services::{
         discord_token::resolver::DiscordTokensService,
         plex_token::resolver::PlexTokensService,
@@ -58,6 +62,7 @@ impl DiscordUsersQuery {
         gql_ctx: &Context<'_>,
         input: GetDiscordUserInput,
     ) -> Result<GetDiscordUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordUsersService>()
             .get(&input.id)
@@ -73,6 +78,7 @@ impl DiscordUsersQuery {
         gql_ctx: &Context<'_>,
         input: UserSummaryBy,
     ) -> Result<SummaryDiscordUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordUsersService>()
             .summary(&input)
@@ -90,6 +96,7 @@ impl DiscordUsersMutation {
         gql_ctx: &Context<'_>,
         input: CreateDiscordUserInput,
     ) -> Result<CreateDiscordUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordUsersService>()
             .create(&input.id, &input.username)
@@ -101,6 +108,7 @@ impl DiscordUsersMutation {
         gql_ctx: &Context<'_>,
         input: UpdateDiscordUserInput,
     ) -> Result<UpdateDiscordUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordUsersService>()
             .update(&input.id, input.is_active)
@@ -112,6 +120,7 @@ impl DiscordUsersMutation {
         gql_ctx: &Context<'_>,
         input: DeleteDiscordUserInput,
     ) -> Result<DeleteDiscordUserResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordUsersService>()
             .delete(&input.id)

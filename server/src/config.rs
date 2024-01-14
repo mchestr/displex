@@ -142,6 +142,7 @@ pub struct ApiConfig {
     pub enabled: bool,
     pub api_key: String,
     pub cors_allowed_origins: Vec<String>,
+    pub admin_discord_ids: Vec<String>,
 }
 
 impl Default for ApiConfig {
@@ -150,6 +151,7 @@ impl Default for ApiConfig {
             enabled: false,
             api_key: "notasecret".into(),
             cors_allowed_origins: vec![],
+            admin_discord_ids: vec![],
         }
     }
 }

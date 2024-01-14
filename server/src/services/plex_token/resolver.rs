@@ -18,7 +18,13 @@ use tracing::instrument;
 
 use crate::entities::plex_token;
 
-use crate::entities::prelude::*;
+use crate::{
+    entities::prelude::*,
+    server::cookies::{
+        verify_role,
+        Role,
+    },
+};
 
 #[derive(Default)]
 pub struct PlexTokensQuery;
@@ -30,6 +36,7 @@ impl PlexTokensQuery {
         gql_ctx: &Context<'_>,
         input: GetPlexTokenInput,
     ) -> Result<GetPlexTokenResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexTokensService>()
             .get(&input.access_token)
@@ -40,6 +47,7 @@ impl PlexTokensQuery {
         gql_ctx: &Context<'_>,
         input: ListPlexTokenInput,
     ) -> Result<Vec<plex_token::Model>> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexTokensService>()
             .list(input.plex_user_id, input.plex_user_ids)
@@ -57,6 +65,7 @@ impl PlexTokensMutation {
         gql_ctx: &Context<'_>,
         input: CreatePlexTokenInput,
     ) -> Result<CreatePlexTokenResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexTokensService>()
             .create(&input.access_token, &input.plex_user_id)
@@ -68,6 +77,7 @@ impl PlexTokensMutation {
         gql_ctx: &Context<'_>,
         input: DeletePlexTokenInput,
     ) -> Result<DeletePlexTokenResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<PlexTokensService>()
             .delete(&input.access_token)

@@ -10,12 +10,18 @@ use reqwest::Url;
 
 use tracing::instrument;
 
-use crate::services::tautulli::models::{
-    ApiResponse,
-    GetActivity,
-    GetLibrary,
-    ServerStatus,
-    UserWatchStat,
+use crate::{
+    server::cookies::{
+        verify_role,
+        Role,
+    },
+    services::tautulli::models::{
+        ApiResponse,
+        GetActivity,
+        GetLibrary,
+        ServerStatus,
+        UserWatchStat,
+    },
 };
 use anyhow::Result;
 
@@ -30,6 +36,7 @@ impl TautulliQuery {
         &self,
         gql_ctx: &Context<'_>,
     ) -> async_graphql::Result<GetPlexStatusResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         Ok(GetPlexStatusResult::Ok(
             gql_ctx
                 .data_unchecked::<TautulliService>()
@@ -42,6 +49,7 @@ impl TautulliQuery {
         &self,
         gql_ctx: &Context<'_>,
     ) -> async_graphql::Result<GetPlexActivityResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         Ok(GetPlexActivityResult::Ok(
             gql_ctx
                 .data_unchecked::<TautulliService>()

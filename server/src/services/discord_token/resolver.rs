@@ -23,7 +23,13 @@ use crate::entities::discord_token::{
     TokenStatus,
 };
 
-use crate::entities::prelude::*;
+use crate::{
+    entities::prelude::*,
+    server::cookies::{
+        verify_role,
+        Role,
+    },
+};
 
 pub static COOKIE_NAME: &str = "auth";
 
@@ -37,6 +43,7 @@ impl DiscordTokensQuery {
         gql_ctx: &Context<'_>,
         input: GetDiscordTokenInput,
     ) -> Result<GetDiscordTokenResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordTokensService>()
             .get(&input.access_token)
@@ -47,6 +54,7 @@ impl DiscordTokensQuery {
         gql_ctx: &Context<'_>,
         input: ListDiscordTokenInput,
     ) -> Result<Vec<discord_token::Model>> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordTokensService>()
             .list(input.discord_user_id, input.before_expires_at, input.status)
@@ -64,6 +72,7 @@ impl DiscordTokensMutation {
         gql_ctx: &Context<'_>,
         input: CreateDiscordTokenInput,
     ) -> Result<CreateDiscordTokenResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordTokensService>()
             .create(
@@ -81,6 +90,7 @@ impl DiscordTokensMutation {
         gql_ctx: &Context<'_>,
         input: DeleteDiscordTokenInput,
     ) -> Result<DeleteDiscordTokenResult> {
+        verify_role(gql_ctx, Role::Admin)?;
         gql_ctx
             .data_unchecked::<DiscordTokensService>()
             .delete(&input.access_token)
@@ -117,6 +127,7 @@ pub struct ListDiscordTokenInput {
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
 pub enum CreateDiscordTokenErrorVariant {
     InternalError,
+    Unauthorized,
 }
 
 #[derive(Debug, SimpleObject)]

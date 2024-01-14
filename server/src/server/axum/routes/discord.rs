@@ -27,13 +27,11 @@ use crate::{
             get_cookie_data,
             set_cookie_data,
             CookieData,
+            Role,
         },
     },
     services::{
-        discord_token::resolver::{
-            CreateDiscordTokenErrorVariant,
-            CreateDiscordTokenResult,
-        },
+        discord_token::resolver::CreateDiscordTokenResult,
         discord_user::resolver::{
             CreateDiscordUserErrorVariant,
             CreateDiscordUserResult,
@@ -154,11 +152,9 @@ async fn callback(
                     )
                     .await?;
                 match result {
-                    CreateDiscordTokenResult::Error(err) => match err.error {
-                        CreateDiscordTokenErrorVariant::InternalError => {
-                            Err(DisplexError(anyhow!("internal error")))
-                        }
-                    },
+                    CreateDiscordTokenResult::Error(_) => {
+                        Err(DisplexError(anyhow!("internal error")))
+                    }
                     _ => Ok(()),
                 }?;
                 Ok(())
@@ -167,7 +163,16 @@ async fn callback(
         .await
         .expect("failed to save discord user info to database");
 
-    cookie_data.discord_user = Some(discord_user.id);
+    let discord_user_id = discord_user.id;
+    cookie_data.discord_user = Some(discord_user_id.clone());
+    if state
+        .config
+        .api
+        .admin_discord_ids
+        .contains(&discord_user_id.clone())
+    {
+        cookie_data.role = Role::Admin;
+    }
     set_cookie_data(&state.config.session.secret_key, &cookies, &cookie_data)?;
 
     let mut url = String::from("/");

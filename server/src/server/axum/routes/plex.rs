@@ -19,7 +19,10 @@ use crate::{
     errors::DisplexError,
     server::{
         axum::DisplexState,
-        cookies::get_cookie_data,
+        cookies::{
+            get_cookie_data,
+            set_cookie_data,
+        },
     },
     services::{
         discord::models::{
@@ -62,7 +65,7 @@ async fn callback(
         .pin_claim(query_string.id, &query_string.code)
         .await?;
 
-    let cookie_data = get_cookie_data(&state.config.session.secret_key, &cookies)?;
+    let mut cookie_data = get_cookie_data(&state.config.session.secret_key, &cookies)?;
     let discord_token = discord_tokens_svc
         .latest_token(&cookie_data.discord_user.clone().unwrap())
         .await?
@@ -142,6 +145,9 @@ async fn callback(
             data.metadata.watched_hours = latest.total_time / 3600;
         };
     };
+
+    cookie_data.plex_user = Some(plex_user.id);
+    set_cookie_data(&state.config.session.secret_key, &cookies, &cookie_data)?;
 
     discord_svc
         .link_application(

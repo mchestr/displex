@@ -16,6 +16,10 @@ use serde::{
 
 use crate::{
     config::AppConfig,
+    server::cookies::{
+        CookieData,
+        Role,
+    },
     services::{
         discord_token::resolver::{
             DiscordTokensMutation,
@@ -65,6 +69,13 @@ pub struct CoreDetails {
     repository_link: String,
 }
 
+#[derive(SimpleObject, Default)]
+pub struct UserDetails {
+    discord_user_id: Option<String>,
+    plex_user_id: Option<i64>,
+    role: Role,
+}
+
 #[derive(Debug, SimpleObject)]
 pub struct IdObject {
     pub id: Identifier,
@@ -81,6 +92,19 @@ impl CoreQuery {
             version: VERSION.to_owned(),
             author_name: AUTHOR.to_owned(),
             repository_link: REPOSITORY_LINK.to_owned(),
+        }
+    }
+
+    async fn whoami(&self, gql_ctx: &Context<'_>) -> UserDetails {
+        match gql_ctx.data::<CookieData>() {
+            Ok(cookie) => UserDetails {
+                discord_user_id: cookie.discord_user.clone(),
+                plex_user_id: cookie.plex_user,
+                role: cookie.role,
+            },
+            Err(_) => UserDetails {
+                ..Default::default()
+            },
         }
     }
 }
