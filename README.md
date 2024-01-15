@@ -82,4 +82,4 @@ You can use CloudFlare tunnels or similar to test the OAuth2 flow as it requires
 cloudflared tunnel --name displex.example.com --hostname displex.example.com --url 'http://localhost:8080' -f
 ```
 
-Then visit `https://displex.example.com/auth/discord/linked-role`.
+Then visit `https://displex.example.com/auth/discord?next=/auth/plex?next=discord://-/channels/{}/@home`.

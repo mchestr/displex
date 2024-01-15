@@ -60,7 +60,12 @@ impl PlexService {
     }
 
     #[instrument(skip(self), ret, level = "debug")]
-    pub async fn generate_auth_url(&self, pin_id: u64, pin_code: &str) -> Result<String> {
+    pub async fn generate_auth_url(
+        &self,
+        pin_id: u64,
+        pin_code: &str,
+        next: &str,
+    ) -> Result<String> {
         let qs = AuthQueryParams {
             client_id: String::from(&self.client_id),
             code: String::from(pin_code),
@@ -69,7 +74,10 @@ impl PlexService {
                     product: String::from(&self.client_id),
                 },
             },
-            forward_url: format!("{}?id={}&code={}", &self.redirect_url, pin_id, pin_code),
+            forward_url: format!(
+                "{}?id={}&code={}&next={}",
+                &self.redirect_url, pin_id, pin_code, next
+            ),
         };
         let params = serde_qs::to_string(&qs)?;
 

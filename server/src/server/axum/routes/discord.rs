@@ -49,14 +49,15 @@ async fn discord_auth(
     State(state): State<DisplexState>,
     query_string: Query<DiscordAuthQueryParams>,
 ) -> Result<impl IntoResponse, DisplexError> {
-    let query_param = match &query_string.next {
+    let query_params = match &query_string.next {
         Some(next) => format!("?next={}", next),
         None => String::new(),
     };
+    tracing::debug!("query_params:{}", query_params);
 
     let (url, persist_state) = state.services.discord_service.authorize_url(&format!(
         "https://{}/auth/discord/callback{}",
-        &state.config.http.hostname, query_param
+        &state.config.http.hostname, query_params
     ));
 
     let persist_state = String::from(persist_state.secret());
@@ -89,10 +90,11 @@ async fn callback(
     let discord_state = cookie_data.discord_state.as_mut().unwrap();
     verify_state(discord_state, &query_string.state)?;
 
-    let params = match &query_string.next {
-        Some(next) => format!("?next={}", next),
+    let query_params = match &query_string.next {
+        Some(next) => format!("?next={}", urlencoding::decode(next).unwrap()),
         None => String::new(),
     };
+    tracing::debug!("query_params:{}", query_params);
     let token = state
         .services
         .discord_service
@@ -100,7 +102,7 @@ async fn callback(
             &query_string.code,
             &format!(
                 "https://{}/auth/discord/callback{}",
-                &state.config.http.hostname, params
+                &state.config.http.hostname, query_params
             ),
         )
         .await?;
@@ -177,17 +179,11 @@ async fn callback(
     }
     set_cookie_data(&state.config.session.secret_key, &cookies, &cookie_data)?;
 
-    let mut url = String::from("/");
-    if query_string.next.is_some() {
-        let pin = state.services.plex_service.get_pin().await?;
-        url = state
-            .services
-            .plex_service
-            .generate_auth_url(pin.id, &pin.code)
-            .await?;
-    }
-
-    Ok(Redirect::to(url.as_str()))
+    let url = match &query_string.next {
+        Some(next) => next,
+        None => "/",
+    };
+    Ok(Redirect::to(url))
 }
 
 #[tracing::instrument]

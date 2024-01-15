@@ -42,9 +42,33 @@ use crate::{
 };
 
 #[derive(Deserialize)]
+struct PlexAuthQueryParams {
+    pub next: Option<String>,
+}
+
+async fn plex_auth(
+    State(state): State<DisplexState>,
+    query_string: Query<PlexAuthQueryParams>,
+) -> Result<impl IntoResponse, DisplexError> {
+    let pin = state.services.plex_service.get_pin().await?;
+    let next = match &query_string.next {
+        Some(next) => format!("{}", next),
+        None => String::new(),
+    };
+    tracing::debug!("next:{}", next);
+    let url = state
+        .services
+        .plex_service
+        .generate_auth_url(pin.id, &pin.code, &next)
+        .await?;
+    Ok(Redirect::to(&url))
+}
+
+#[derive(Deserialize)]
 struct CallbackQueryParams {
     pub id: u64,
     pub code: String,
+    pub next: Option<String>,
 }
 
 async fn callback(
@@ -162,12 +186,17 @@ async fn callback(
             &plex_user.id.to_string(),
         )
         .await?;
-    Ok(Redirect::to(&format!(
-        "discord://-/channels/{}/@home",
-        state.config.discord.server_id
-    )))
+
+    let url = match &query_string.next {
+        Some(next) => next,
+        None => "/",
+    };
+    tracing::debug!("url:{}", url);
+    Ok(Redirect::to(&url))
 }
 
 pub fn routes() -> Router<DisplexState> {
-    Router::new().route("/auth/plex/callback", get(callback))
+    Router::new()
+        .route("/auth/plex", get(plex_auth))
+        .route("/auth/plex/callback", get(callback))
 }

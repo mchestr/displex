@@ -92,6 +92,7 @@ sea-query = "0.30.7"
 tower-cookies = { version = "0.10.0", features = ["signed"] }
 thiserror = "1.0.56"
 http = "1.0.0"
+urlencoding = "2.1.3"
 
 [[bin]]
 name = "displex"
