@@ -91,6 +91,7 @@
         commitMessageTopic: "{{{groupName}}} group",
       },
       separateMinorPatch: false,
+      "automerge": true
     },
     {
       description: "async-graphql Group",
@@ -101,6 +102,16 @@
         commitMessageTopic: "{{{groupName}}} group",
       },
       separateMinorPatch: false,
+      "automerge": true
     },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    }
   ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  }
 }
