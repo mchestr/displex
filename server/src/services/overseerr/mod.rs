@@ -83,12 +83,7 @@ impl OverseerrService {
             .overrides
             .get(&user.plex_username)
             .ok_or_else(|| {
-                for tier in &self.config.requests_config.tiers {
-                    if tier.watch_hours < watch_hours.into() {
-                        return Some(tier);
-                    }
-                }
-                None
+                self.config.requests_config.tiers.iter().find(|&tier| tier.watch_hours < watch_hours.into())
             })
             .ok();
 

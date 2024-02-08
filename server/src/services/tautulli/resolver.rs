@@ -118,7 +118,7 @@ impl TautulliQuery {
                 leaderboard.watch_position = position;
                 break;
             }
-            position = position + 1;
+            position += 1;
         }
         Ok(GetLeaderboardResult::Ok(leaderboard))
     }

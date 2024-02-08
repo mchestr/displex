@@ -52,7 +52,7 @@ async fn plex_auth(
 ) -> Result<impl IntoResponse, DisplexError> {
     let pin = state.services.plex_service.get_pin().await?;
     let next = match &query_string.next {
-        Some(next) => format!("{}", next),
+        Some(next) => next.to_string(),
         None => String::new(),
     };
     tracing::debug!("next:{}", next);
@@ -192,7 +192,7 @@ async fn callback(
         None => "/",
     };
     tracing::debug!("url:{}", url);
-    Ok(Redirect::to(&url))
+    Ok(Redirect::to(url))
 }
 
 pub fn routes() -> Router<DisplexState> {
