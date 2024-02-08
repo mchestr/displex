@@ -81,7 +81,7 @@ impl OverseerrService {
             .config
             .requests_config
             .overrides
-            .get(&user.id)
+            .get(&user.plex_username)
             .ok_or_else(|| {
                 for tier in &self.config.requests_config.tiers {
                     if tier.watch_hours < watch_hours.into() {

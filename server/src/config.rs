@@ -296,7 +296,7 @@ pub struct RequestLimitTier {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct RequestsUpgradeConfig {
     pub tiers: Vec<RequestLimitTier>,
-    pub overrides: HashMap<i64, RequestLimitTier>,
+    pub overrides: HashMap<String, RequestLimitTier>,
 }
 
 impl Default for RequestsUpgradeConfig {
