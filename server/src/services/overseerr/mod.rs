@@ -7,10 +7,7 @@ use tracing::{
 };
 
 use crate::{
-    config::{
-        AppConfig,
-        RequestLimitTier,
-    },
+    config::AppConfig,
     services::tautulli::{
         models::QueryDays,
         TautulliService,
@@ -80,12 +77,20 @@ impl OverseerrService {
             .ok_or_else(|| anyhow::anyhow!("failed to fetch stats"))?;
 
         let watch_hours = latest_stat.total_time / 3600;
-        let mut request_tier: Option<RequestLimitTier> = None;
-        for tier in &self.config.requests_config.tiers {
-            if tier.watch_hours < watch_hours.into() {
-                request_tier = Some(tier.clone());
-            }
-        }
+        let request_tier = &self
+            .config
+            .requests_config
+            .overrides
+            .get(&user.id)
+            .ok_or_else(|| {
+                for tier in &self.config.requests_config.tiers {
+                    if tier.watch_hours < watch_hours.into() {
+                        return Some(tier);
+                    }
+                }
+                None
+            })
+            .ok();
 
         if let Some(tier) = request_tier {
             tracing::info!(

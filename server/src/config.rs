@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt,
     path::PathBuf,
     time::Duration,
@@ -295,11 +296,13 @@ pub struct RequestLimitTier {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct RequestsUpgradeConfig {
     pub tiers: Vec<RequestLimitTier>,
+    pub overrides: HashMap<i64, RequestLimitTier>,
 }
 
 impl Default for RequestsUpgradeConfig {
     fn default() -> Self {
         Self {
+            overrides: HashMap::new(),
             tiers: vec![
                 RequestLimitTier {
                     name: String::from("Bronze"),
