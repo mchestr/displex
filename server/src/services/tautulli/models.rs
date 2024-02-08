@@ -41,6 +41,33 @@ pub struct UserWatchStat {
     pub total_time: i32,
 }
 
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StatId {
+    TopMovies,
+    PopularMovies,
+    TopTv,
+    PopularTv,
+    TopMusic,
+    PopularMusic,
+    LastWatched,
+    TopLibraries,
+    TopUsers,
+    TopPlatforms,
+    MostConcurrent,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct HomeStats {
+    pub stat_id: StatId,
+    pub rows: Vec<StatRow>,
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct StatRow {
+    pub title: String,
+}
+
 #[derive(Debug, Default, PartialEq, Deserialize, Serialize, SimpleObject)]
 pub struct ServerStatus {
     pub connected: bool,
@@ -69,6 +96,22 @@ pub struct GetLibrary {
     pub parent_count: Option<String>,
     #[serde(deserialize_with = "bool_from_int")]
     pub is_active: bool,
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct UserTable {
+    pub records_filtered: Option<i64>,
+    pub records_total: Option<i64>,
+    pub data: Vec<User>,
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct User {
+    pub user_id: i64,
+    pub username: String,
+    pub friendly_name: String,
+    pub plays: i64,
+    pub duration: i64,
 }
 
 fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>

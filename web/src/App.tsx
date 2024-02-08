@@ -7,7 +7,7 @@ import SignIn from "./pages/Authentication/SignIn";
 import SignUp from "./pages/Authentication/SignUp";
 import Loader from "./common/Loader";
 import routes from "./routes";
-import Recap from "./pages/Dashboard/Recap";
+import Recap from "./pages/Dashboard/Stats";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 
 const DefaultLayout = lazy(() => import("./layout/DefaultLayout"));

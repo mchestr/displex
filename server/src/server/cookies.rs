@@ -97,6 +97,16 @@ pub fn verify_role(ctx: &Context<'_>, expected_role: Role) -> anyhow::Result<()>
     }
 }
 
+pub fn get_plex_id(ctx: &Context<'_>) -> anyhow::Result<String> {
+    match ctx.data::<CookieData>() {
+        Ok(cookie) => match &cookie.plex_user {
+            Some(plex_user) => Ok(String::from(plex_user)),
+            None => Err(anyhow!("requires_authentication")),
+        },
+        Err(_) => Err(anyhow!("requires_authentication")),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
