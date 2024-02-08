@@ -43,7 +43,7 @@ async-graphql = { version = "7.0.0", features = [
     "uuid",
     "dataloader",
 ] }
-chrono = { version = "0.4.31", features = ["serde"] }
+chrono = { version = "0.4.33", features = ["serde"] }
 clap = { version = "4.3.10", features = ["derive", "env"] }
 cookie = { version = "0.18", features = ["percent-encode"] }
 derivative = "2.2.0"
