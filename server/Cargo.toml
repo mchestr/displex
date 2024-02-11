@@ -90,7 +90,7 @@ sea-orm = { version = "0.12.14", features = [
 sea-orm-migration = "0.12.14"
 sea-query = "0.30.7"
 tower-cookies = { version = "0.10.0", features = ["signed"] }
-thiserror = "1.0.56"
+thiserror = "1.0.57"
 http = "1.0.0"
 urlencoding = "2.1.3"
 
