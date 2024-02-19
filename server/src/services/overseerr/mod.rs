@@ -82,14 +82,14 @@ impl OverseerrService {
             .requests_config
             .overrides
             .get(&user.plex_username)
-            .ok_or_else(|| {
+            .or_else(|| {
                 self.config
                     .requests_config
                     .tiers
                     .iter()
+                    .rev()
                     .find(|&tier| tier.watch_hours < watch_hours.into())
-            })
-            .ok();
+            });
 
         if let Some(tier) = request_tier {
             tracing::info!(
