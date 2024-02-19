@@ -33,7 +33,7 @@ keywords = ["discord", "plex", "tautulli", "discord-linked-role", "overseerr"]
 default-run = "displex"
 
 [dependencies]
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 async-trait = "0.1.69"
 axum = { version = "0.7.4", features = ["macros", "tracing", "ws"] }
 async-graphql-axum = "7.0.2"
