@@ -17,7 +17,7 @@ jobs:
     name: NPM Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
       - name: Use Node.js
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
       - run: npm ci
@@ -30,7 +30,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Check out the repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
 
       - uses: "actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af" # v1
         with:
@@ -48,7 +48,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
 
       - uses: "actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af" # v1
         with:
@@ -66,7 +66,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
 
       - uses: "actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af" # v1
         with:
@@ -86,7 +86,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
 
       - uses: "actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af" # v1
         with:
@@ -112,7 +112,7 @@ jobs:
       - cargo-fmt
     steps:
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3
