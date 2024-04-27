@@ -73,7 +73,7 @@ tokio = { version = "1.37.0", features = ["full", "tracing"] }
 tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.5.2", features = ["catch-panic", "cors", "fs", "trace"] }
 tracing = "0.1"
-tracing-actix-web = "0.7.9"
+tracing-actix-web = "0.7.10"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.8.0", features = ["fast-rng"] }
 sea-orm = { version = "0.12.15", features = [
