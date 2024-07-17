@@ -122,7 +122,7 @@ jobs:
           echo "image_names=$image_names" >> $GITHUB_OUTPUT
 
       - name: Build and push to ghcr
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5
+        uses: docker/build-push-action@1ca370b3a9802c92e886402e0dd88098a2533b12 # v6
         with:
           context: .
           push: true
