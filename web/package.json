@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.9",
-    "apexcharts": "^3.41.0",
+    "apexcharts": "^4.0.0",
     "graphql": "^16.8.1",
     "headlessui": "^0.0.0",
     "jsvectormap": "^1.5.3",
