@@ -3,7 +3,7 @@ RUN apt-get update && apt-get install -y musl-tools musl-dev
 RUN update-ca-certificates
 WORKDIR /app
 
-FROM node:20-alpine as web-builder
+FROM node:22-alpine as web-builder
 WORKDIR /app
 COPY web/package.json .
 RUN npm install
