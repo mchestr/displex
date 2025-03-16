@@ -3,7 +3,7 @@ RUN apt-get update && apt-get install -y musl-tools musl-dev
 RUN update-ca-certificates
 WORKDIR /app
 
-FROM node:20-alpine as web-builder
+FROM node:20-alpine AS web-builder
 WORKDIR /app
 COPY web/package.json .
 RUN npm install
@@ -22,7 +22,7 @@ RUN rustup target add x86_64-unknown-linux-musl
 RUN cargo build --profile dist --bin displex --target x86_64-unknown-linux-musl
 
 # taken from https://medium.com/@lizrice/non-privileged-containers-based-on-the-scratch-image-a80105d6d341
-FROM ubuntu:latest as user-creator
+FROM ubuntu:latest AS user-creator
 RUN groupadd -g 1001 displex \
         && useradd -u 1001 -g 1001 displex \
         && mkdir /data \
