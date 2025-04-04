@@ -35,7 +35,7 @@ default-run = "displex"
 [dependencies]
 anyhow = "1.0.82"
 async-trait = "0.1.69"
-axum = { version = "0.7.5", features = ["macros", "tracing", "ws"] }
+axum = { version = "0.8.0", features = ["macros", "tracing", "ws"] }
 async-graphql-axum = "7.0.3"
 async-graphql = { version = "7.0.3", features = [
     "chrono",
