@@ -3,13 +3,6 @@ RUN apt-get update && apt-get install -y musl-tools musl-dev
 RUN update-ca-certificates
 WORKDIR /app
 
-# FROM node:20-alpine AS web-builder
-# WORKDIR /app
-# COPY web/package.json .
-# RUN npm install
-# COPY web .
-# RUN npm run build
-
 FROM chef AS planner
 COPY server .
 RUN cargo chef prepare --recipe-path recipe.json
@@ -41,6 +34,5 @@ ENV RUST_LOG="displex=info,sea_orm=info" \
     DISPLEX_HTTP__PORT=8080 \
     DATABASE_URL=sqlite://displex.db?mode=rwc
 COPY --from=app-builder --chown=displex:displex /app/target/x86_64-unknown-linux-musl/dist/displex /displex
-# COPY --from=web-builder --chown=displex:displex /app/dist /dist
 
 ENTRYPOINT ["/displex"]
