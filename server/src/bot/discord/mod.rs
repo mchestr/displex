@@ -3,11 +3,8 @@ use std::collections::HashSet;
 use anyhow::Result;
 
 use serenity::{
-    async_trait,
     client::ClientBuilder,
-    gateway::ActivityData,
     http::HttpBuilder,
-    model::gateway::Ready,
     prelude::*,
 };
 use tokio::sync::broadcast::Receiver;
@@ -19,19 +16,6 @@ use crate::{
 
 mod commands;
 
-struct Handler {
-    config: AppConfig,
-}
-
-#[async_trait]
-impl EventHandler for Handler {
-    async fn ready(&self, ctx: Context, _: Ready) {
-        ctx.set_activity(Some(ActivityData::watching(
-            &self.config.discord_bot.status_text,
-        )));
-    }
-}
-
 pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity::Client> {
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
@@ -42,7 +26,7 @@ pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity:
         .build();
 
     // We will fetch your bot's owners and id
-    let (owners, _bot_id) = match http_client.get_current_application_info().await {
+    let (_owners, _bot_id) = match http_client.get_current_application_info().await {
         Ok(info) => {
             let mut owners = HashSet::new();
             if let Some(owner) = &info.owner {
@@ -55,7 +39,7 @@ pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity:
     };
 
     let options = poise::FrameworkOptions {
-        commands: vec![commands::ping()],
+        commands: vec![commands::ping(), commands::subscriber_tokens()],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("~".into()),
             ..Default::default()
@@ -65,12 +49,13 @@ pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity:
         skip_checks_for_owners: false,
         ..Default::default()
     };
+    let services = services.clone();
     let framework = poise::Framework::builder()
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
                 println!("Logged in as {}", _ready.user.name);
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(())
+                Ok(services)
             })
         })
         .options(options)
@@ -79,11 +64,6 @@ pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity:
     let client = ClientBuilder::new_with_http(http_client, intents)
         .framework(framework)
         .await?;
-
-    {
-        let mut data = client.data.write().await;
-        data.insert::<AppServices>(services.clone());
-    }
 
     Ok(client)
 }

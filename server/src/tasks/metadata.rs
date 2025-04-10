@@ -66,7 +66,7 @@ async fn register_metadata(config: &AppConfig, client: &reqwest::Client) -> Resu
                 .json(&metadata_spec)
                 .send()
                 .await?
-                .json()
+                .json::<serde_json::Value>()
                 .await?
         );
     } else {
