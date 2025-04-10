@@ -5,13 +5,6 @@ use anyhow::Result;
 use serenity::{
     async_trait,
     client::ClientBuilder,
-    framework::{
-        standard::{
-            macros::group,
-            Configuration,
-        },
-        StandardFramework,
-    },
     gateway::ActivityData,
     http::HttpBuilder,
     model::gateway::Ready,
@@ -26,20 +19,9 @@ use crate::{
 
 mod commands;
 
-use self::commands::*;
-
 struct Handler {
     config: AppConfig,
 }
-
-#[group]
-#[commands(ping, status)]
-struct General;
-
-#[group]
-#[prefix = "subs"]
-#[commands(subscriber_tokens)]
-struct Subscribers;
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -72,15 +54,29 @@ pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity:
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
-    let framework = StandardFramework::new()
-        .group(&GENERAL_GROUP)
-        .group(&SUBSCRIBERS_GROUP);
-    framework.configure(Configuration::new().owners(owners).prefix("~"));
+    let options = poise::FrameworkOptions {
+        commands: vec![commands::ping()],
+        prefix_options: poise::PrefixFrameworkOptions {
+            prefix: Some("~".into()),
+            ..Default::default()
+        },
+        // Enforce command checks even for owners (enforced by default)
+        // Set to true to bypass checks, which is useful for testing
+        skip_checks_for_owners: false,
+        ..Default::default()
+    };
+    let framework = poise::Framework::builder()
+        .setup(move |ctx, _ready, framework| {
+            Box::pin(async move {
+                println!("Logged in as {}", _ready.user.name);
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                Ok(())
+            })
+        })
+        .options(options)
+        .build();
 
     let client = ClientBuilder::new_with_http(http_client, intents)
-        .event_handler(Handler {
-            config: config.clone(),
-        })
         .framework(framework)
         .await?;
 

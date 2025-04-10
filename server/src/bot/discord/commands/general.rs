@@ -1,26 +1,9 @@
-use serenity::{
-    framework::standard::{
-        macros::command,
-        Args,
-        CommandResult,
-    },
-    gateway::ActivityData,
-    model::prelude::*,
-    prelude::*,
-};
+use poise::serenity_prelude as serenity;
 
-#[command]
-#[owners_only]
-pub async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, "Pong!").await?;
-    Ok(())
-}
+type Error = serenity::Error;
 
-#[command]
-#[owners_only]
-pub async fn status(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
-    ctx.set_activity(Some(ActivityData::watching(args.rest())));
-    msg.reply(ctx, format!("set status: {}", args.rest()))
-        .await?;
+#[poise::command(prefix_command)]
+pub async fn ping(ctx: poise::Context<'_, (), Error>) -> Result<(), Error> {
+    ctx.say("Pong!").await?;
     Ok(())
 }

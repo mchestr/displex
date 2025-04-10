@@ -3,26 +3,17 @@ use chrono::{
     DurationRound,
     Utc,
 };
-use serenity::{
-    builder::{
-        CreateEmbed,
-        CreateEmbedFooter,
-        CreateMessage,
-    },
-    framework::standard::{
-        macros::command,
-        CommandResult,
-    },
-    model::prelude::*,
-    prelude::*,
+use poise::serenity_prelude as serenity;
+use serenity::builder::{
+    CreateEmbed,
+    CreateEmbedFooter,
+    CreateMessage,
 };
 
 use crate::services::AppServices;
 
-#[command]
-#[aliases("tokens")]
-#[owners_only]
-pub async fn subscriber_tokens(ctx: &Context, msg: &Message) -> CommandResult {
+#[poise::command(prefix_command, owners_only)]
+pub async fn subscriber_tokens(ctx: poise::Context<'_, (), serenity::Error>, msg: serenity::Message) -> Result<(), serenity::Error> {
     let data = ctx.data.read().await;
 
     if let Some(services) = data.get::<AppServices>() {
