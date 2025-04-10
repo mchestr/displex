@@ -113,7 +113,7 @@ impl PlexService {
         ];
         Ok(self
             .client
-            .get(&format!("{PLEX_TV_URL}{PLEX_TV_USER_PATH}"))
+            .get(format!("{PLEX_TV_URL}{PLEX_TV_USER_PATH}"))
             .query(&user_params)
             .send()
             .await?
@@ -130,7 +130,7 @@ impl PlexService {
         ];
         Ok(self
             .client
-            .get(&format!("{PLEX_TV_URL}{PLEX_TV_RESOURCES_PATH}"))
+            .get(format!("{PLEX_TV_URL}{PLEX_TV_RESOURCES_PATH}"))
             .query(&user_params)
             .send()
             .await?

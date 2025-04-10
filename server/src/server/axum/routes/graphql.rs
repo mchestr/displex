@@ -22,10 +22,7 @@ use crate::{
     errors::DisplexError,
     server::{
         axum::DisplexState,
-        cookies::{
-            get_cookie_data,
-            CookieData,
-        },
+        cookies::get_cookie_data,
     },
 };
 
@@ -40,10 +37,7 @@ async fn graphql_handler(
     cookies: Cookies,
     req: GraphQLRequest,
 ) -> Result<GraphQLResponse, DisplexError> {
-    let cookie = match get_cookie_data(&state.config.session.secret_key, &cookies) {
-        Ok(cookie) => cookie,
-        Err(_) => CookieData::default(),
-    };
+    let cookie = get_cookie_data(&state.config.session.secret_key, &cookies).unwrap_or_default();
     let mut req = req.into_inner();
     req = req.data(cookie);
     Ok(state.schema.execute(req).await.into())
