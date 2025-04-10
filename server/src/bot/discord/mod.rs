@@ -15,6 +15,7 @@ use crate::{
 };
 
 mod commands;
+mod utils;
 
 pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity::Client> {
     let intents = GatewayIntents::GUILD_MESSAGES

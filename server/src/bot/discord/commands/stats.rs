@@ -1,16 +1,26 @@
-use crate::services::{
-    discord_user::resolver::{
-        SummaryDiscordUserResult,
-        UserSummaryBy,
+use crate::{
+    bot::discord::utils::{
+        send_error,
+        ErrorSeverity,
     },
-    tautulli::models::QueryDays,
-    AppServices,
+    services::{
+        discord_user::resolver::{
+            SummaryDiscordUserResult,
+            UserSummaryBy,
+        },
+        tautulli::models::QueryDays,
+        AppServices,
+    },
 };
+use anyhow::anyhow;
 use chrono::Utc;
-use poise::serenity_prelude as serenity;
+use poise::{
+    serenity_prelude as serenity,
+    CreateReply,
+};
 
 /// Show your watch time statistics from Tautulli
-#[poise::command(prefix_command, slash_command)]
+#[poise::command(slash_command)]
 pub async fn stats(
     ctx: poise::Context<'_, AppServices, serenity::Error>,
 ) -> Result<(), serenity::Error> {
@@ -23,8 +33,13 @@ pub async fn stats(
     {
         if let SummaryDiscordUserResult::Ok(summary) = summary {
             if summary.summary.plex_users.is_empty() {
-                ctx.say("No Plex accounts linked to your Discord account.")
-                    .await?;
+                send_error(
+                    &ctx,
+                    anyhow!("User has no linked Plex account"),
+                    Some("An error has occurred"),
+                    ErrorSeverity::Critical,
+                )
+                .await?;
                 return Ok(());
             }
 
@@ -39,8 +54,13 @@ pub async fn stats(
             {
                 Ok(stats) => stats,
                 Err(err) => {
-                    ctx.say(format!("Error retrieving watch stats: {}", err))
-                        .await?;
+                    send_error(
+                        &ctx,
+                        err,
+                        Some("An error has occurred"),
+                        ErrorSeverity::Critical,
+                    )
+                    .await?;
                     return Ok(());
                 }
             };
@@ -53,8 +73,13 @@ pub async fn stats(
             {
                 Ok(stats) => stats,
                 Err(err) => {
-                    ctx.say(format!("Error retrieving watch stats: {}", err))
-                        .await?;
+                    send_error(
+                        &ctx,
+                        err,
+                        Some("An error has occurred"),
+                        ErrorSeverity::Critical,
+                    )
+                    .await?;
                     return Ok(());
                 }
             };
@@ -67,8 +92,13 @@ pub async fn stats(
             {
                 Ok(stats) => stats,
                 Err(err) => {
-                    ctx.say(format!("Error retrieving watch stats: {}", err))
-                        .await?;
+                    send_error(
+                        &ctx,
+                        err,
+                        Some("An error has occurred"),
+                        ErrorSeverity::Critical,
+                    )
+                    .await?;
                     return Ok(());
                 }
             };
@@ -81,8 +111,13 @@ pub async fn stats(
             {
                 Ok(stats) => stats,
                 Err(err) => {
-                    ctx.say(format!("Error retrieving watch stats: {}", err))
-                        .await?;
+                    send_error(
+                        &ctx,
+                        err,
+                        Some("An error has occurred"),
+                        ErrorSeverity::Critical,
+                    )
+                    .await?;
                     return Ok(());
                 }
             };
@@ -154,24 +189,22 @@ pub async fn stats(
                 .footer(serenity::CreateEmbedFooter::new("powered by displex"))
                 .timestamp(Utc::now());
 
-            ctx.channel_id()
-                .send_message(
-                    ctx,
-                    serenity::CreateMessage::new()
-                        .content(format!("📊 **Watch History for {}**", user.name))
-                        .add_embed(embed),
-                )
-                .await?;
+            ctx.send(
+                CreateReply::default()
+                    .content(format!("📊 **Watch History for {}**", user.name))
+                    .embed(embed),
+            )
+            .await?;
         } else {
-            send_error_message(&ctx).await?;
+            send_link_warning(&ctx).await?;
         }
     } else {
-        send_error_message(&ctx).await?;
+        send_link_warning(&ctx).await?;
     }
     Ok(())
 }
 
-async fn send_error_message(
+async fn send_link_warning(
     ctx: &poise::Context<'_, AppServices, serenity::Error>,
 ) -> Result<(), serenity::Error> {
     let embed = serenity::CreateEmbed::new()
@@ -191,13 +224,6 @@ async fn send_error_message(
     .footer(serenity::CreateEmbedFooter::new("powered by displex"))
     .timestamp(Utc::now());
 
-    ctx.channel_id()
-        .send_message(
-            ctx,
-            serenity::CreateMessage::new()
-                .content("⚠️ **Account Linking Required**")
-                .add_embed(embed),
-        )
-        .await?;
+    ctx.send(CreateReply::default().embed(embed)).await?;
     Ok(())
 }
