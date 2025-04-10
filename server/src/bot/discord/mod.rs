@@ -59,6 +59,12 @@ pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity:
             Box::pin(async move {
                 println!("Logged in as {}", _ready.user.name);
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+
+                // Set the bot's activity status
+                ctx.set_activity(Some(serenity::all::ActivityData::watching(
+                    config.discord_bot.status_text,
+                )));
+
                 Ok(services)
             })
         })

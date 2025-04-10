@@ -163,10 +163,41 @@ pub async fn stats(
                 )
                 .await?;
         } else {
-            ctx.say("Could not retrieve your user information.").await?;
+            send_error_message(&ctx).await?;
         }
     } else {
-        ctx.say("Could not retrieve your user information.").await?;
+        send_error_message(&ctx).await?;
     }
+    Ok(())
+}
+
+async fn send_error_message(
+    ctx: &poise::Context<'_, AppServices, serenity::Error>,
+) -> Result<(), serenity::Error> {
+    let embed = serenity::CreateEmbed::new()
+    .title("Account Linking Required")
+    .description("To access your Plex statistics, you need to link your Discord account to your Plex account.")
+    .color(0xE5A00D) // Warning color (amber)
+    .field(
+        "How to Link Your Account",
+        "1. Go to Server Settings\n2. Click on Linked Roles\n3. Follow the steps to connect your Plex account",
+        false,
+    )
+    .field(
+        "Is it safe?",
+        "Yes! The linking process is secure and only provides us with the minimal permissions needed to associate your accounts.",
+        false,
+    )
+    .footer(serenity::CreateEmbedFooter::new("powered by displex"))
+    .timestamp(Utc::now());
+
+    ctx.channel_id()
+        .send_message(
+            ctx,
+            serenity::CreateMessage::new()
+                .content("⚠️ **Account Linking Required**")
+                .add_embed(embed),
+        )
+        .await?;
     Ok(())
 }
