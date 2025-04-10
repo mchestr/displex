@@ -11,7 +11,7 @@ use poise::serenity_prelude as serenity;
 
 /// Show your watch time statistics from Tautulli
 #[poise::command(prefix_command, slash_command)]
-pub async fn history(
+pub async fn stats(
     ctx: poise::Context<'_, AppServices, serenity::Error>,
 ) -> Result<(), serenity::Error> {
     let user = ctx.author();

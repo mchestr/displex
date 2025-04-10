@@ -42,7 +42,7 @@ pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity:
         commands: vec![
             commands::ping(),
             commands::subscriber_tokens(),
-            commands::history(),
+            commands::stats(),
         ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("~".into()),
