@@ -1,117 +1,173 @@
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    "config:base",
-    "docker:enableMajor",
-    ":disableRateLimiting",
-    ":dependencyDashboard",
-    ":semanticCommits",
-    ":enablePreCommit",
-    ":automergeDigest",
-    ":automergeBranch",
-    "helpers:pinGitHubActionDigests",
+    'config:recommended',
+    'docker:enableMajor',
+    ':disableRateLimiting',
+    ':dependencyDashboard',
+    ':semanticCommits',
+    ':enablePreCommit',
+    ':automergeDigest',
+    ':automergeBranch',
+    'helpers:pinGitHubActionDigests',
   ],
-  platform: "github",
+  platform: 'github',
   onboarding: false,
-  requireConfig: "optional",
-  username: "mchesterbot[bot]",
-  gitAuthor: "mchesterbot <202745+mchesterbot[bot]@users.noreply.github.com>",
-  repositories: ["mchestr/displex"],
-  dependencyDashboardTitle: "Renovate Dashboard",
-  suppressNotifications: ["prIgnoreNotification"],
-  rebaseWhen: "conflicted",
+  requireConfig: 'optional',
+  username: 'mchesterbot[bot]',
+  gitAuthor: 'mchesterbot <202745+mchesterbot[bot]@users.noreply.github.com>',
+  repositories: [
+    'mchestr/displex',
+  ],
+  dependencyDashboardTitle: 'Renovate Dashboard',
+  suppressNotifications: [
+    'prIgnoreNotification',
+  ],
+  rebaseWhen: 'conflicted',
   commitBodyTable: true,
-  regexManagers: [
+  customManagers: [
     {
-      fileMatch: ["Cargo\\.toml"],
+      customType: 'regex',
+      fileMatch: [
+        'Cargo\\.toml',
+      ],
       matchStrings: [
         'rust-toolchain-version\\s*=\\s*"(?<currentValue>\\d+\\.\\d+(\\.\\d+)?)"',
       ],
-      depNameTemplate: "rust",
-      lookupNameTemplate: "rust-lang/rust",
-      datasourceTemplate: "github-releases",
+      depNameTemplate: 'rust',
+      packageNameTemplate: 'rust-lang/rust',
+      datasourceTemplate: 'github-releases',
     },
   ],
   packageRules: [
     {
-      matchDatasources: ["docker"],
+      matchDatasources: [
+        'docker',
+      ],
       enabled: true,
-      matchUpdateTypes: ["major", "minor", "patch", "digest"],
+      matchUpdateTypes: [
+        'major',
+        'minor',
+        'patch',
+        'digest',
+      ],
     },
     {
-      matchDatasources: ["docker"],
-      semanticCommitScope: "container",
+      matchDatasources: [
+        'docker',
+      ],
+      semanticCommitScope: 'container',
       separateMinorPatch: true,
     },
     {
-      matchDatasources: ["docker"],
-      matchUpdateTypes: ["major"],
-      commitMessagePrefix: "feat(container)!: ",
+      matchDatasources: [
+        'docker',
+      ],
+      matchUpdateTypes: [
+        'major',
+      ],
+      commitMessagePrefix: 'feat(container)!: ',
     },
     {
-      matchDatasources: ["docker"],
-      matchUpdateTypes: ["minor"],
-      semanticCommitType: "feat",
+      matchDatasources: [
+        'docker',
+      ],
+      matchUpdateTypes: [
+        'minor',
+      ],
+      semanticCommitType: 'feat',
     },
     {
-      matchDatasources: ["docker"],
-      matchUpdateTypes: ["patch"],
-      semanticCommitType: "fix",
+      matchDatasources: [
+        'docker',
+      ],
+      matchUpdateTypes: [
+        'patch',
+      ],
+      semanticCommitType: 'fix',
     },
     {
-      matchDatasources: ["docker"],
-      matchUpdateTypes: ["digest"],
-      semanticCommitType: "chore",
+      matchDatasources: [
+        'docker',
+      ],
+      matchUpdateTypes: [
+        'digest',
+      ],
+      semanticCommitType: 'chore',
     },
     {
-      description: "Auto merge GitHub Actions",
-      matchManagers: ["github-actions"],
-      matchDatasources: ["github-tags"],
+      description: 'Auto merge GitHub Actions',
+      matchManagers: [
+        'github-actions',
+      ],
+      matchDatasources: [
+        'github-tags',
+      ],
       automerge: true,
       ignoreTests: true,
-      automergeType: "branch",
-      matchUpdateTypes: ["minor", "patch"],
+      automergeType: 'branch',
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ],
     },
     {
-      description: "Dockerfile Group",
-      groupName: "Dockerfile",
-      matchPackagePatterns: ["alpine", "rust", "lukemathwalker/cargo-chef"],
-      matchDatasources: ["dockerfile"],
+      description: 'Dockerfile Group',
+      groupName: 'Dockerfile',
+      matchDatasources: [
+        'dockerfile',
+      ],
       group: {
-        commitMessageTopic: "{{{groupName}}} group",
+        commitMessageTopic: '{{{groupName}}} group',
       },
       separateMinorPatch: false,
+      matchPackageNames: [
+        '/alpine/',
+        '/rust/',
+        '/lukemathwalker/cargo-chef/',
+      ],
     },
     {
-      description: "sea-orm Group",
-      groupName: "sea-orm",
-      matchPackagePrefixes: ["sea-orm"],
-      matchDatasources: ["crate"],
+      description: 'sea-orm Group',
+      groupName: 'sea-orm',
+      matchDatasources: [
+        'crate',
+      ],
       group: {
-        commitMessageTopic: "{{{groupName}}} group",
+        commitMessageTopic: '{{{groupName}}} group',
       },
       separateMinorPatch: false,
-      "automerge": true
+      automerge: true,
+      matchPackageNames: [
+        'sea-orm{/,}**',
+      ],
     },
     {
-      description: "async-graphql Group",
-      groupName: "async-graphql",
-      matchPackagePrefixes: ["async-graphql"],
-      matchDatasources: ["crate"],
+      description: 'async-graphql Group',
+      groupName: 'async-graphql',
+      matchDatasources: [
+        'crate',
+      ],
       group: {
-        commitMessageTopic: "{{{groupName}}} group",
+        commitMessageTopic: '{{{groupName}}} group',
       },
       separateMinorPatch: false,
-      "automerge": true
+      automerge: true,
+      matchPackageNames: [
+        'async-graphql{/,}**',
+      ],
     },
     {
-      "matchUpdateTypes": ["minor", "patch"],
-      "matchCurrentVersion": "!/^0/",
-      "automerge": true
-    }
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ],
+      matchCurrentVersion: '!/^0/',
+      automerge: true,
+    },
   ],
-  "lockFileMaintenance": {
-    "enabled": true,
-    "automerge": true
-  }
+  lockFileMaintenance: {
+    enabled: true,
+    automerge: true,
+  },
 }
