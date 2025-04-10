@@ -39,7 +39,11 @@ pub async fn init(config: AppConfig, services: &AppServices) -> Result<serenity:
     };
 
     let options = poise::FrameworkOptions {
-        commands: vec![commands::ping(), commands::subscriber_tokens()],
+        commands: vec![
+            commands::ping(),
+            commands::subscriber_tokens(),
+            commands::history(),
+        ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("~".into()),
             ..Default::default()

@@ -22,6 +22,64 @@ pub enum QueryDays {
     Total,
 }
 
+#[derive(Debug, Display)]
+pub enum MediaType {
+    #[display(fmt = "movie")]
+    Movie,
+    #[display(fmt = "episode")]
+    Episode,
+    #[display(fmt = "track")]
+    Track,
+    #[display(fmt = "live")]
+    Live,
+    #[display(fmt = "collection")]
+    Collection,
+    #[display(fmt = "playlist")]
+    Playlist,
+}
+
+#[derive(Debug, Display)]
+pub enum TranscodeDecision {
+    #[display(fmt = "direct play")]
+    DirectPlay,
+    #[display(fmt = "copy")]
+    Copy,
+    #[display(fmt = "transcode")]
+    Transcode,
+}
+
+#[derive(Debug, Display)]
+pub enum OrderColumn {
+    #[display(fmt = "date")]
+    Date,
+    #[display(fmt = "friendly_name")]
+    FriendlyName,
+    #[display(fmt = "ip_address")]
+    IpAddress,
+    #[display(fmt = "platform")]
+    Platform,
+    #[display(fmt = "player")]
+    Player,
+    #[display(fmt = "full_title")]
+    FullTitle,
+    #[display(fmt = "started")]
+    Started,
+    #[display(fmt = "paused_counter")]
+    PausedCounter,
+    #[display(fmt = "stopped")]
+    Stopped,
+    #[display(fmt = "duration")]
+    Duration,
+}
+
+#[derive(Debug, Display)]
+pub enum OrderDir {
+    #[display(fmt = "desc")]
+    Desc,
+    #[display(fmt = "asc")]
+    Asc,
+}
+
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct ApiResponse<T> {
     pub response: ApiResult<T>,
@@ -112,6 +170,64 @@ pub struct User {
     pub friendly_name: String,
     pub plays: i64,
     pub duration: i64,
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize, SimpleObject)]
+pub struct GetHistory {
+    pub draw: i32,
+    pub records_total: Option<i32>,
+    pub records_filtered: Option<i32>,
+    pub total_duration: String,
+    pub filter_duration: String,
+    pub data: Vec<HistoryItem>,
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize, SimpleObject)]
+pub struct HistoryItem {
+    pub date: i64,
+    pub friendly_name: String,
+    pub full_title: String,
+    pub grandparent_rating_key: Option<String>,
+    pub grandparent_title: Option<String>,
+    pub original_title: Option<String>,
+    pub group_count: i32,
+    pub group_ids: String,
+    pub guid: String,
+    pub ip_address: String,
+    #[serde(deserialize_with = "bool_from_int")]
+    pub live: bool,
+    pub location: String,
+    pub machine_id: String,
+    pub media_index: Option<String>,
+    pub media_type: String,
+    pub originally_available_at: Option<String>,
+    pub parent_media_index: Option<String>,
+    pub parent_rating_key: Option<String>,
+    pub parent_title: Option<String>,
+    pub paused_counter: i32,
+    pub percent_complete: i32,
+    pub platform: String,
+    pub play_duration: i64,
+    pub product: String,
+    pub player: String,
+    pub rating_key: i64,
+    pub reference_id: i64,
+    #[serde(deserialize_with = "bool_from_int")]
+    pub relayed: bool,
+    pub row_id: i64,
+    #[serde(deserialize_with = "bool_from_int")]
+    pub secure: bool,
+    pub session_key: Option<String>,
+    pub started: i64,
+    pub state: Option<String>,
+    pub stopped: i64,
+    pub thumb: String,
+    pub title: String,
+    pub transcode_decision: String,
+    pub user: String,
+    pub user_id: i64,
+    pub watched_status: f32,
+    pub year: Option<i32>,
 }
 
 fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>

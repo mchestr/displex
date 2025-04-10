@@ -46,10 +46,10 @@ pub static COOKIE_NAME: &str = "auth";
     SimpleObject, Debug, PartialEq, Eq, Clone, Serialize, Deserialize, FromJsonQueryResult,
 )]
 pub struct DiscordUserSummary {
-    discord_user: discord_user::Model,
-    discord_tokens: Vec<discord_token::Model>,
-    plex_users: Vec<plex_user::Model>,
-    plex_tokens: Vec<plex_token::Model>,
+    pub discord_user: discord_user::Model,
+    pub discord_tokens: Vec<discord_token::Model>,
+    pub plex_users: Vec<plex_user::Model>,
+    pub plex_tokens: Vec<plex_token::Model>,
 }
 
 #[derive(Default)]

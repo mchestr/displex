@@ -6,6 +6,7 @@ use async_graphql::{
     Union,
 };
 
+use chrono::Utc;
 use reqwest::Url;
 
 use serde::{
@@ -33,7 +34,11 @@ use crate::{
 };
 use anyhow::Result;
 
-use super::models::QueryDays;
+use super::models::{
+    GetHistory,
+    MediaType,
+    QueryDays,
+};
 
 #[derive(Default)]
 pub struct TautulliQuery;
@@ -122,6 +127,28 @@ impl TautulliQuery {
         }
         Ok(GetLeaderboardResult::Ok(leaderboard))
     }
+
+    async fn get_history(&self, gql_ctx: &Context<'_>) -> async_graphql::Result<GetHistoryResult> {
+        let plex_user = get_plex_id(gql_ctx)?;
+        let user_history = gql_ctx
+            .data_unchecked::<TautulliService>()
+            .get_user_history(
+                &plex_user,
+                MediaType::Movie,
+                &(Utc::now() - chrono::Duration::days(90)).date_naive(),
+            )
+            .await?;
+
+        Ok(GetHistoryResult::Ok(GetHistorySuccess {
+            recent: user_history
+                .data
+                .iter()
+                .map(|f| GetHistoryItem {
+                    title: f.title.clone(),
+                })
+                .collect(),
+        }))
+    }
 }
 
 #[derive(Debug, Union)]
@@ -160,6 +187,32 @@ pub struct GetLeaderboardError {
 
 #[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
 pub enum GetLeaderboardVariant {
+    InternalError,
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize, SimpleObject)]
+pub struct GetHistorySuccess {
+    pub recent: Vec<GetHistoryItem>,
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize, SimpleObject)]
+pub struct GetHistoryItem {
+    pub title: String,
+}
+
+#[derive(Debug, Union)]
+pub enum GetHistoryResult {
+    Ok(GetHistorySuccess),
+    Err(GetHistoryError),
+}
+
+#[derive(Debug, SimpleObject)]
+pub struct GetHistoryError {
+    pub error: GetHistoryVariant,
+}
+
+#[derive(Enum, Clone, Debug, Copy, PartialEq, Eq)]
+pub enum GetHistoryVariant {
     InternalError,
 }
 
@@ -328,6 +381,28 @@ impl TautulliService {
         };
         let url = Url::parse_with_params(&format!("{}/api/v2", self.url), &params)?;
         let response: ApiResponse<UserTable> = self.client.get(url).send().await?.json().await?;
+
+        Ok(response.response.data)
+    }
+
+    #[instrument(skip(self), ret, level = "debug")]
+    pub async fn get_user_history(
+        &self,
+        user_id: &str,
+        media_type: MediaType,
+        start_date: &chrono::NaiveDate,
+    ) -> Result<GetHistory> {
+        let user_id = user_id.to_string();
+        let params = vec![
+            ("apikey", self.api_key.clone()),
+            ("cmd", "get_history".into()),
+            ("user_id", user_id),
+            ("media_type", media_type.to_string()),
+            ("after", start_date.format("%Y-%m-%d").to_string()),
+        ];
+
+        let url = Url::parse_with_params(&format!("{}/api/v2", self.url), &params)?;
+        let response: ApiResponse<GetHistory> = self.client.get(url).send().await?.json().await?;
 
         Ok(response.response.data)
     }
