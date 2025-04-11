@@ -33,8 +33,8 @@ keywords = ["discord", "plex", "tautulli", "discord-linked-role", "overseerr"]
 default-run = "displex"
 
 [dependencies]
-anyhow = "1.0.82"
-async-trait = "0.1.69"
+anyhow = "1.0.85"
+async-trait = "0.1.79"
 axum = { version = "0.7.5", features = ["macros", "tracing", "ws"] }
 async-graphql-axum = "7.0.3"
 async-graphql = { version = "7.0.3", features = [
@@ -44,7 +44,7 @@ async-graphql = { version = "7.0.3", features = [
     "dataloader",
 ] }
 chrono = { version = "0.4.38", features = ["serde"] }
-clap = { version = "4.3.10", features = ["derive", "env"] }
+clap = { version = "4.5.5", features = ["derive", "env"] }
 cookie = { version = "0.18.1", features = ["percent-encode"] }
 derivative = "2.2.0"
 derive_more = "0.99.17"
@@ -55,11 +55,11 @@ humantime-serde = "1.1.1"
 hyper = { version = "1.3.1", features = [] }
 hyper-util = { version = "0.1.3", features = ["tokio", "server-auto", "http1"] }
 oauth2 = "4.4.2"
-reqwest = { version = "0.11.22", features = [
+reqwest = { version = "0.11.27", features = [
     "json",
     "rustls-tls-native-roots",
 ], default-features = false }
-serde = { version = "1.0.198", features = ["derive"] }
+serde = { version = "1.0.201", features = ["derive"] }
 serde_json = "1.0.116"
 serde_qs = "0.14.0"
 serenity = "0.12.1"
