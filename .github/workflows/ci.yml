@@ -30,7 +30,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Check out the repo
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - uses: "actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af" # v1
         with:
@@ -48,7 +48,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - uses: "actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af" # v1
         with:
@@ -66,7 +66,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - uses: "actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af" # v1
         with:
@@ -86,7 +86,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - uses: "actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af" # v1
         with:
@@ -113,7 +113,7 @@ jobs:
       - cargo-fmt
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@aa33708b10e362ff993539393ff100fa93ed6a27 # v3
