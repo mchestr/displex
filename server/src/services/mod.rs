@@ -42,6 +42,7 @@ pub struct AppServices {
     pub overseerr_service: OverseerrService,
     pub db: DatabaseConnection,
     pub reqwest_client: reqwest::Client,
+    pub config: AppConfig,
 }
 
 pub async fn create_app_services(
@@ -112,6 +113,7 @@ pub async fn create_app_services(
         overseerr_service,
         db,
         reqwest_client,
+        config: config.clone(),
     };
 
     let serenity_client = bot::discord::init(config.clone(), &services).await.unwrap();

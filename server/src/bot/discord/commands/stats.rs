@@ -195,13 +195,19 @@ pub async fn stats(
         )
         .await?;
     } else {
+        let auth_url = format!(
+            "https://{}/auth/discord?next=/auth/plex?next=discord://-/channels/{}/@home",
+            ctx.data().config.http.hostname,
+            ctx.data().config.discord.server_id
+        );
+
         let embed = serenity::CreateEmbed::new()
         .title("Account Linking & Verification Required")
-        .description("To access your Plex statistics, you need to link your Discord account to your Plex account and confirm your a subscriber.")
+        .description("To access your Plex statistics, you need to link your Discord account to your Plex account and confirm you're a subscriber.")
         .color(0xE5A00D) // Warning color (amber)
         .field(
             "How to Link Your Account",
-            "1. Go to Server Settings\n2. Click on Linked Roles\n3. Follow the steps to connect your Plex account",
+            format!("Click [here]({}) to link your accounts\n\nOr follow these steps manually:\n1. Go to Server Settings\n2. Click on Linked Roles\n3. Follow the steps to connect your Plex account", auth_url),
             false,
         )
         .field(
