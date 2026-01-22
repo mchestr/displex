@@ -3,7 +3,7 @@ version: v3
 services:
 
   postgres:
-    image: postgres:17
+    image: postgres:18
     restart: always
     environment:
       POSTGRES_PASSWORD: password
